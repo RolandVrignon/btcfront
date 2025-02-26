@@ -1,17 +1,31 @@
 "use client"
 
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Plus, Link2 } from "lucide-react"
 
 export function AppNavbar() {
-  return (
-    <div className="p-2 bg-sidebar w-full border-b border-gray-200 flex-shrink-0 flex justify-between items-center">
-      <SidebarTrigger />
-      <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={() => window.location.href = '/'}>+ Nouveau projet</Button>
-        <Button onClick={() => window.location.href = '/'}>Partager</Button>
-        <UserAvatar />
+
+    return (
+    <div className="border-b">
+      <div className="flex h-16 items-center px-4">
+        <div className="flex-1 flex items-center gap-4">
+          <div className="relative w-full max-w-sm">
+            <SidebarTrigger />
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button variant="outline">
+            <Plus className="h-4 w-4" />
+            Nouveau projet
+          </Button>
+          <Button>
+            <Link2 className="h-4 w-4" />
+            Partager
+          </Button>
+          <UserAvatar />
+        </div>
       </div>
     </div>
   )
