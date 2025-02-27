@@ -13,14 +13,12 @@ interface FileUploadZoneProps {
 // Types de fichiers acceptés
 const ACCEPTED_FILE_TYPES = [
   'text/csv',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/pdf',
-  'image/jpeg',
-  'image/png'
 ];
 
 // Extensions pour l'attribut accept de l'input
-const ACCEPTED_FILE_EXTENSIONS = '.csv,.docx,.pdf,.jpg,.jpeg,.png';
+const ACCEPTED_FILE_EXTENSIONS = '.csv,.docx,.pdf';
 
 export function FileUploadZone({ onFilesSelected, files = [] }: FileUploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -43,7 +41,7 @@ export function FileUploadZone({ onFilesSelected, files = [] }: FileUploadZonePr
     );
 
     if (validTypeFiles.length < files.length) {
-      setError(`Certains fichiers ont été ignorés. Formats acceptés : CSV, DOCX, PDF, JPG, PNG.`);
+      setError(`Certains fichiers ont été ignorés. Formats acceptés : CSV, DOCX, PDF.`);
     }
 
     // Ensuite, filtrer les doublons
@@ -123,7 +121,7 @@ export function FileUploadZone({ onFilesSelected, files = [] }: FileUploadZonePr
         <Upload className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-lg font-medium mb-2">Déposez vos fichiers ici</p>
         <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner des fichiers</p>
-        <p className="text-xs text-muted-foreground mt-2">Formats acceptés : CSV, DOCX, PDF, JPG, PNG</p>
+        <p className="text-xs text-muted-foreground mt-2">Formats acceptés : CSV, DOCX, PDF</p>
       </label>
 
       {error && (

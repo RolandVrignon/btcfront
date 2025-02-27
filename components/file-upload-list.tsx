@@ -10,7 +10,7 @@ interface FileUploadListProps {
     file: File
     id: string
     progress: number
-    status: 'pending' | 'indexing' | 'rafting' | 'ready' | 'error'
+    status: 'processing' | 'pending' | 'indexing' | 'rafting' | 'ready' | 'end'
     url?: string
     documentId?: string
     processingStatus?: string
@@ -87,7 +87,7 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
         return 'Traitement'
       case 'READY':
         return 'Prêt'
-      case 'ERROR':
+      case 'END':
         return 'Erreur'
       default:
         return status
@@ -100,12 +100,14 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
       case 'NOT_STARTED':
         return "bg-gray-50 text-gray-700"
       case 'INDEXING':
+        return "bg-blue-50 text-blue-700"
       case 'RAFTING':
+        return "bg-purple-50 text-purple-700"
       case 'PROCESSING':
         return "bg-yellow-50 text-yellow-700"
       case 'READY':
         return "bg-green-50 text-green-700"
-      case 'ERROR':
+      case 'END':
         return "bg-red-50 text-red-700"
       default:
         return "bg-gray-50 text-gray-700"
@@ -115,11 +117,11 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
   return (
     <div className="w-full">
       <h3 className="text-xl font-semibold mb-4">Fichiers ({files.length})</h3>
-      <div className="border rounded-lg p-1 flex flex-col gap-1 max-h-[20vh] overflow-y-auto">
+      <div className="border rounded-lg flex flex-col gap-1 min-h-[20vh] max-h-[20vh] overflow-y-auto">
         {files.map((file) => (
           <div
             key={file.id}
-            className="border rounded-lg p-1 hover:bg-gray-100 cursor-pointer transition-colors group"
+            className="p-2 border-b hover:bg-gray-100 cursor-pointer transition-colors group"
             onClick={() => openFileInNewTab(file.id)}
           >
             <div className="flex items-center justify-between">
@@ -133,16 +135,6 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
                 />
               </div>
               <div className="flex items-center gap-2">
-                {file.status === 'pending' && (
-                  <Badge variant="outline" className="bg-blue-50">
-                    En cours...
-                  </Badge>
-                )}
-                {file.status === 'error' && (
-                  <Badge variant="outline" className="bg-red-50 text-red-700">
-                    Erreur
-                  </Badge>
-                )}
                 {file.processingStatus && (
                   <Badge
                     variant="outline"
