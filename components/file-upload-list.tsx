@@ -1,124 +1,176 @@
 "use client"
 
 import { useState } from "react"
-import { File, AlertCircle, ExternalLink, FileText, Image as ImageIcon, FileSpreadsheet } from "lucide-react"
-import { UploadingFile } from "./project-tools"
-import Image from "next/image"
-import { usePresignedUrl } from "@/lib/hooks/use-presigned-url"
+import { File, FileText, Image as ImageIcon, FileSpreadsheet, ExternalLink } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 
 interface FileUploadListProps {
-  files: UploadingFile[]
+  files: {
+    file: File
+    id: string
+    progress: number
+    status: 'pending' | 'indexing' | 'rafting' | 'ready' | 'error'
+    url?: string
+    documentId?: string
+    processingStatus?: string
+    processingMessage?: string
+  }[]
   projectId?: string
 }
 
 export function FileUploadList({ files, projectId }: FileUploadListProps) {
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null)
-  const { getPresignedUrl } = usePresignedUrl()
-
-  // Fonction pour obtenir l'aperçu du fichier
-  const getFilePreview = (file: File) => {
-    if (file.type.startsWith("image/")) {
-      return URL.createObjectURL(file)
-    }
-    return null
-  }
 
   // Fonction pour obtenir l'icône selon le type de fichier
   const getFileIcon = (file: File) => {
     if (file.type === 'application/pdf') {
-      return <File className="w-6 h-6 text-red-500" />
+      return <File className="h-5 w-5 text-red-500" />
     } else if (file.type === 'text/csv') {
-      return <FileSpreadsheet className="w-6 h-6 text-green-600" />
+      return <FileSpreadsheet className="h-5 w-5 text-green-600" />
     } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      return <FileText className="w-6 h-6 text-blue-600" />
+      return <FileText className="h-5 w-5 text-blue-600" />
     } else if (file.type.startsWith('image/')) {
-      return <ImageIcon className="w-6 h-6 text-purple-500" />
+      return <ImageIcon className="h-5 w-5 text-purple-500" />
     }
-    return <File className="w-6 h-6 text-muted-foreground" />
+    return <File className="h-5 w-5 text-blue-500" />
   }
 
-  // Fonction pour obtenir l'URL présignée du S3 et ouvrir le fichier
+  // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
   const openFileInNewTab = async (fileId: string) => {
     const uploadingFile = files.find(f => f.id === fileId)
-    if (!uploadingFile) return
+    if (!uploadingFile || !projectId) return
 
     setLoadingFileId(fileId)
     try {
-      const presignedUrl = await getPresignedUrl(uploadingFile.file, projectId)
+      // Appel à notre API interne pour obtenir l'URL de visualisation
+      const response = await fetch('/api/documents/view', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: uploadingFile.file.name,
+          projectId: projectId
+        }),
+      });
 
-      if (presignedUrl) {
-        window.open(presignedUrl.url, '_blank')
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération de l'URL de visualisation");
+      }
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error("URL de visualisation non disponible");
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de l'URL présignée", error)
-      alert("Impossible d'ouvrir le fichier. Veuillez réessayer plus tard.")
+      console.error("Erreur lors de l'ouverture du fichier:", error);
+      alert("Impossible d'ouvrir le fichier. Veuillez réessayer plus tard.");
     } finally {
-      setLoadingFileId(null)
+      setLoadingFileId(null);
+    }
+  }
+
+  // Fonction pour obtenir le libellé du statut de traitement
+  const getProcessingStatusLabel = (status: string) => {
+    switch (status) {
+      case 'NOT_STARTED':
+        return 'En attente'
+      case 'INDEXING':
+        return 'Indexation'
+      case 'RAFTING':
+        return 'Condensation'
+      case 'PROCESSING':
+        return 'Traitement'
+      case 'READY':
+        return 'Prêt'
+      case 'ERROR':
+        return 'Erreur'
+      default:
+        return status
+    }
+  }
+
+  // Fonction pour obtenir la classe CSS du badge selon le statut
+  const getProcessingStatusClass = (status: string) => {
+    switch (status) {
+      case 'NOT_STARTED':
+        return "bg-gray-50 text-gray-700"
+      case 'INDEXING':
+      case 'RAFTING':
+      case 'PROCESSING':
+        return "bg-yellow-50 text-yellow-700"
+      case 'READY':
+        return "bg-green-50 text-green-700"
+      case 'ERROR':
+        return "bg-red-50 text-red-700"
+      default:
+        return "bg-gray-50 text-gray-700"
     }
   }
 
   return (
-    <div className="w-full border rounded-[20px]">
-      <div className="p-2 bg-muted/30 border-b top-0 z-10">
-        <h3 className="font-medium">Fichiers téléchargés ({files.length})</h3>
-      </div>
-
-      <div className="divide-y max-h-[30vh] overflow-y-auto">
-        {files.map((uploadingFile) => (
+    <div className="w-full">
+      <h3 className="text-xl font-semibold mb-4">Fichiers ({files.length})</h3>
+      <div className="border rounded-lg p-1 flex flex-col gap-1 max-h-[20vh] overflow-y-auto">
+        {files.map((file) => (
           <div
-            key={uploadingFile.id}
-            className={`p-3 flex justify-start items-center gap-3 ${uploadingFile.status === 'completed' ? 'cursor-pointer hover:bg-muted/80 transition-colors' : ''}`}
-            onClick={() => uploadingFile.status === 'completed' && openFileInNewTab(uploadingFile.id)}
+            key={file.id}
+            className="border rounded-lg p-1 hover:bg-gray-100 cursor-pointer transition-colors group"
+            onClick={() => openFileInNewTab(file.id)}
           >
-            <div className="h-6 w-6 flex-shrink-0 rounded overflow-hidden bg-muted/30 flex items-center justify-center">
-              {getFilePreview(uploadingFile.file) ? (
-                <Image
-                  src={getFilePreview(uploadingFile.file)!}
-                  alt={uploadingFile.file.name}
-                  width={48}
-                  height={48}
-                  className="object-cover h-full w-full"
+            <div className="flex items-center justify-between">
+              <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
+                {getFileIcon(file.file)}
+                <span className="font-medium truncate">{file.file.name}</span>
+                <div className="text-xs text-gray-500 mt-1 truncate">{formatFileSize(file.file.size)}</div>
+                <ExternalLink
+                  className="h-3 w-3 text-gray-400 opacity-100 transition-opacity"
+                  aria-label="Ouvrir dans un nouvel onglet"
                 />
-              ) : (
-                getFileIcon(uploadingFile.file)
-              )}
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center">
-                <span className="truncate font-medium text-sm mr-2">
-                  {uploadingFile.file.name}
-                </span>
-                {loadingFileId === uploadingFile.id && (
-                  <div className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                {file.status === 'pending' && (
+                  <Badge variant="outline" className="bg-blue-50">
+                    En cours...
+                  </Badge>
                 )}
-                {uploadingFile.status === 'completed' && !loadingFileId && (
-                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                {file.status === 'error' && (
+                  <Badge variant="outline" className="bg-red-50 text-red-700">
+                    Erreur
+                  </Badge>
+                )}
+                {file.processingStatus && (
+                  <Badge
+                    variant="outline"
+                    className={getProcessingStatusClass(file.processingStatus)}
+                  >
+                    {getProcessingStatusLabel(file.processingStatus)}
+                  </Badge>
+                )}
+                {loadingFileId === file.id && (
+                  <span className="text-xs text-gray-500 animate-pulse">Chargement...</span>
                 )}
               </div>
-
-              {uploadingFile.status === 'uploading' ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full transition-all duration-300 bg-primary rounded-full"
-                      style={{ width: `${uploadingFile.progress}%` }}
-                    />
-                  </div>
-                  <div className="flex-shrink-0 w-9 text-xs font-medium">
-                    {uploadingFile.progress}%
-                  </div>
-                </div>
-              ) : uploadingFile.status === 'error' && (
-                <div className="mt-2 flex items-center text-red-500 text-xs">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  Erreur lors du téléchargement
-                </div>
-              )}
             </div>
+
+            {file.status === 'pending' && (
+              <Progress value={file.progress} className="h-2" />
+            )}
           </div>
         ))}
       </div>
     </div>
   )
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }

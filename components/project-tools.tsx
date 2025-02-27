@@ -24,8 +24,11 @@ export interface UploadingFile {
   file: File
   id: string
   progress: number
-  status: 'uploading' | 'completed' | 'error'
+  status: 'pending' | 'indexing' | 'rafting' | 'ready' | 'error'
   url?: string // URL S3 où le fichier a été uploadé
+  documentId?: string // ID du document dans le backend
+  processingStatus?: string // Statut de traitement du document (NOT_STARTED, INDEXING, RAFTING, READY, ERROR)
+  processingMessage?: string // Message associé au statut de traitement
 }
 
 interface Tool {
@@ -140,13 +143,108 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
     }
   }
 
+  // Fonction pour surveiller le statut du document
+  const monitorDocument = async (documentId: string, projectId: string) => {
+    try {
+      const response = await fetch('/api/documents/monitor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ documentId, projectId }),
+      });
+
+      if (!response.ok) {
+        console.error('Erreur lors de la surveillance du document');
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la surveillance du document:', error);
+      return null;
+    }
+  }
+
+  // Fonction pour confirmer l'upload au backend
+  const confirmUploadToBackend = async (projectId: string, fileName: string) => {
+    try {
+      const response = await fetch('/api/documents/confirm-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectId, fileName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erreur lors de la confirmation de l\'upload:', errorData);
+        return false;
+      }
+
+      const result = await response.json();
+      console.log('Confirmation d\'upload réussie:', result);
+
+      // Retourner l'ID du document pour pouvoir le surveiller
+      return result.id ? { success: true, documentId: result.id } : { success: true };
+    } catch (error) {
+      console.error('Erreur lors de la confirmation de l\'upload:', error);
+      return false;
+    }
+  }
+
+  // Fonction pour démarrer la surveillance périodique d'un document
+  const startDocumentMonitoring = (fileId: string, documentId: string, projectId: string) => {
+    const intervalId = setInterval(async () => {
+      const documentStatus = await monitorDocument(documentId, projectId);
+
+      if (!documentStatus) {
+        console.error('Impossible de récupérer le statut du document');
+        return;
+      }
+
+      console.log('Statut du document:', documentStatus);
+
+      // Mettre à jour le statut du fichier
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId
+          ? {
+              ...f,
+              processingStatus: documentStatus.status,
+              processingMessage: documentStatus.message,
+              // Mettre à jour le statut principal en fonction du statut de traitement
+              status: documentStatus.status === 'READY'
+                ? 'ready'
+                : documentStatus.status === 'ERROR'
+                  ? 'error'
+                  : documentStatus.status === 'INDEXING'
+                    ? 'indexing'
+                    : documentStatus.status === 'RAFTING'
+                      ? 'rafting'
+                      : 'pending'
+            }
+          : f
+        )
+      );
+
+      // Si le document est prêt ou en erreur, arrêter la surveillance
+      if (documentStatus.status === 'READY' || documentStatus.status === 'ERROR') {
+        clearInterval(intervalId);
+      }
+    }, 5000); // Vérifier toutes les 5 secondes
+
+    // Stocker l'ID de l'intervalle pour pouvoir l'arrêter plus tard si nécessaire
+    return intervalId;
+  }
+
   // Fonction pour gérer le processus complet d'upload d'un fichier
   const processFileUpload = async (fileId: string, file: File, projectId?: string) => {
     try {
-      // Mettre à jour le statut du fichier à "uploading"
+      // Mettre à jour le statut du fichier à "pending"
       setUploadingFiles(prev =>
         prev.map(f => f.id === fileId
-          ? { ...f, progress: 10 }
+          ? { ...f, progress: 10, status: 'pending' }
           : f
         )
       );
@@ -197,13 +295,57 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
         throw new Error("Échec de l'upload vers S3");
       }
 
+      // Mettre à jour la progression
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId
+          ? { ...f, progress: 80 }
+          : f
+        )
+      );
+
+      // 3. Confirmer l'upload au backend
+      if (projectId) {
+        const fileName = file.name;
+        const confirmResult = await confirmUploadToBackend(projectId, fileName);
+        console.log('confirmResult:', confirmResult);
+
+        if (!confirmResult) {
+          console.warn("L'upload a réussi mais la confirmation au backend a échoué");
+          // Mettre à jour le statut du fichier à "error"
+          setUploadingFiles(prev =>
+            prev.map(f => f.id === fileId
+              ? { ...f, status: 'error' }
+              : f
+            )
+          );
+        } else if (confirmResult.documentId) {
+          // Mettre à jour le fichier avec l'ID du document
+          setUploadingFiles(prev =>
+            prev.map(f => f.id === fileId
+              ? {
+                  ...f,
+                  progress: 100,
+                  status: 'pending', // Utiliser 'pending' au lieu de 'completed'
+                  documentId: confirmResult.documentId,
+                  processingStatus: 'NOT_STARTED',
+                  processingMessage: 'Le document est en attente de traitement'
+                }
+              : f
+            )
+          );
+
+          // Démarrer la surveillance du document
+          startDocumentMonitoring(fileId, confirmResult.documentId, projectId);
+        }
+      }
+
       // Mettre à jour la progression et le statut
       setUploadingFiles(prev =>
         prev.map(f => f.id === fileId
           ? {
               ...f,
               progress: 100,
-              status: 'completed',
+              status: 'ready',
               url: presignedUrlResponse.key || presignedUrlResponse.url.split('?')[0]
             }
           : f
@@ -229,7 +371,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
       file,
       id: Math.random().toString(36).substring(2, 11),
       progress: 0,
-      status: 'uploading' as const
+      status: 'pending' as const
     }));
 
     // Ajouter les nouveaux fichiers à la liste des fichiers en téléchargement
@@ -283,6 +425,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
 
           <div className="flex flex-col items-center gap-4">
             <FileUploadZone
+              files={uploadingFiles}
               onFilesSelected={handleFilesSelected}
             />
 
@@ -294,7 +437,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
             )}
           </div>
 
-          {uploadingFiles.some(file => file.status === 'completed') && (
+          {uploadingFiles.some(file => file.status === 'ready') && (
             <div className="mt-4">
               <h3 className="text-xl font-semibold mb-4">Outils disponibles</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -3,9 +3,11 @@
 import { useState, useCallback } from "react"
 import { Upload, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { UploadingFile } from "./project-tools"
 
 interface FileUploadZoneProps {
   onFilesSelected: (files: File[]) => void
+  files: UploadingFile[]
 }
 
 // Types de fichiers acceptés
@@ -20,22 +22,43 @@ const ACCEPTED_FILE_TYPES = [
 // Extensions pour l'attribut accept de l'input
 const ACCEPTED_FILE_EXTENSIONS = '.csv,.docx,.pdf,.jpg,.jpeg,.png';
 
-export function FileUploadZone({ onFilesSelected }: FileUploadZoneProps) {
+export function FileUploadZone({ onFilesSelected, files = [] }: FileUploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Fonction pour vérifier si un fichier existe déjà
+  const isFileAlreadyUploaded = (file: File) => {
+    return files.some(existingFile =>
+      existingFile.file.name === file.name &&
+      existingFile.file.size === file.size
+    );
+  }
 
   const validateFiles = (files: File[]): File[] => {
     setError(null)
 
-    const validFiles = files.filter(file =>
+    // Filtrer d'abord par type de fichier
+    const validTypeFiles = files.filter(file =>
       ACCEPTED_FILE_TYPES.includes(file.type)
     );
 
-    if (validFiles.length < files.length) {
+    if (validTypeFiles.length < files.length) {
       setError(`Certains fichiers ont été ignorés. Formats acceptés : CSV, DOCX, PDF, JPG, PNG.`);
     }
 
-    return validFiles;
+    // Ensuite, filtrer les doublons
+    const uniqueFiles = validTypeFiles.filter(file => !isFileAlreadyUploaded(file));
+
+    if (uniqueFiles.length < validTypeFiles.length) {
+      const duplicateCount = validTypeFiles.length - uniqueFiles.length;
+      setError((prev) =>
+        prev
+          ? `${prev} De plus, ${duplicateCount} fichier(s) déjà téléchargé(s) ont été ignorés.`
+          : `${duplicateCount} fichier(s) déjà téléchargé(s) ont été ignorés.`
+      );
+    }
+
+    return uniqueFiles;
   }
 
   const onDragOver = useCallback((e: React.DragEvent) => {
@@ -60,7 +83,8 @@ export function FileUploadZone({ onFilesSelected }: FileUploadZoneProps) {
         onFilesSelected(validFiles)
       }
     }
-  }, [onFilesSelected])
+  //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onFilesSelected, files])
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
