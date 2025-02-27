@@ -4,13 +4,16 @@ import { useState } from "react"
 import { File, AlertCircle, ExternalLink, FileText, Image as ImageIcon, FileSpreadsheet } from "lucide-react"
 import { UploadingFile } from "./project-tools"
 import Image from "next/image"
+import { usePresignedUrl } from "@/lib/hooks/use-presigned-url"
 
 interface FileUploadListProps {
   files: UploadingFile[]
+  projectId?: string
 }
 
-export function FileUploadList({ files }: FileUploadListProps) {
+export function FileUploadList({ files, projectId }: FileUploadListProps) {
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null)
+  const { getPresignedUrl, isLoading } = usePresignedUrl()
 
   // Fonction pour obtenir l'aperçu du fichier
   const getFilePreview = (file: File) => {
@@ -36,17 +39,17 @@ export function FileUploadList({ files }: FileUploadListProps) {
 
   // Fonction pour obtenir l'URL présignée du S3 et ouvrir le fichier
   const openFileInNewTab = async (fileId: string) => {
+    const uploadingFile = files.find(f => f.id === fileId)
+    if (!uploadingFile) return
+
     setLoadingFileId(fileId)
     try {
-      // Simulation d'une requête API
-      // Dans une implémentation réelle, vous feriez un appel fetch à votre backend
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const presignedUrl = await getPresignedUrl(uploadingFile.file, projectId)
 
-      // URL simulée pour la démonstration
-      const url = `https://example-bucket.s3.amazonaws.com/files/${fileId}?AWSAccessKeyId=EXAMPLE&Signature=EXAMPLE&Expires=1234567890`
-
-      // Ouvrir l'URL dans un nouvel onglet
-      window.open(url, '_blank')
+      if (presignedUrl) {
+        // Ouvrir l'URL dans un nouvel onglet
+        window.open(presignedUrl, '_blank')
+      }
     } catch (error) {
       console.error("Erreur lors de la récupération de l'URL présignée", error)
       alert("Impossible d'ouvrir le fichier. Veuillez réessayer plus tard.")
