@@ -500,7 +500,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
             )}
           </div>
 
-          {uploadingFiles.some((file) => file.status === "ready") && (
+          {uploadingFiles.every((file) => file.status && file.status === "ready") && (
             <div className="mt-4">
               <h3 className="text-xl font-semibold mb-4">Outils disponibles</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

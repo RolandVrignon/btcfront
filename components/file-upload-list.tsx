@@ -4,6 +4,7 @@ import { useState } from "react"
 import { File, FileText, Image as ImageIcon, FileSpreadsheet, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { DocumentMetadataDialog } from "@/components/document-metadata-dialog"
 
 interface FileUploadListProps {
   files: {
@@ -21,6 +22,8 @@ interface FileUploadListProps {
 
 export function FileUploadList({ files, projectId }: FileUploadListProps) {
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<{id: string, name: string} | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Fonction pour obtenir l'icône selon le type de fichier
   const getFileIcon = (file: File) => {
@@ -36,12 +39,23 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
     return <File className="h-5 w-5 text-blue-500" />
   }
 
-  // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
-  const openFileInNewTab = async (fileId: string) => {
+  // Fonction pour ouvrir la popup de métadonnées
+  const handleFileClick = (fileId: string) => {
     const uploadingFile = files.find(f => f.id === fileId)
     if (!uploadingFile || !projectId) return
 
-    setLoadingFileId(fileId)
+    setSelectedFile({
+      id: fileId,
+      name: uploadingFile.file.name
+    })
+    setIsDialogOpen(true)
+  }
+
+  // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
+  const openFileInNewTab = async () => {
+    if (!selectedFile || !projectId) return
+
+    setLoadingFileId(selectedFile.id)
     try {
       // Appel à notre API interne pour obtenir l'URL de visualisation
       const response = await fetch('/api/documents/view', {
@@ -50,7 +64,7 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: uploadingFile.file.name,
+          fileName: selectedFile.name,
           projectId: projectId
         }),
       });
@@ -115,47 +129,60 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
   }
 
   return (
-    <div className="w-full">
-      <h3 className="text-xl font-semibold mb-4">Fichiers ({files.length})</h3>
-      <div className="border rounded-lg flex flex-col gap-1 min-h-[20vh] max-h-[20vh] overflow-y-auto">
-        {files.map((file) => (
-          <div
-            key={file.id}
-            className="p-2 border-b hover:bg-gray-100 cursor-pointer transition-colors group"
-            onClick={() => openFileInNewTab(file.id)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
-                {getFileIcon(file.file)}
-                <span className="font-medium truncate">{file.file.name}</span>
-                <div className="text-xs text-gray-500 mt-1 truncate">{formatFileSize(file.file.size)}</div>
-                <ExternalLink
-                  className="h-3 w-3 text-gray-400 opacity-100 transition-opacity"
-                  aria-label="Ouvrir dans un nouvel onglet"
-                />
+    <>
+      <div className="w-full">
+        <h3 className="text-xl font-semibold mb-4">Fichiers ({files.length})</h3>
+        <div className="border rounded-lg flex flex-col gap-1 min-h-[20vh] max-h-[20vh] overflow-y-auto">
+          {files.map((file) => (
+            <div
+              key={file.id}
+              className="p-2 border-b hover:bg-gray-100 cursor-pointer transition-colors group"
+              onClick={() => handleFileClick(file.id)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
+                  {getFileIcon(file.file)}
+                  <span className="font-medium truncate">{file.file.name}</span>
+                  <div className="text-xs text-gray-500 mt-1 truncate">{formatFileSize(file.file.size)}</div>
+                  <ExternalLink
+                    className="h-3 w-3 text-gray-400 opacity-100 transition-opacity"
+                    aria-label="Ouvrir dans un nouvel onglet"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  {file.processingStatus && (
+                    <Badge
+                      variant="outline"
+                      className={getProcessingStatusClass(file.processingStatus)}
+                    >
+                      {getProcessingStatusLabel(file.processingStatus)}
+                    </Badge>
+                  )}
+                  {loadingFileId === file.id && (
+                    <span className="text-xs text-gray-500 animate-pulse">Chargement...</span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {file.processingStatus && (
-                  <Badge
-                    variant="outline"
-                    className={getProcessingStatusClass(file.processingStatus)}
-                  >
-                    {getProcessingStatusLabel(file.processingStatus)}
-                  </Badge>
-                )}
-                {loadingFileId === file.id && (
-                  <span className="text-xs text-gray-500 animate-pulse">Chargement...</span>
-                )}
-              </div>
-            </div>
 
-            {file.status === 'pending' && (
-              <Progress value={file.progress} className="h-2" />
-            )}
-          </div>
-        ))}
+              {file.status === 'pending' && (
+                <Progress value={file.progress} className="h-2" />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {selectedFile && projectId && (
+        <DocumentMetadataDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          fileName={selectedFile.name}
+          projectId={projectId}
+          onOpenDocument={openFileInNewTab}
+          fileStatus={files.find(f => f.id === selectedFile.id)?.status}
+        />
+      )}
+    </>
   )
 }
 
