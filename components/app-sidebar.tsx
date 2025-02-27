@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { History, MoreVertical, Pencil, Trash2, X, Check } from "lucide-react"
-import { useSidebar } from "@/components/ui/sidebar"
 
 import {
   Sidebar,
@@ -13,7 +12,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -71,10 +69,6 @@ export function AppSidebar() {
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [newName, setNewName] = useState<string>("")
-  const { state } = useSidebar()
-
-  // Calculer la position du bouton en fonction de l'état de la sidebar
-  const triggerPosition = state === "closed" ? "left-[-20px]" : "right-[-10px]"
 
   const handleRename = (id: string) => {
     const projectToRename = projects.find(project => project.id === id)

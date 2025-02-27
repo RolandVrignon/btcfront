@@ -13,7 +13,7 @@ interface FileUploadListProps {
 
 export function FileUploadList({ files, projectId }: FileUploadListProps) {
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null)
-  const { getPresignedUrl, isLoading } = usePresignedUrl()
+  const { getPresignedUrl } = usePresignedUrl()
 
   // Fonction pour obtenir l'aperçu du fichier
   const getFilePreview = (file: File) => {
@@ -47,8 +47,7 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
       const presignedUrl = await getPresignedUrl(uploadingFile.file, projectId)
 
       if (presignedUrl) {
-        // Ouvrir l'URL dans un nouvel onglet
-        window.open(presignedUrl, '_blank')
+        window.open(presignedUrl.url, '_blank')
       }
     } catch (error) {
       console.error("Erreur lors de la récupération de l'URL présignée", error)

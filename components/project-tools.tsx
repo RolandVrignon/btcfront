@@ -6,7 +6,7 @@ import { FileUploadZone } from "@/components/file-upload-zone"
 import { FileUploadList } from "@/components/file-upload-list"
 import { Project } from "@/types/project"
 import { usePresignedUrl } from "@/lib/hooks/use-presigned-url"
-import { useRouter } from "next/navigation"
+
 import {
   FileText,
   GitCompare,
@@ -39,7 +39,6 @@ interface Tool {
 export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   const [project, setProject] = useState<Project | null>(initialProject)
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
-  const [isCreatingProject, setIsCreatingProject] = useState(false)
   const { getPresignedUrl } = usePresignedUrl()
 
   const tools: Tool[] = [
@@ -83,8 +82,6 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   // Fonction pour créer un nouveau projet
   const createProject = async (): Promise<Project | null> => {
     try {
-      setIsCreatingProject(true)
-
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
@@ -105,8 +102,6 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
     } catch (error) {
       console.error("Erreur lors de la création du projet:", error)
       return null
-    } finally {
-      setIsCreatingProject(false)
     }
   }
 
@@ -289,7 +284,6 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
           <div className="flex flex-col items-center gap-4">
             <FileUploadZone
               onFilesSelected={handleFilesSelected}
-              disabled={isCreatingProject}
             />
 
             {uploadingFiles.length > 0 && (
