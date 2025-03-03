@@ -71,8 +71,8 @@ export function DocumentMetadataDialog({
       }
 
       const data = await response.json();
-      console.log("data:", data.metadata);
-      setMetadata(data.metadata);
+      console.log("data:", data);
+      setMetadata(data);
     } catch (error) {
       console.error("Erreur:", error);
       setError("Impossible de récupérer les métadonnées du document");
