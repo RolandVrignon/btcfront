@@ -6,6 +6,7 @@ import { FileUploadZone } from "@/components/file-upload-zone";
 import { FileUploadList } from "@/components/file-upload-list";
 import { Project } from "@/types/project";
 import { usePresignedUrl } from "@/lib/hooks/use-presigned-url";
+import { useSession } from "next-auth/react";
 
 import {
   FileText,
@@ -43,6 +44,8 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { getPresignedUrl } = usePresignedUrl();
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   const tools: Tool[] = [
     {

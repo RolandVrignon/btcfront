@@ -1,5 +1,5 @@
-import { ProjectTools } from "@/components/project-tools"
+import { redirect } from "next/navigation"
 
 export default function Home() {
-  return <ProjectTools project={null} />
+  redirect("/dashboard")
 }

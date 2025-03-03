@@ -3,9 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { AppNavbar } from "@/components/app-navbar"
+import { SessionProvider } from "@/components/auth/session-provider"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
@@ -22,27 +20,19 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={cn(
-        "h-screen bg-background font-sans antialiased overflow-hidden",
+        "bg-background font-sans antialiased",
         inter.variable
       )}>
-        <SidebarProvider>
+        <SessionProvider>
           <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
           >
-            <div className="flex h-screen w-screen">
-              <AppSidebar />
-              <main className="flex-1 flex flex-col h-full overflow-hidden">
-                <AppNavbar />
-                <div className="flex-1 overflow-auto">
-                  {children}
-                </div>
-              </main>
-            </div>
+            {children}
           </ThemeProvider>
-        </SidebarProvider>
+        </SessionProvider>
       </body>
     </html>
   )

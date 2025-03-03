@@ -2,9 +2,6 @@ import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { PrismaClient } from "@prisma/client"
 import GoogleProvider from "next-auth/providers/google"
-import GithubProvider from "next-auth/providers/github"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcrypt"
 
 const prisma = new PrismaClient()
 
@@ -14,46 +11,15 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Mot de passe", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
-
-        if (!user || !user.password) {
-          return null
-        }
-
-        const isPasswordValid = await compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+          scope: "openid email profile"
         }
       }
-    })
+    }),
   ],
   session: {
     strategy: "jwt",
@@ -68,6 +34,30 @@ export const authOptions = {
         session.user.id = token.sub
       }
       return session
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+      }
+      return token
+    },
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" && profile) {
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: profile.email },
+          })
+
+          if (!existingUser) {
+            console.log("Nouvel utilisateur créé via Google:", profile.email)
+          }
+        } catch (error) {
+          console.error("Erreur lors de la vérification/création de l'utilisateur:", error)
+        }
+      }
+
+      // Assurez-vous de retourner true pour autoriser la connexion
+      return true
     },
   },
 }
