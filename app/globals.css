@@ -125,10 +125,10 @@
 
 /* Masquer la scrollbar tout en permettant le défilement */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE et Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;             /* Chrome, Safari et Opera */
+  display: none; /* Chrome, Safari et Opera */
 }

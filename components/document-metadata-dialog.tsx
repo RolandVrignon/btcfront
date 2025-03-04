@@ -212,7 +212,10 @@ export function DocumentMetadataDialog({
                   <div className="border rounded-2xl">
                     {metadata &&
                       Object.entries(metadata).map(([key, value]) => (
-                        <div key={key} className={`flex flex-col p-3 ${Object.keys(metadata).pop() !== key ? 'border-b' : ''}`}>
+                        <div
+                          key={key}
+                          className={`flex flex-col p-3 ${Object.keys(metadata).pop() !== key ? "border-b" : ""}`}
+                        >
                           <div className="font-medium">{key}</div>
                           <div className="text-gray-500">
                             {renderMetadataValue(value)}

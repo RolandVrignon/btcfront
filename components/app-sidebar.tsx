@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { History, MoreVertical, Pencil, Trash2, X, Check } from "lucide-react"
+import { useState } from "react";
+import { History, MoreVertical, Pencil, Trash2, X, Check } from "lucide-react";
 
 import {
   Sidebar,
@@ -12,90 +12,172 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 // Types pour les projets
-type ProjectStatus = "en_cours" | "terminé" | "erreur"
+type ProjectStatus = "en_cours" | "terminé" | "erreur";
 
 interface Project {
-  id: string
-  name: string
-  date: string
-  status: ProjectStatus
+  id: string;
+  name: string;
+  date: string;
+  status: ProjectStatus;
 }
 
 // Fonction pour obtenir la couleur selon le statut
 function getStatusColor(status: ProjectStatus): string {
   switch (status) {
     case "en_cours":
-      return "bg-yellow-400"
+      return "bg-yellow-400";
     case "terminé":
-      return "bg-green-500"
+      return "bg-green-500";
     case "erreur":
-      return "bg-red-500"
+      return "bg-red-500";
     default:
-      return "bg-gray-400"
+      return "bg-gray-400";
   }
 }
 
 // Exemple de projets récents mockés
 const initialProjects: Project[] = [
-  { id: "0000000000000001", name: "Résidence Les Oliviers", date: "2023-11-15", status: "en_cours" },
-  { id: "0000000000000002", name: "Tour Horizon", date: "2023-10-22", status: "terminé" },
-  { id: "0000000000000003", name: "Centre Commercial Atlantis avec un nom très long qui devrait être tronqué", date: "2023-09-05", status: "erreur" },
-  { id: "0000000000000004", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000005", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000006", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000007", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000008", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000009", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000010", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000011", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000012", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000013", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000014", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000015", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-  { id: "0000000000000016", name: "Hôpital Saint-Michel", date: "2023-08-18", status: "terminé" },
-]
+  {
+    id: "0000000000000001",
+    name: "Résidence Les Oliviers",
+    date: "2023-11-15",
+    status: "en_cours",
+  },
+  {
+    id: "0000000000000002",
+    name: "Tour Horizon",
+    date: "2023-10-22",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000003",
+    name: "Centre Commercial Atlantis avec un nom très long qui devrait être tronqué",
+    date: "2023-09-05",
+    status: "erreur",
+  },
+  {
+    id: "0000000000000004",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000005",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000006",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000007",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000008",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000009",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000010",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000011",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000012",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000013",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000014",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000015",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+  {
+    id: "0000000000000016",
+    name: "Hôpital Saint-Michel",
+    date: "2023-08-18",
+    status: "terminé",
+  },
+];
 
 export function AppSidebar() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [newName, setNewName] = useState<string>("")
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState<string>("");
 
   const handleRename = (id: string) => {
-    const projectToRename = projects.find(project => project.id === id)
+    const projectToRename = projects.find((project) => project.id === id);
     if (projectToRename) {
-      setNewName(projectToRename.name)
-      setEditingId(id)
+      setNewName(projectToRename.name);
+      setEditingId(id);
     }
-  }
+  };
 
   const handleSaveRename = () => {
     if (editingId && newName.trim()) {
-      setProjects(projects.map(project =>
-        project.id === editingId
-          ? { ...project, name: newName.trim() }
-          : project
-      ))
-      setEditingId(null)
+      setProjects(
+        projects.map((project) =>
+          project.id === editingId
+            ? { ...project, name: newName.trim() }
+            : project,
+        ),
+      );
+      setEditingId(null);
     }
-  }
+  };
 
   const handleCancelRename = () => {
-    setEditingId(null)
-  }
+    setEditingId(null);
+  };
 
   const handleDelete = (id: string) => {
-    setProjects(projects.filter(project => project.id !== id))
-  }
+    setProjects(projects.filter((project) => project.id !== id));
+  };
 
   return (
     <div className="top-0 left-0 h-screen">
@@ -127,8 +209,9 @@ export function AppSidebar() {
                                   className="h-7 py-1 text-sm"
                                   autoFocus
                                   onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSaveRename()
-                                    if (e.key === "Escape") handleCancelRename()
+                                    if (e.key === "Enter") handleSaveRename();
+                                    if (e.key === "Escape")
+                                      handleCancelRename();
                                   }}
                                 />
                                 <button
@@ -152,7 +235,9 @@ export function AppSidebar() {
                                   className={`h-3 w-3 flex-shrink-0 rounded-full ${getStatusColor(project.status)}`}
                                   aria-hidden="true"
                                 />
-                                <span className="ml-2 truncate">{project.name}</span>
+                                <span className="ml-2 truncate">
+                                  {project.name}
+                                </span>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <button
@@ -160,11 +245,15 @@ export function AppSidebar() {
                                       onClick={(e) => e.preventDefault()}
                                     >
                                       <MoreVertical className="h-4 w-4" />
-                                      <span className="sr-only">Options pour {project.name}</span>
+                                      <span className="sr-only">
+                                        Options pour {project.name}
+                                      </span>
                                     </button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleRename(project.id)}>
+                                    <DropdownMenuItem
+                                      onClick={() => handleRename(project.id)}
+                                    >
                                       <Pencil className="mr-2 h-4 w-4" />
                                       <span>Renommer</span>
                                     </DropdownMenuItem>
@@ -187,7 +276,9 @@ export function AppSidebar() {
                     <div className="px-4 py-8 text-center text-sidebar-foreground/70 text-sm">
                       <History className="h-10 w-10 mx-auto mb-2 opacity-50" />
                       <p>Aucun projet récent</p>
-                      <p className="mt-1 text-xs">Les projets consultés apparaîtront ici</p>
+                      <p className="mt-1 text-xs">
+                        Les projets consultés apparaîtront ici
+                      </p>
                     </div>
                   )}
                 </SidebarMenu>
@@ -197,6 +288,5 @@ export function AppSidebar() {
         </Sidebar>
       </div>
     </div>
-  )
+  );
 }
-

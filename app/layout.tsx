@@ -1,28 +1,27 @@
-import "./globals.css"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { cn } from "@/lib/utils"
-import { ThemeProvider } from "@/components/theme-provider"
-import { SessionProvider } from "@/components/auth/session-provider"
+import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "@/components/auth/session-provider";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Mon Application",
   description: "Créée avec Next.js et Shadcn UI",
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={cn(
-        "bg-background font-sans antialiased",
-        inter.variable
-      )}>
+      <body
+        className={cn("bg-background font-sans antialiased", inter.variable)}
+      >
         <SessionProvider>
           <ThemeProvider
             attribute="class"
@@ -35,5 +34,5 @@ export default function RootLayout({
         </SessionProvider>
       </body>
     </html>
-  )
+  );
 }

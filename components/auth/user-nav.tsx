@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useSession, signOut } from "next-auth/react"
-import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,19 +10,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export function UserNav() {
-  const { data: session } = useSession()
-  const user = session?.user
+  const { data: session } = useSession();
+  const user = session?.user;
 
   if (!user) {
     return (
       <Button asChild>
         <Link href="/auth/signin">Se connecter</Link>
       </Button>
-    )
+    );
   }
 
   const initials = user.name
@@ -30,7 +30,7 @@ export function UserNav() {
         .split(" ")
         .map((n) => n[0])
         .join("")
-    : user.email?.charAt(0).toUpperCase()
+    : user.email?.charAt(0).toUpperCase();
 
   return (
     <DropdownMenu>
@@ -52,23 +52,16 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard">Tableau de bord</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/profile">Profil</Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer"
           onSelect={(event) => {
-            event.preventDefault()
-            signOut({ callbackUrl: "/" })
+            event.preventDefault();
+            signOut({ callbackUrl: "/" });
           }}
         >
           Se déconnecter
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

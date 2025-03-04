@@ -1,41 +1,70 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function POST() {
+const prisma = new PrismaClient();
+
+export async function POST(request: NextRequest) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
+    const session = await getServerSession(authOptions);
 
-    if (!apiUrl) {
-      return NextResponse.json(
-        { error: 'Configuration API manquante' },
-        { status: 500 }
-      );
+    if (!session) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const response = await fetch(`${apiUrl}/projects`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': process.env.NEXT_PUBLIC_CTIA_API_KEY || '',
+    const body = await request.json();
+    const { externalId, name, status, userId } = body;
+
+    // Vérifier que l'utilisateur qui fait la requête est bien celui auquel le projet sera associé
+    if (session.user.id !== userId) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+    }
+
+    // Créer le projet dans la base de données
+    const project = await prisma.project.create({
+      data: {
+        externalId,
+        name,
+        status: status === "DRAFT" ? "draft" : status.toLowerCase(),
+        userId,
       },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: 'Erreur lors de la création du projet', details: errorData },
-        { status: response.status }
-      );
+    return NextResponse.json(project);
+  } catch (error) {
+    console.error("Erreur lors de la création du projet:", error);
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const data = await response.json();
-    console.log('data:', data);
+    // Récupérer les projets de l'utilisateur
+    const projects = await prisma.project.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-    return NextResponse.json(data);
+    return NextResponse.json(projects);
   } catch (error) {
-    console.error('Erreur lors de la création du projet:', error);
+    console.error("Erreur lors de la récupération des projets:", error);
     return NextResponse.json(
-      { error: 'Erreur serveur lors de la création du projet' },
-      { status: 500 }
+      { error: "Erreur interne du serveur" },
+      { status: 500 },
     );
   }
 }

@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
-import { signIn } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { FaGoogle } from "react-icons/fa"
-import Image from "next/image"
+import { signIn } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { FaGoogle } from "react-icons/fa";
 
 export default function SignIn() {
   return (
@@ -25,5 +24,5 @@ export default function SignIn() {
         </div>
       </div>
     </div>
-  )
+  );
 }

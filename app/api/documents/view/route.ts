@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     if (!fileName || !projectId) {
       return NextResponse.json(
         { error: "fileName et projectId sont requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || '',
+        "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
       },
       body: JSON.stringify({ fileName, projectId }),
     });
@@ -27,18 +27,24 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
-        { error: "Erreur lors de la récupération de l'URL de visualisation", details: errorData },
-        { status: response.status }
+        {
+          error: "Erreur lors de la récupération de l'URL de visualisation",
+          details: errorData,
+        },
+        { status: response.status },
       );
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'URL de visualisation:", error);
+    console.error(
+      "Erreur lors de la récupération de l'URL de visualisation:",
+      error,
+    );
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

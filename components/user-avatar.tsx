@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,20 +8,23 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { LogOut, Settings, User } from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import { LogOut, Settings, User } from "lucide-react";
 
 export function UserAvatar() {
   const handleLogout = () => {
     // Logique de déconnexion à implémenter
-    console.log("Déconnexion")
-  }
+    console.log("Déconnexion");
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-9 w-9 cursor-pointer">
-          <AvatarImage src="/assets/img/avatar.jpg" alt="Avatar de l'utilisateur" />
+          <AvatarImage
+            src="/assets/img/avatar.jpg"
+            alt="Avatar de l'utilisateur"
+          />
           <AvatarFallback>JD</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
@@ -46,5 +49,5 @@ export function UserAvatar() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

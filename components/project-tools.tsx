@@ -25,7 +25,7 @@ export interface UploadingFile {
   file: File;
   id: string;
   progress: number;
-  status: "processing" | "pending" | "indexing" | "rafting" | "ready" | "end" ;
+  status: "processing" | "pending" | "indexing" | "rafting" | "ready" | "end";
   url?: string; // URL S3 où le fichier a été uploadé
   documentId?: string; // ID du document dans le backend
   processingMessage?: string; // Message associé au statut de traitement
@@ -91,10 +91,9 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
     console.log("uploadingFiles:", uploadingFiles);
   }, [uploadingFiles]);
 
-  // Fonction pour créer un nouveau projet
-  const createProject = async (): Promise<Project | null> => {
+  const createProject = async () => {
     try {
-      const response = await fetch("/api/projects", {
+      const response = await fetch("/api/projects/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -102,17 +101,48 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Erreur lors de la création du projet: ${response.status}`
-        );
+        throw new Error("Erreur lors de la création du projet");
       }
 
-      const newProject = await response.json();
-      console.log("newProject:", newProject);
+      const data = await response.json();
+      console.log("Projet créé dans l'API externe:", data);
 
-      setProject(newProject);
+      if (userId) {
+        const dbResponse = await fetch("/api/projects", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            externalId: data.id,
+            name: data.name || "Nouveau projet",
+            status:
+              data.status === "DRAFT" ? "draft" : data.status.toLowerCase(),
+            userId: userId,
+          }),
+        });
 
-      return newProject;
+        if (!dbResponse.ok) {
+          console.error(
+            "Erreur lors de l'enregistrement du projet dans la base de données locale",
+          );
+        } else {
+          console.log("Projet enregistré dans la base de données locale");
+        }
+      }
+
+      // 3. Mettre à jour l'état local
+      setProject({
+        id: data.id,
+        name: data.name || "Nouveau projet",
+        date: new Date().toISOString(),
+      });
+
+      return {
+        id: data.id,
+        name: data.name || "Nouveau projet",
+        date: new Date().toISOString(),
+      };
     } catch (error) {
       console.error("Erreur lors de la création du projet:", error);
       return null;
@@ -122,7 +152,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   // Fonction pour uploader un fichier vers S3 avec l'URL présignée
   const uploadFileToS3 = async (
     file: File,
-    presignedUrl: string
+    presignedUrl: string,
   ): Promise<boolean> => {
     try {
       console.log("Début de l'upload vers S3 via proxy");
@@ -183,7 +213,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   // Fonction pour confirmer l'upload au backend
   const confirmUploadToBackend = async (
     projectId: string,
-    fileName: string
+    fileName: string,
   ) => {
     try {
       const response = await fetch("/api/documents/confirm-upload", {
@@ -217,7 +247,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   const startDocumentMonitoring = (
     fileId: string,
     documentId: string,
-    projectId: string
+    projectId: string,
   ) => {
     const intervalId = setInterval(async () => {
       const documentStatus = await monitorDocument(documentId, projectId);
@@ -241,17 +271,17 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
                   documentStatus.status === "READY"
                     ? "ready"
                     : documentStatus.status === "END"
-                    ? "end"
-                    : documentStatus.status === "INDEXING"
-                    ? "indexing"
-                    : documentStatus.status === "RAFTING"
-                    ? "rafting"
-                    : documentStatus.status === "PROCESSING"
-                    ? "processing"
-                    : "processing",
+                      ? "end"
+                      : documentStatus.status === "INDEXING"
+                        ? "indexing"
+                        : documentStatus.status === "RAFTING"
+                          ? "rafting"
+                          : documentStatus.status === "PROCESSING"
+                            ? "processing"
+                            : "processing",
               }
-            : f
-        )
+            : f,
+        ),
       );
 
       // Si le document est prêt ou en erreur, arrêter la surveillance
@@ -271,14 +301,14 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
   const processFileUpload = async (
     fileId: string,
     file: File,
-    projectId?: string
+    projectId?: string,
   ) => {
     try {
       // Mettre à jour le statut du fichier à "pending"
       setUploadingFiles((prev) =>
         prev.map((f) =>
-          f.id === fileId ? { ...f, progress: 10, status: "pending" } : f
-        )
+          f.id === fileId ? { ...f, progress: 10, status: "pending" } : f,
+        ),
       );
 
       // 1. Obtenir l'URL présignée
@@ -314,13 +344,13 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
 
       // Mettre à jour la progression
       setUploadingFiles((prev) =>
-        prev.map((f) => (f.id === fileId ? { ...f, progress: 30 } : f))
+        prev.map((f) => (f.id === fileId ? { ...f, progress: 30 } : f)),
       );
 
       // 2. Uploader le fichier vers S3
       const uploadSuccess = await uploadFileToS3(
         file,
-        presignedUrlResponse.url
+        presignedUrlResponse.url,
       );
 
       if (!uploadSuccess) {
@@ -329,7 +359,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
 
       // Mettre à jour la progression
       setUploadingFiles((prev) =>
-        prev.map((f) => (f.id === fileId ? { ...f, progress: 80 } : f))
+        prev.map((f) => (f.id === fileId ? { ...f, progress: 80 } : f)),
       );
 
       // 3. Confirmer l'upload au backend
@@ -340,11 +370,11 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
 
         if (!confirmResult) {
           console.warn(
-            "L'upload a réussi mais la confirmation au backend a échoué"
+            "L'upload a réussi mais la confirmation au backend a échoué",
           );
           // Mettre à jour le statut du fichier à "error"
           setUploadingFiles((prev) =>
-            prev.map((f) => (f.id === fileId ? { ...f, status: "end" } : f))
+            prev.map((f) => (f.id === fileId ? { ...f, status: "end" } : f)),
           );
         } else if (confirmResult.documentId) {
           // Mettre à jour le fichier avec l'ID du document
@@ -360,8 +390,8 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
                     processingMessage:
                       "Le document est en attente de traitement",
                   }
-                : f
-            )
+                : f,
+            ),
           );
 
           // Démarrer la surveillance du document
@@ -381,18 +411,18 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
                   presignedUrlResponse.key ||
                   presignedUrlResponse.url.split("?")[0],
               }
-            : f
-        )
+            : f,
+        ),
       );
     } catch (error) {
       console.error(
         `Erreur lors du traitement du fichier ${file.name}:`,
-        error
+        error,
       );
 
       // Mettre à jour le statut du fichier à "error"
       setUploadingFiles((prev) =>
-        prev.map((f) => (f.id === fileId ? { ...f, status: "end" } : f))
+        prev.map((f) => (f.id === fileId ? { ...f, status: "end" } : f)),
       );
     }
   };
@@ -485,7 +515,7 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
               {project
                 ? project.date
                   ? `Projet créé le ${new Date(project.date).toLocaleDateString(
-                      "fr-FR"
+                      "fr-FR",
                     )}`
                   : "Projet en cours de création..."
                 : "Votre boîte à outils pour le Contrôle Technique"}
@@ -503,7 +533,9 @@ export function ProjectTools({ project: initialProject }: ProjectToolsProps) {
             )}
           </div>
 
-          {uploadingFiles.every((file) => file.status && file.status === "ready") && (
+          {uploadingFiles.every(
+            (file) => file.status && file.status === "ready",
+          ) && (
             <div className="mt-4">
               <h3 className="text-xl font-semibold mb-4">Outils disponibles</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

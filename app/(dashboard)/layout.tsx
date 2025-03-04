@@ -1,11 +1,11 @@
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { AppNavbar } from "@/components/app-navbar"
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { AppNavbar } from "@/components/app-navbar";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <SidebarProvider>
@@ -13,11 +13,9 @@ export default function DashboardLayout({
         <AppSidebar />
         <main className="flex-1 flex flex-col h-full overflow-hidden">
           <AppNavbar />
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
+          <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
     </SidebarProvider>
-  )
+  );
 }
