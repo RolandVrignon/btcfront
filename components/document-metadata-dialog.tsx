@@ -23,10 +23,10 @@ interface DocumentMetadataDialogProps {
 
 interface MetadataItem {
   key: string;
-  value: string | number | boolean | null | object | any[];
+  value: string | number | boolean | null | Record<string, unknown> | unknown[];
 }
 
-type Metadata = MetadataItem[] | Record<string, any>;
+type Metadata = MetadataItem[] | Record<string, unknown>;
 
 export function DocumentMetadataDialog({
   isOpen,
@@ -83,7 +83,7 @@ export function DocumentMetadataDialog({
   };
 
   // Fonction pour rendre une valeur de métadonnée, quelle que soit sa structure
-  const renderMetadataValue = (value: any): React.ReactNode => {
+  const renderMetadataValue = (value: unknown): React.ReactNode => {
     if (value === null || value === undefined) {
       return "N/A";
     }

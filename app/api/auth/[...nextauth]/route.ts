@@ -2,6 +2,11 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import GoogleProvider from "next-auth/providers/google";
+import { JWT } from "next-auth/jwt";
+import { Session } from "next-auth";
+import type { User } from "next-auth";
+import { Account, Profile } from "next-auth";
+import { AdapterUser } from "next-auth/adapters";
 
 const prisma = new PrismaClient();
 
@@ -22,26 +27,34 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
   callbacks: {
-    async session({ session, token }) {
-      if (token && session.user) {
+    async session({ session, token }: { session: Session; token: JWT }) {
+      if (token && session.user && token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.id = user.id;
       }
       return token;
     },
-    async signIn({ account, profile }) {
+    async signIn(params: {
+      user: User | AdapterUser;
+      account: Account | null;
+      profile?: Profile;
+      email?: { verificationRequest?: boolean };
+      credentials?: Record<string, unknown>;
+    }) {
+      const { account, profile } = params;
+
       if (account?.provider === "google" && profile) {
         try {
           const existingUser = await prisma.user.findUnique({
@@ -58,8 +71,6 @@ export const authOptions = {
           );
         }
       }
-
-      // Assurez-vous de retourner true pour autoriser la connexion
       return true;
     },
   },
