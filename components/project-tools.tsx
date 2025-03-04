@@ -7,6 +7,7 @@ import { FileUploadList } from "@/components/file-upload-list";
 import { Project } from "@/types/project";
 import { usePresignedUrl } from "@/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/components/selected-files-list";
+import { UploadingFile } from "@/types/project";
 
 import {
   FileText,
@@ -21,25 +22,6 @@ interface ProjectToolsProps {
   project: Project | null;
   userId: string;
 }
-
-export interface UploadingFile {
-  file: File;
-  id: string;
-  progress: number;
-  status:
-    | "upload"
-    | "processing"
-    | "pending"
-    | "indexing"
-    | "rafting"
-    | "ready"
-    | "end"
-    | "error";
-  url?: string; // URL S3 où le fichier a été uploadé
-  documentId?: string; // ID du document dans le backend
-  processingMessage?: string; // Message associé au statut de traitement
-}
-
 interface Tool {
   id: string;
   name: string;
@@ -56,7 +38,6 @@ export function ProjectTools({
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const { getPresignedUrl } = usePresignedUrl();
 
   const tools: Tool[] = [
@@ -100,8 +81,52 @@ export function ProjectTools({
   ];
 
   useEffect(() => {
-    console.log("uploadingFiles:", uploadingFiles);
-  }, [uploadingFiles]);
+    if (!project) return;
+    console.log('project:', project)
+  }, [project])
+
+  useEffect(() => {
+    if (!uploadingFiles) return;
+    console.log('uploadingFiles:', uploadingFiles)
+  }, [uploadingFiles])
+
+  useEffect(() => {
+    if (!project) return;
+
+    async function fetchProjectData() {
+      try {
+        // 1. Récupérer l'externalId depuis notre base de données
+        if (!project) return;
+
+        // 2. Récupérer les documents depuis l'API externe
+        const documentsResponse = await fetch(`/api/documents/project/${project.id}`);
+
+        if (!documentsResponse.ok) {
+          console.error("Erreur lors de la récupération des documents depuis l'API externe");
+          return;
+        }
+
+        const documentsData = await documentsResponse.json();
+        console.log('documentsData:', documentsData)
+
+        // 3. Transformer les documents en format UploadingFile
+        const files = documentsData.map((doc: Record<string, any>) => ({
+          id: doc.id,
+          status: doc.status,
+          fileName: doc.filename,
+        }));
+
+        // 4. Mettre à jour l'état des fichiers
+        setUploadingFiles(files);
+
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données du projet:", error);
+      }
+    }
+
+    fetchProjectData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const createProject = async () => {
     try {
@@ -184,6 +209,7 @@ export function ProjectTools({
             );
 
             // Mettre à jour la progression dans l'état
+            console.log("1️⃣ setUploadingFiles - Mise à jour de la progression");
             setUploadingFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
@@ -215,6 +241,7 @@ export function ProjectTools({
               console.log("Upload réussi:", result.message);
 
               // Mettre à jour le statut à "pending" une fois l'upload terminé
+              console.log("2️⃣ setUploadingFiles - Upload terminé, statut pending");
               setUploadingFiles((prev) =>
                 prev.map((f) =>
                   f.id === fileId
@@ -244,6 +271,7 @@ export function ProjectTools({
             }
 
             // Mettre à jour le statut en cas d'erreur
+            console.log("3️⃣ setUploadingFiles - Erreur HTTP");
             setUploadingFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
@@ -264,6 +292,7 @@ export function ProjectTools({
           console.error("Erreur réseau lors de l'upload");
 
           // Mettre à jour le statut en cas d'erreur réseau
+          console.log("4️⃣ setUploadingFiles - Erreur réseau");
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.id === fileId
@@ -316,19 +345,24 @@ export function ProjectTools({
         (file) => ({
           file,
           id: file.name,
+          fileName: file.name,
           progress: 0,
           status: "pending",
         }),
       );
 
-      setUploadingFiles(uploadingFilesArray);
 
+      setUploadingFiles(uploadingFilesArray);
       setSelectedFiles([]);
 
-      // Uploader tous les fichiers en parallèle
       const uploadPromises = uploadingFilesArray.map(async (uploadingFile) => {
+        console.log('uploadingFile:', uploadingFile)
         try {
           // Obtenir l'URL présignée
+          if (!uploadingFile.file) {
+            throw new Error("Fichier manquant");
+          }
+
           console.log("projectId:", projectId);
 
           const presignedUrl = await getPresignedUrl(
@@ -342,7 +376,15 @@ export function ProjectTools({
             throw new Error("Impossible d'obtenir l'URL présignée");
           }
 
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+
           // Mettre à jour le statut à "upload" avant de commencer l'upload
+          console.log("6️⃣ setUploadingFiles - Démarrage de l'upload");
+          console.log('uploadingFile:', uploadingFile)
+          console.log('uploadingFiles:', uploadingFiles)
+
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.id === uploadingFile.id
@@ -356,14 +398,13 @@ export function ProjectTools({
             ),
           );
 
-          console.log("uploadingFile:", uploadingFile);
-
           // Uploader le fichier avec suivi de progression
           const uploadSuccess = await uploadFileToS3(
             uploadingFile.file,
             presignedUrl.url,
             uploadingFile.id,
           );
+
 
           if (!uploadSuccess) {
             throw new Error("Échec de l'upload");
@@ -377,11 +418,12 @@ export function ProjectTools({
           };
         } catch (error) {
           console.error(
-            `Erreur lors de l'upload du fichier ${uploadingFile.file.name}:`,
+            `Erreur lors de l'upload du fichier ${uploadingFile}:`,
             error,
           );
 
           // Mettre à jour le statut en cas d'erreur
+          console.log("7️⃣ setUploadingFiles - Erreur lors de l'upload");
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.id === uploadingFile.id
@@ -418,8 +460,6 @@ export function ProjectTools({
       }
     } catch (error) {
       console.error("Erreur lors de l'upload des fichiers:", error);
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -490,9 +530,10 @@ export function ProjectTools({
       const data = await response.json();
 
       // Mettre à jour le statut des fichiers
+      console.log("8️⃣ setUploadingFiles - Confirmation des uploads");
       setUploadingFiles((prev) =>
         prev.map((f) => {
-          const matchingFile = fileNames.includes(f.file.name);
+          const matchingFile = f.file && fileNames.includes(f.file.name);
           if (matchingFile) {
             return {
               ...f,
@@ -509,9 +550,10 @@ export function ProjectTools({
         console.log("documentId:", documentId);
 
         if (documentId) {
+          console.log("9️⃣ setUploadingFiles - Mise à jour de l'ID du document");
           setUploadingFiles((prev) =>
             prev.map((f) =>
-              f.file.name === fileName
+              f.file && f.file.name === fileName
                 ? {
                     ...f,
                     id: documentId,
@@ -542,36 +584,6 @@ export function ProjectTools({
     // ou ouvrir une modale, etc.
   };
 
-  // Effet pour marquer que nous sommes côté client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Si nous ne sommes pas encore côté client, retourner un placeholder
-  if (!isClient) {
-    return (
-      <div className="flex flex-col w-full h-full overflow-auto">
-        <div className="banner h-[50vh] w-full relative flex-shrink-0">
-          {/* Image de fond */}
-        </div>
-        <div className="mt-[-35vh] pb-[80vh] inset-0 m-auto w-full px-40">
-          <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-white">
-            {/* Contenu de chargement */}
-            <div className="rounded-[20px] p-6 bg-black/5">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center">
-                {project
-                  ? project.name || "Nouveau projet"
-                  : "BTP Consultants IA"}
-              </h1>
-            </div>
-            {/* Zone de chargement */}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Rendu normal une fois que nous sommes côté client
   return (
     <div className="flex flex-col w-full h-full overflow-auto">
       <div className="banner h-[50vh] w-full relative flex-shrink-0">
@@ -618,6 +630,7 @@ export function ProjectTools({
                 isUploading={isUploading}
               />
             )}
+
             {uploadingFiles.length > 0 && (
               <FileUploadList files={uploadingFiles} projectId={project?.id} />
             )}
@@ -625,7 +638,7 @@ export function ProjectTools({
 
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
-              (file) => file.status && file.status === "ready",
+              (file) => file.status && file.status.toLowerCase() === "ready",
             ) && (
               <div className="mt-4">
                 <h3 className="text-xl font-semibold mb-4">
@@ -667,6 +680,7 @@ const monitorDocumentProcessing = async (
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
 ) => {
   try {
+    console.log("🔟 setUploadingFiles - Début du monitoring");
     setUploadingFiles((prev) =>
       prev.map((f) =>
         f.id === documentId
@@ -715,6 +729,7 @@ const monitorDocumentProcessing = async (
         statusMap[data.status as keyof typeof statusMap] ||
         ("pending" as const);
 
+      console.log("1️⃣1️⃣ setUploadingFiles - Mise à jour du statut pendant le monitoring");
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.id === documentId
@@ -732,6 +747,7 @@ const monitorDocumentProcessing = async (
     }
   } catch (error) {
     console.error("Erreur lors du monitoring du document:", error);
+    console.log("1️⃣2️⃣ setUploadingFiles - Erreur pendant le monitoring");
     setUploadingFiles((prev) =>
       prev.map((f) =>
         f.id === documentId

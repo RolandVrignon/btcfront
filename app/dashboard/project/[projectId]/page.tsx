@@ -4,7 +4,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { ProjectTools } from "@/components/project-tools";
 import prisma from "@/lib/prisma";
 import { Project as ProjectType } from "@/types/project";
-
 interface ProjectPageProps {
   params: {
     projectId: string;
@@ -21,27 +20,30 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   const { projectId } = params;
-
-  console.log("projectId:", projectId);
+  console.log('projectId:', projectId)
 
   const project = await prisma.project.findUnique({
     where: {
-      id: projectId,
-    },
+      id: projectId
+    }
   });
 
-  console.log("project:", project);
+  console.log('project:', project)
 
   if (!project) {
+    console.log('project not found');
     notFound();
   }
 
   const projectWithoutNull = {
-    id: project.id,
+    id: project.externalId,
     name: project.name || undefined,
     description: project.description || undefined,
     status: project.status as ProjectType["status"],
   };
 
   return <ProjectTools project={projectWithoutNull} userId={session.user.id} />;
+    // return (
+    //     <div>Hello {projectId}</div>
+    // )
 }

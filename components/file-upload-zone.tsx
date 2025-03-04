@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { Upload, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { UploadingFile } from "./project-tools";
+import { UploadingFile } from "@/types/project";
 
 interface FileUploadZoneProps {
   onFilesSelected: (files: File[]) => void;
@@ -31,8 +31,7 @@ export function FileUploadZone({
   const isFileAlreadyUploaded = (file: File) => {
     return files.some(
       (existingFile) =>
-        existingFile.file.name === file.name &&
-        existingFile.file.size === file.size,
+        existingFile.fileName === file.name,
     );
   };
 

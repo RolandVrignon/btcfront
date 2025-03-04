@@ -8,26 +8,9 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/components/document-metadata-dialog";
-
+import { UploadingFile } from "@/types/project";
 interface FileUploadListProps {
-  files: {
-    file: File;
-    id: string;
-    progress: number;
-    status:
-      | "upload"
-      | "processing"
-      | "pending"
-      | "indexing"
-      | "rafting"
-      | "ready"
-      | "end"
-      | "error";
-    url?: string;
-    documentId?: string;
-    processingStatus?: string;
-    processingMessage?: string;
-  }[];
+  files: UploadingFile[];
   projectId?: string;
 }
 
@@ -39,37 +22,45 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fonction pour obtenir l'icône selon le type de fichier
-  const getFileIcon = (file: File) => {
-    if (file.type === "application/pdf") {
+  const getFileIcon = (fileName: string) => {
+    if (fileName.endsWith(".pdf")) {
       return <File className="h-5 w-5 text-red-500" />;
-    } else if (file.type === "text/csv") {
+    } else if (fileName.endsWith(".csv")) {
       return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
     } else if (
-      file.type ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      fileName.endsWith(".docx") ||
+      fileName.endsWith(".doc") ||
+      fileName.endsWith(".xls") ||
+      fileName.endsWith(".xlsx")
     ) {
       return <FileText className="h-5 w-5 text-blue-600" />;
-    } else if (file.type.startsWith("image/")) {
+    } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png")) {
       return <ImageIcon className="h-5 w-5 text-purple-500" />;
     }
     return <File className="h-5 w-5 text-blue-500" />;
   };
 
   // Fonction pour ouvrir la popup de métadonnées
-  const handleFileClick = (fileId: string) => {
-    const uploadingFile = files.find((f) => f.id === fileId);
+  const handleFileClick = (documentId: string) => {
+    const uploadingFile = files.find((f) => f.id === documentId);
     if (!uploadingFile || !projectId) return;
 
     setSelectedFile({
-      id: fileId,
-      name: uploadingFile.file.name,
+      id: documentId,
+      name: uploadingFile.fileName,
     });
     setIsDialogOpen(true);
   };
 
   // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
   const openFileInNewTab = async () => {
+    console.log('openFileInNewTab:')
+
+    console.log('selectedFile:', selectedFile)
+    console.log('projectId:', projectId)
+
     if (!selectedFile || !projectId) return;
+
     try {
       // Appel à notre API interne pour obtenir l'URL de visualisation
       const response = await fetch("/api/documents/view", {
@@ -83,6 +74,8 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
         }),
       });
 
+      console.log('response:', response)
+
       if (!response.ok) {
         throw new Error(
           "Erreur lors de la récupération de l'URL de visualisation",
@@ -90,6 +83,7 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
       }
 
       const data = await response.json();
+      console.log('data:', data)
 
       if (data.url) {
         window.open(data.url, "_blank");
@@ -108,7 +102,7 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
         <h3 className="text-xl font-semibold mb-4">
           Fichiers ({files.length})
         </h3>
-        <div className="border rounded-lg flex flex-col gap-1 min-h-[30vh] max-h-[30vh] overflow-y-auto">
+        <div className="border rounded-lg flex flex-col min-h-[30vh] max-h-[30vh] overflow-y-auto">
           {files.map((file) => (
             <div
               key={file.id}
@@ -118,37 +112,34 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
               <div className="flex items-center justify-between">
                 <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
                   <div className="text-muted-foreground">
-                    {getFileIcon(file.file)}
+                    {getFileIcon(file.fileName ?? "")}
                   </div>
                   <div className="flex items-center gap-2 truncate">
-                    <p className="font-medium truncate">{file.file.name}</p>
-                    <p className="font-medium text-gray-300">
-                      {(file.file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
+                    <p className="font-medium truncate">{file.fileName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {file.status === "upload" ? (
+                  {file.status?.toLowerCase() === "upload" ? (
                     <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                       Upload
                     </div>
-                  ) : file.status === "pending" ? (
+                  ) : file.status?.toLowerCase() === "pending" ? (
                     <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
                       En attente
                     </div>
-                  ) : file.status === "processing" ? (
+                  ) : file.status?.toLowerCase() === "processing" ? (
                     <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
                       Traitement
                     </div>
-                  ) : file.status === "indexing" ? (
+                  ) : file.status?.toLowerCase() === "indexing" ? (
                     <div className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
                       Indexation
                     </div>
-                  ) : file.status === "ready" ? (
+                  ) : file.status?.toLowerCase() === "ready" ? (
                     <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
                       Prêt
                     </div>
-                  ) : file.status === "error" ? (
+                  ) : file.status?.toLowerCase() === "error" ? (
                     <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
                       Erreur
                     </div>

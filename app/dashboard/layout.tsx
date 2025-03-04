@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Sidebar } from "@/components/sidebar";
 import { redirect } from "next/navigation";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function DashboardLayout({
   children,
@@ -19,8 +20,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen">
-      <Sidebar userId={userId} className="w-64 h-full border-r" />
+      <Sidebar userId={userId} className="w-64 h-[100dvh] border-r" />
       <main className="flex-1 overflow-auto">{children}</main>
+      <Toaster />
     </div>
   );
 }

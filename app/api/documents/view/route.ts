@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('body:', body)
     const { fileName, projectId } = body;
 
     if (!fileName || !projectId) {
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
+    console.log('apiUrl:', apiUrl)
+
+    console.log('url: ', `${apiUrl}/documents/view`)
 
     // Appel à l'API externe
     const response = await fetch(`${apiUrl}/documents/view`, {
@@ -23,7 +27,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({ fileName, projectId }),
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
@@ -36,6 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
+    console.log('data:', data)
     return NextResponse.json(data);
   } catch (error) {
     console.error(

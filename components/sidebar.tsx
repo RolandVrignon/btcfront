@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Project } from "@/types/project";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, FileText } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   userId?: string;
@@ -55,7 +55,7 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
 
   return (
     <div className={cn("flex flex-col h-full", className)} {...props}>
-      <div className="space-y-4 py-4 flex-1">
+      <div className="flex flex-col justify-between h-full space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             Projets
@@ -85,11 +85,11 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
             </Button>
           </div>
         </div>
-        <div className="px-3 py-2">
+        <div className="flex flex-col flex-1 px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             Historique
           </h2>
-          <div className="space-y-1">
+          <div className="space-y-1 flex-1">
             {isLoading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -98,38 +98,24 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
                 </span>
               </div>
             ) : projects.length > 0 ? (
-              <ScrollArea className="h-[300px]">
-                {projects.map((project) => (
-                  <Button
-                    key={project.id}
-                    variant={
-                      pathname === `/dashboard/project/${project.id}`
-                        ? "secondary"
-                        : "ghost"
-                    }
-                    className="w-full justify-start font-normal"
-                    asChild
-                  >
+              <ScrollArea className="h-[100%]">
+                <div className="flex flex-col h-[300px] gap-2 px-2">
+                  {projects.map((project) => (
                     <Link
+                      key={project.id}
                       href={`/dashboard/project/${project.id}`}
-                      className="flex items-center truncate"
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+                        pathname === `/dashboard/project/${project.id}`
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent/50 hover:text-accent-foreground"
+                      )}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="mr-2 h-4 w-4"
-                      >
-                        <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-                      </svg>
-                      {project.name}
+                      <FileText className="h-4 w-4" />
+                      <span className="truncate">{project.name}</span>
                     </Link>
-                  </Button>
-                ))}
+                  ))}
+                </div>
               </ScrollArea>
             ) : (
               <div className="px-4 py-2 text-sm text-muted-foreground">
@@ -138,10 +124,7 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Bouton de déconnexion */}
-      <div className="px-3 py-4 border-t mt-auto">
+        <div className="px-3 py-4 border-t mt-auto">
         <Button
           variant="outline"
           className="w-full justify-start text-muted-foreground hover:text-foreground"
@@ -150,6 +133,7 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
           <LogOut className="mr-2 h-4 w-4" />
           Déconnexion
         </Button>
+      </div>
       </div>
     </div>
   );
