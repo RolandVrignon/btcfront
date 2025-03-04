@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Créée avec Next.js et Shadcn UI",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;

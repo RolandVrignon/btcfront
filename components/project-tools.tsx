@@ -48,13 +48,6 @@ interface Tool {
   color: string;
 }
 
-// Définir une interface pour le document
-interface DocumentResponse {
-  documentId: string;
-  fileName: string;
-  status: string;
-}
-
 export function ProjectTools({
   project: initialProject,
   userId,
