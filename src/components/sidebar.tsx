@@ -10,6 +10,7 @@ import { ScrollArea } from "@/src/components/ui/scroll-area";
 import { Project } from "@/src/types/project";
 import { Loader2, LogOut, FileText } from "lucide-react";
 import Image from "next/image";
+import { Skeleton } from "@/src/components/ui/skeleton";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   userId?: string;
@@ -100,12 +101,20 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
           </h2>
           <div className="space-y-1 flex-1">
             {isLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">
-                  Chargement...
-                </span>
-              </div>
+              <ScrollArea className="h-[100%]">
+                <div className="flex flex-col h-[300px] gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(
+                    (index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-lg"
+                      >
+                        <Skeleton className="h-8 w-full" />
+                      </div>
+                    ),
+                  )}
+                </div>
+              </ScrollArea>
             ) : projects.length > 0 ? (
               <ScrollArea className="h-[100%]">
                 <div className="flex flex-col h-[300px] gap-2 px-2">
