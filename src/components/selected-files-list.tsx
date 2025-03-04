@@ -2,6 +2,15 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
+import dynamic from "next/dynamic";
+
+// Composant qui ne sera rendu que côté client
+const LoadingSpinner = dynamic(() => Promise.resolve(() => (
+  <span className="flex items-center gap-2">
+    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+    Upload en cours...
+  </span>
+)), { ssr: false });
 
 interface SelectedFilesListProps {
   files: File[];
@@ -32,10 +41,7 @@ export function SelectedFilesList({
           className="ml-auto"
         >
           {isUploading ? (
-            <span className="flex items-center gap-2">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-              Upload en cours...
-            </span>
+            <LoadingSpinner />
           ) : (
             "Télécharger tous les documents"
           )}
