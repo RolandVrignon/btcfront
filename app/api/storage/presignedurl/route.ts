@@ -4,10 +4,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { fileName, fileType, projectId } = body;
-    console.log("fileName:", fileName);
-    console.log("fileType:", fileType);
-    console.log("projectId:", projectId);
-    console.log("body:", body);
 
     if (!fileName || !fileType) {
       return NextResponse.json(
@@ -18,7 +14,6 @@ export async function POST(request: NextRequest) {
 
     // Récupérer l'URL de l'API depuis les variables d'environnement
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    console.log("apiUrl:", apiUrl);
 
     if (!apiUrl) {
       return NextResponse.json(
@@ -53,7 +48,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log("Presigned URL response:", data);
 
     return NextResponse.json(data);
   } catch (error) {

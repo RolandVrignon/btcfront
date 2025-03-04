@@ -35,9 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("Fichier uploadé avec succès");
-    console.log("response:", response);
-
     return NextResponse.json({
       success: true,
       status: response.status,

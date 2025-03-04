@@ -5,10 +5,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { projectId, fileName } = body;
 
-    console.log("Recherche de document par nom de fichier");
-    console.log("projectId:", projectId);
-    console.log("fileName:", fileName);
-
     if (!projectId || !fileName) {
       return NextResponse.json(
         { error: "projectId et fileName sont requis" },
@@ -17,7 +13,6 @@ export async function POST(request: NextRequest) {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    console.log("URL de l'API:", `${apiUrl}/documents/find-by-filename`);
 
     // Appel à l'API externe
     const response = await fetch(`${apiUrl}/documents/find-by-filename`, {
@@ -32,7 +27,6 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    console.log("Statut de la réponse:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();

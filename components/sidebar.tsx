@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Project } from "@/types/project";
 import { Loader2, LogOut, FileText } from "lucide-react";
+import Image from "next/image";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   userId?: string;
@@ -55,7 +56,10 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
 
   return (
     <div className={cn("flex flex-col h-full", className)} {...props}>
-      <div className="flex flex-col justify-between h-full space-y-4 py-4">
+      <div className="flex flex-col justify-between h-full space-y-1 py-4">
+        <div className="flex items-center justify-center">
+          <Image src="/assets/img/logo2.jpg" alt="logo" width={150} height={100} />
+        </div>
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             Projets

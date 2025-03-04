@@ -15,13 +15,11 @@ export async function GET(
 
     // Utiliser les paramètres de manière sûre
     const externalId = params.externalId;
-    console.log('externalId:', externalId)
     if (!externalId) {
       return NextResponse.json({ error: "ID externe manquant" }, { status: 400 });
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    console.log('apiUrl:', apiUrl)
 
     // Appeler l'API externe pour récupérer les documents
     const response = await fetch(
@@ -43,7 +41,6 @@ export async function GET(
     }
 
     const documents = await response.json();
-    console.log('documents:', documents);
     return NextResponse.json(documents);
   } catch (error) {
     console.error("Erreur lors de la récupération des documents:", error);

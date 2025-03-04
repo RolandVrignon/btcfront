@@ -5,10 +5,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { projectId, fileNames } = body;
 
-    console.log("Confirmation des uploads multiple");
-    console.log("body:", body);
-    console.log("Before if");
-
     if (
       !projectId ||
       !fileNames ||
@@ -21,15 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("After if");
-    console.log("projectId:", projectId);
-    console.log("fileNames:", fileNames);
-
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    console.log(
-      "URL de l'API:",
-      `${apiUrl}/documents/confirm-multiple-uploads`,
-    );
 
     // Appel à l'API externe
     const response = await fetch(
@@ -45,13 +33,6 @@ export async function POST(request: NextRequest) {
           fileNames,
         }),
       },
-    );
-
-    // Ajouter des logs pour la réponse
-    console.log("Statut de la réponse:", response.status);
-    console.log(
-      "Headers de la réponse:",
-      Object.fromEntries(response.headers.entries()),
     );
 
     if (!response.ok) {
