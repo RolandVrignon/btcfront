@@ -26,16 +26,20 @@ export function usePresignedUrl({
     setError(null);
 
     try {
+      const body = {
+        fileName: file.name,
+        fileType: file.type,
+        projectId: projectId || null,
+      };
+
+      console.log("body:", body);
+
       const response = await fetch("/api/storage/presignedurl", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-          projectId: projectId || null,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

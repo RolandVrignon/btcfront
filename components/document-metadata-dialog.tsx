@@ -51,7 +51,7 @@ export function DocumentMetadataDialog({
         setIsLoading(true);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, fileName, projectId, isFileReady]);
 
   const fetchMetadata = async () => {
