@@ -642,7 +642,7 @@ export function ProjectTools({
                   {tools.map((tool) => (
                     <div
                       key={tool.id}
-                      className={`rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${tool.color} border border-transparent hover:border-current`}
+                      className={`rounded-lg p-4 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent hover:border-current`}
                       onClick={() => handleToolClick(tool.id)}
                     >
                       <div className="flex items-start gap-4">
@@ -651,7 +651,7 @@ export function ProjectTools({
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-lg">{tool.name}</h4>
-                          <p className="text-sm opacity-80 mt-1">
+                          <p className="text-sm opacity-80 mt-1 line-clamp-3">
                             {tool.description}
                           </p>
                         </div>
