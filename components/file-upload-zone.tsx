@@ -90,8 +90,8 @@ export function FileUploadZone({
           onFilesSelected(validFiles);
         }
       }
-      //eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    //eslint-disable-next-line react-hooks/exhaustive-deps
     [onFilesSelected, files],
   );
 
