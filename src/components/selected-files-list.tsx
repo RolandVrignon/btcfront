@@ -3,6 +3,12 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import dynamic from "next/dynamic";
+import {
+  File,
+  FileText,
+  Image as ImageIcon,
+  FileSpreadsheet,
+} from "lucide-react";
 
 // Composant qui ne sera rendu que côté client
 const LoadingSpinner = dynamic(
@@ -25,6 +31,29 @@ interface SelectedFilesListProps {
   onUploadAll: () => void;
   isUploading: boolean;
 }
+
+// Fonction pour obtenir l'icône selon le type de fichier
+const getFileIcon = (fileName: string) => {
+  if (fileName.endsWith(".pdf")) {
+    return <File className="h-5 w-5 text-red-500" />;
+  } else if (fileName.endsWith(".csv")) {
+    return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
+  } else if (
+    fileName.endsWith(".docx") ||
+    fileName.endsWith(".doc") ||
+    fileName.endsWith(".xls") ||
+    fileName.endsWith(".xlsx")
+  ) {
+    return <FileText className="h-5 w-5 text-blue-600" />;
+  } else if (
+    fileName.endsWith(".jpg") ||
+    fileName.endsWith(".jpeg") ||
+    fileName.endsWith(".png")
+  ) {
+    return <ImageIcon className="h-5 w-5 text-purple-500" />;
+  }
+  return <File className="h-5 w-5 text-blue-500" />;
+};
 
 export function SelectedFilesList({
   files,
@@ -55,11 +84,11 @@ export function SelectedFilesList({
         <div className="divide-y">
           {files.map((file, index) => (
             <div key={index} className="flex items-center justify-between p-1">
-              <div className="flex items-center gap-2 flex-1">
-                <p className="font-medium truncate">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
+              <div className="flex items-center gap-2">
+                <div className="text-muted-foreground">
+                  {getFileIcon(file.name)}
+                </div>
+                <span className="truncate">{file.name}</span>
               </div>
               <Button
                 variant="ghost"

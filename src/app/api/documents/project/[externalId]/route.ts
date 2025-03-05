@@ -13,8 +13,8 @@ export async function GET(
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Utiliser les paramètres de manière sûre
-    const externalId = params.externalId;
+    // Utiliser les paramètres de manière asynchrone
+    const { externalId } = await params;
     if (!externalId) {
       return NextResponse.json(
         { error: "ID externe manquant" },

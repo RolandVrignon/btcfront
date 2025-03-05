@@ -11,24 +11,19 @@ interface ProjectPageProps {
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  console.log("params:", params);
-
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect("/auth/signin");
   }
 
-  const { projectId } = params;
-  console.log("projectId:", projectId);
+  const { projectId } = await params;
 
   const project = await prisma.project.findUnique({
     where: {
       id: projectId,
     },
   });
-
-  console.log("project:", project);
 
   if (!project) {
     console.log("project not found");

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FileUploadZone } from "@/src/components/file-upload-zone";
 import { FileUploadList } from "@/src/components/file-upload-list";
 import { Project } from "@/src/types/project";
@@ -39,6 +39,8 @@ export function ProjectTools({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { getPresignedUrl } = usePresignedUrl();
+  const [isLoading, setIsLoading] = useState(false);
+  const isUploadingRef = useRef(false);
 
   const tools: Tool[] = [
     {
@@ -95,8 +97,12 @@ export function ProjectTools({
 
     async function fetchProjectData() {
       try {
-        // 1. Récupérer l'externalId depuis notre base de données
-        if (!project) return;
+        setIsLoading(true);
+
+        if (!project) {
+          setIsLoading(false);
+          return;
+        }
 
         // 2. Récupérer les documents depuis l'API externe
         const documentsResponse = await fetch(
@@ -122,17 +128,23 @@ export function ProjectTools({
 
         // 4. Mettre à jour l'état des fichiers
         setUploadingFiles(files);
+        setIsLoading(false);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des données du projet:",
           error,
         );
+        setIsLoading(false);
       }
     }
 
     fetchProjectData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    isUploadingRef.current = isUploading;
+  }, [isUploading]);
 
   const createProject = async () => {
     try {
@@ -519,14 +531,6 @@ export function ProjectTools({
 
       console.log("body:", body);
 
-      fetch("/api/documents/confirm-multiple-uploads", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
       // Mettre à jour le statut des fichiers
       setUploadingFiles((prev) =>
         prev.map((f) => {
@@ -566,14 +570,29 @@ export function ProjectTools({
             ),
           );
 
-          monitorDocumentProcessing(documentId, projectId, setUploadingFiles);
+          monitorDocumentProcessing(
+            documentId,
+            projectId,
+            setUploadingFiles,
+            isUploadingRef,
+          );
         }
 
         return { fileName, documentId };
       });
 
       // Attendre que toutes les requêtes soient terminées
-      await Promise.all(documentPromises);
+      Promise.all(documentPromises);
+
+      await fetch("/api/documents/confirm-multiple-uploads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      setIsUploading(false);
     } catch (error) {
       console.error("Erreur lors de la confirmation des uploads:", error);
       return null;
@@ -633,8 +652,12 @@ export function ProjectTools({
               />
             )}
 
-            {uploadingFiles.length > 0 && (
-              <FileUploadList files={uploadingFiles} projectId={project?.id} />
+            {(uploadingFiles.length > 0 || isLoading) && (
+              <FileUploadList
+                files={uploadingFiles}
+                projectId={project?.id}
+                isLoading={isLoading}
+              />
             )}
           </div>
 
@@ -680,6 +703,7 @@ const monitorDocumentProcessing = async (
   documentId: string,
   projectId: string,
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
+  isUploadingRef: React.MutableRefObject<boolean>,
 ) => {
   try {
     console.log("🔟 setUploadingFiles - Début du monitoring");
@@ -697,7 +721,7 @@ const monitorDocumentProcessing = async (
 
     let isProcessingComplete = false;
 
-    while (!isProcessingComplete) {
+    while (!isProcessingComplete && isUploadingRef.current) {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const response = await fetch("/api/documents/monitor", {

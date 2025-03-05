@@ -9,12 +9,18 @@ import {
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/src/components/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/project";
+import { ScrollArea } from "@/src/components/ui/scroll-area";
 interface FileUploadListProps {
   files: UploadingFile[];
   projectId?: string;
+  isLoading?: boolean;
 }
 
-export function FileUploadList({ files, projectId }: FileUploadListProps) {
+export function FileUploadList({
+  files,
+  projectId,
+  isLoading,
+}: FileUploadListProps) {
   const [selectedFile, setSelectedFile] = useState<{
     id: string;
     name: string;
@@ -51,7 +57,7 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
 
     setSelectedFile({
       id: documentId,
-      name: uploadingFile.fileName,
+      name: uploadingFile.fileName ?? "",
     });
     setIsDialogOpen(true);
   };
@@ -104,69 +110,85 @@ export function FileUploadList({ files, projectId }: FileUploadListProps) {
     <>
       <div className="w-full">
         <h3 className="text-xl font-semibold mb-4">
-          Fichiers ({files.length})
+          Fichiers ({isLoading ? "..." : files.length})
         </h3>
-        <div className="border rounded-lg flex flex-col min-h-[30vh] max-h-[30vh] overflow-y-auto">
-          {files.map((file) => (
-            <div
-              key={file.id}
-              className="p-2 border-b hover:bg-gray-100 cursor-pointer transition-colors group"
-              onClick={() => handleFileClick(file.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
-                  <div className="text-muted-foreground">
-                    {getFileIcon(file.fileName ?? "")}
-                  </div>
-                  <div className="flex items-center gap-2 truncate">
-                    <p className="font-medium truncate">{file.fileName}</p>
+        <ScrollArea className="border rounded-lg flex flex-col min-h-[30vh] max-h-[30vh] overflow-y-auto">
+          {isLoading
+            ? // Skeleton loader
+              Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="p-2 border-b animate-pulse"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
+                      <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+                      <div className="h-6 w-52 bg-gray-200 rounded-full"></div>
+                    </div>
+                    <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {file.status?.toLowerCase() === "upload" ? (
-                    <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                      Upload
+              ))
+            : files.map((file) => (
+                <div
+                  key={file.id}
+                  className="p-2 border-b hover:bg-gray-100 cursor-pointer transition-colors group"
+                  onClick={() => handleFileClick(file.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
+                      <div className="text-muted-foreground">
+                        {getFileIcon(file.fileName ?? "")}
+                      </div>
+                      <div className="flex items-center gap-2 truncate">
+                        <p className="font-medium truncate">{file.fileName}</p>
+                      </div>
                     </div>
-                  ) : file.status?.toLowerCase() === "pending" ? (
-                    <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
-                      En attente
+                    <div className="flex items-center gap-2">
+                      {file.status?.toLowerCase() === "upload" ? (
+                        <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                          Upload
+                        </div>
+                      ) : file.status?.toLowerCase() === "pending" ? (
+                        <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                          En attente
+                        </div>
+                      ) : file.status?.toLowerCase() === "processing" ? (
+                        <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                          Traitement
+                        </div>
+                      ) : file.status?.toLowerCase() === "indexing" ? (
+                        <div className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
+                          Indexation
+                        </div>
+                      ) : file.status?.toLowerCase() === "ready" ? (
+                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                          Prêt
+                        </div>
+                      ) : file.status?.toLowerCase() === "error" ? (
+                        <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                          Erreur
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                          {file.status}
+                        </div>
+                      )}
                     </div>
-                  ) : file.status?.toLowerCase() === "processing" ? (
-                    <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
-                      Traitement
-                    </div>
-                  ) : file.status?.toLowerCase() === "indexing" ? (
-                    <div className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
-                      Indexation
-                    </div>
-                  ) : file.status?.toLowerCase() === "ready" ? (
-                    <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                      Prêt
-                    </div>
-                  ) : file.status?.toLowerCase() === "error" ? (
-                    <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                      Erreur
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-                      {file.status}
+                  </div>
+
+                  {/* Barre de progression pour l'upload */}
+                  {file.status === "upload" && (
+                    <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                      <div
+                        className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                        style={{ width: `${file.progress}%` }}
+                      ></div>
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Barre de progression pour l'upload */}
-              {file.status === "upload" && (
-                <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
-                  <div
-                    className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                    style={{ width: `${file.progress}%` }}
-                  ></div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+              ))}
+        </ScrollArea>
       </div>
 
       {selectedFile && projectId && (
