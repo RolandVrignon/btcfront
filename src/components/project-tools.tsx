@@ -251,7 +251,7 @@ export function ProjectTools({
         // Configurer la requête vers notre proxy API au lieu de directement vers S3
         xhr.open("POST", "/api/storage/upload");
 
-        // Gérer la fin de la requête
+        // // Gérer la fin de la requête
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
@@ -260,7 +260,7 @@ export function ProjectTools({
 
               // Mettre à jour le statut à "pending" une fois l'upload terminé
               console.log(
-                "2️⃣ setUploadingFiles - Upload terminé, statut pending",
+                "2️⃣ setUploadingFiles - Upload terminé, statut processing",
               );
               setUploadingFiles((prev) =>
                 prev.map((f) =>
@@ -268,8 +268,7 @@ export function ProjectTools({
                     ? {
                         ...f,
                         progress: 100,
-                        status: "pending",
-                        processingMessage: "En attente de traitement...",
+                        status: "processing",
                       }
                     : f,
                 ),
@@ -375,11 +374,11 @@ export function ProjectTools({
           id: file.name,
           fileName: file.name,
           progress: 0,
-          status: "pending",
+          status: "upload",
         }),
       );
 
-      setUploadingFiles(uploadingFilesArray);
+      setUploadingFiles((prev) => [...prev, ...uploadingFilesArray]);
       setSelectedFiles([]);
 
       const uploadPromises = uploadingFilesArray.map(async (uploadingFile) => {
@@ -538,7 +537,7 @@ export function ProjectTools({
           if (matchingFile) {
             return {
               ...f,
-              status: "indexing" as const,
+              status: "processing" as const,
             };
           }
           return f;
@@ -706,19 +705,6 @@ const monitorDocumentProcessing = async (
   isUploadingRef: React.MutableRefObject<boolean>,
 ) => {
   try {
-    console.log("🔟 setUploadingFiles - Début du monitoring");
-    setUploadingFiles((prev) =>
-      prev.map((f) =>
-        f.id === documentId
-          ? {
-              ...f,
-              documentId,
-              status: "indexing" as const,
-            }
-          : f,
-      ),
-    );
-
     let isProcessingComplete = false;
 
     while (!isProcessingComplete && isUploadingRef.current) {
@@ -738,6 +724,7 @@ const monitorDocumentProcessing = async (
       }
 
       const data = await response.json();
+      console.log("data:", data);
 
       const terminalStatuses = ["READY", "END", "ERROR"];
 
@@ -748,16 +735,17 @@ const monitorDocumentProcessing = async (
         PROCESSING: "processing" as const,
         INDEXING: "indexing" as const,
         RAFTING: "rafting" as const,
-        PENDING: "pending" as const,
+        NOT_STARTED: "pending" as const,
       };
 
-      const mappedStatus =
-        statusMap[data.status as keyof typeof statusMap] ||
-        ("pending" as const);
+      const mappedStatus = statusMap[data.status as keyof typeof statusMap];
+
+      console.log("mappedStatus:", mappedStatus);
 
       console.log(
         "1️⃣1️⃣ setUploadingFiles - Mise à jour du statut pendant le monitoring",
       );
+      console.log("mappedStatus:", mappedStatus);
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.id === documentId

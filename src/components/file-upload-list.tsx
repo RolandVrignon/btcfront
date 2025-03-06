@@ -6,10 +6,25 @@ import {
   FileText,
   Image as ImageIcon,
   FileSpreadsheet,
+  CheckCircle2,
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/src/components/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/project";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
+import dynamic from "next/dynamic";
+
+// Composant spinner qui ne sera rendu que côté client
+const LoadingSpinner = dynamic(
+  () =>
+    Promise.resolve(() => (
+      <div
+        className="h-3 w-3 mr-1 animate-spin rounded-full border-2 border-current border-t-transparent"
+        aria-hidden="true"
+      />
+    )),
+  { ssr: false },
+);
+
 interface FileUploadListProps {
   files: UploadingFile[];
   projectId?: string;
@@ -146,23 +161,28 @@ export function FileUploadList({
                     </div>
                     <div className="flex items-center gap-2">
                       {file.status?.toLowerCase() === "upload" ? (
-                        <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                          <LoadingSpinner />
                           Upload
                         </div>
                       ) : file.status?.toLowerCase() === "pending" ? (
-                        <div className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                          <LoadingSpinner />
                           En attente
                         </div>
                       ) : file.status?.toLowerCase() === "processing" ? (
-                        <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                          <LoadingSpinner />
                           Traitement
                         </div>
                       ) : file.status?.toLowerCase() === "indexing" ? (
-                        <div className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
+                          <LoadingSpinner />
                           Indexation
                         </div>
                       ) : file.status?.toLowerCase() === "ready" ? (
-                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
                           Prêt
                         </div>
                       ) : file.status?.toLowerCase() === "error" ? (
