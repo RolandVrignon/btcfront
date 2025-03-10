@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    image: btpc-front:latest
+    container_name: btpc-front
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:TSnFU4uXXyPQW22fzcbKV@roland-aec-agents-front.c96wswwy05s8.eu-west-1.rds.amazonaws.com:5432/aec-front?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=TSnFU4uXXyPQW22fzcbKV
+      - NEXT_PUBLIC_CTIA_API_KEY=sk_43898650f1c6d5c9998163a996376c8251b4ea93185576cd
+      - NEXT_PUBLIC_CTIA_API_URL=http://localhost:8080
+      - PRISMA_MIGRATE=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

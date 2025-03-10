@@ -11,7 +11,7 @@ import {
 import { Button } from "@/src/components/ui/button";
 import { ExternalLink, Sparkles } from "lucide-react";
 import { Skeleton } from "@/src/components/ui/skeleton";
-
+import { ScrollArea } from "@/src/components/ui/scroll-area";
 interface DocumentMetadataDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,7 +40,14 @@ export function DocumentMetadataDialog({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isFileReady = fileStatus === "ready";
+  const isFileReady = fileStatus?.toLowerCase() === "ready";
+
+  useEffect(() => {
+    console.log("isOpen:", isOpen);
+    console.log("fileName:", fileName);
+    console.log("projectId:", projectId);
+    console.log("isFileReady:", isFileReady);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -172,7 +179,7 @@ export function DocumentMetadataDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <ScrollArea className="flex-1 overflow-y-auto p-6">
           {!isFileReady || isLoading ? (
             <div>
               {!isFileReady && (
@@ -228,7 +235,7 @@ export function DocumentMetadataDialog({
               </div>
             </div>
           )}
-        </div>
+        </ScrollArea>
 
         <DialogFooter className="p-6 border-t">
           <Button variant="outline" onClick={onClose}>

@@ -3,8 +3,10 @@
 # Variables
 NODE_BIN = node_modules/.bin
 NPM = npm
-DB_URL=postgresql://postgres:TSnFU4uXXyPQW22fzcbKV@roland-aec-agents-front.c96wswwy05s8.eu-west-1.rds.amazonaws.com:5432/aec-front?schema=public
-
+DOCKER_HUB_USERNAME = roland.vrignon@iadopt.fr
+DOCKER_HUB_PREFIX = iadopt
+DOCKER_IMAGE_NAME = btpc-front
+DOCKER_IMAGE_TAG = latest
 # Commandes principales
 .PHONY: install start build test lint clean help
 
@@ -141,3 +143,15 @@ prettier-check:
 clear-db:
 	@echo "Effacement des données de la base de données (sauf users et accounts)..."
 	@npx ts-node --esm scripts/clear-db.ts
+
+.PHONY: push-image
+push-image:
+	@echo "\033[1;36m=== Préparation et envoi de l'image Docker vers Docker Hub ===\033[0m"
+	@echo "\033[1;33mConstruction de l'image Docker...\033[0m"
+	@docker-compose build
+	@echo "\033[1;33mTaggage de l'image avec $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)...\033[0m"
+	@docker tag btpc-front:latest $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	@echo "\033[1;33mEnvoi de l'image vers Docker Hub...\033[0m"
+	@docker push $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	@echo "\033[1;32mImage envoyée avec succès vers Docker Hub !\033[0m"
+	@echo "L'image est disponible à l'adresse: $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)"

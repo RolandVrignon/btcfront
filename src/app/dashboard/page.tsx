@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/src/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/src/lib/auth";
 import { ProjectTools } from "@/src/components/project-tools";
 
 export default async function DashboardPage() {
