@@ -10,7 +10,7 @@ export async function GET(
 
     const { userId } = await params;
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "14");
+    const limit = parseInt(searchParams.get("limit") || "18");
     const skip = (page - 1) * limit;
 
     const projects = await db.project.findMany({

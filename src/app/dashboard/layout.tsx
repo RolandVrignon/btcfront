@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
-import { Sidebar } from "@/src/components/sidebar";
+import { AceternitySidebar } from "@/src/components/ui/aceternity-sidebar";
 import { redirect } from "next/navigation";
 import { Toaster } from "@/src/components/ui/sonner";
 
@@ -20,7 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen">
-      <Sidebar userId={userId} className="w-64 h-[100dvh] border-r" />
+      <AceternitySidebar userId={userId} className="h-[100dvh]" />
       <main className="flex-1 overflow-auto">{children}</main>
       <Toaster />
     </div>

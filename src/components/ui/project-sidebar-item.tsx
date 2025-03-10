@@ -21,7 +21,7 @@ export function ProjectSidebarItem({ project, isActive }: ProjectSidebarItemProp
     <Link
       href={`/dashboard/project/${project.id}`}
       className={cn(
-        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors relative",
+        "flex items-center gap-2 rounded-lg px-3 py-2 text-md transition-colors relative",
         isActive
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50 hover:text-accent-foreground",
@@ -29,7 +29,7 @@ export function ProjectSidebarItem({ project, isActive }: ProjectSidebarItemProp
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <FileText className="h-4 w-4 flex-shrink-0" />
+      <FileText className="h-6 w-6 flex-shrink-0" />
 
       {/* Conteneur avec largeur fixe et débordement caché */}
       <div className="w-[calc(100%-24px)] relative overflow-hidden">

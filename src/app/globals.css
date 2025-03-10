@@ -2,6 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
+.border-top-left {
+  border-top-left-radius: 40px;
+}
+
+/* Animation de marquee pour les textes tronqués */
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-66.6%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 10s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  line-height: 1;
+}
+
+/* Conteneur pour le texte avec marquee */
+.marquee-container {
+  overflow: hidden;
+  flex: 1;
+  width: 0;
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

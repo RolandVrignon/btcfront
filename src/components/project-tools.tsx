@@ -52,7 +52,7 @@ export function ProjectTools({
       name: "Descriptif sommaire des travaux",
       description:
         "Obtenir un descriptif sommaire des travaux décrits dans le/les CCTP, en vue de rédiger le RICT.",
-      icon: <FileText className="h-8 w-8" />,
+      icon: <FileText className="h-12 w-12" />,
       color: "bg-blue-100 text-blue-700",
     },
     {
@@ -60,28 +60,28 @@ export function ProjectTools({
       name: "Comparateur d'indice",
       description:
         "Identifier les différences tant sur le fond (ajouts, suppression, modifications) que sur la forme des deux documents.",
-      icon: <GitCompare className="h-8 w-8" />,
+      icon: <GitCompare className="h-12 w-12" />,
       color: "bg-green-100 text-green-700",
     },
     {
       id: "thermique",
       name: "Analyse Etude Thermique",
       description: "Analyse de la conformité de l'étude thermique.",
-      icon: <Thermometer className="h-8 w-8" />,
+      icon: <Thermometer className="h-12 w-12" />,
       color: "bg-red-100 text-red-700",
     },
     {
       id: "incoherences",
       name: "Incohérences",
       description: "Détection des incohérences dans le projet.",
-      icon: <AlertTriangle className="h-8 w-8" />,
+      icon: <AlertTriangle className="h-12 w-12" />,
       color: "bg-amber-100 text-amber-700",
     },
     {
       id: "suggestions",
       name: "Suggestions",
       description: "Propositions d'améliorations pour votre projet.",
-      icon: <Lightbulb className="h-8 w-8" />,
+      icon: <Lightbulb className="h-12 w-12" />,
       color: "bg-purple-100 text-purple-700",
     },
   ];
@@ -643,20 +643,20 @@ export function ProjectTools({
   };
 
   return (
-    <div className="flex flex-col w-full h-full overflow-auto">
+    <div className="flex flex-col w-full h-full overflow-auto overflow-x-hidden border-top-left border-l-2 bg-gray-50">
       <div className="banner h-[50vh] w-full relative flex-shrink-0">
         <Image
           src="/assets/img/bg.jpg"
           alt="Bannière d'arrière-plan"
           fill
           priority
-          className="object-cover"
+          className="object-cover border-tl-radius-xl"
           sizes="100vw"
         />
       </div>
 
-      <div className="mt-[-35vh] pb-[80vh] inset-0 m-auto w-full px-40">
-        <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-white">
+      <div className="mt-[-35vh] pb-[30vh] inset-0 m-auto w-full px-40">
+        <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-gray-50">
           {!isLoading ? (
             <div className="flex flex-col gap-4 justify-center items-center rounded-[20px] px-[15%] py-[4vh] bg-black/5 relative">
               <h1 className="text-3xl font-bold">
@@ -728,7 +728,7 @@ export function ProjectTools({
                   {tools.map((tool) => (
                     <div
                       key={tool.id}
-                      className={`rounded-lg p-4 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent hover:border-current`}
+                      className={`rounded-xl p-4 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent hover:border-current`}
                       onClick={() => handleToolClick(tool.id)}
                     >
                       <div className="flex items-start gap-4">
@@ -736,8 +736,8 @@ export function ProjectTools({
                           {tool.icon}
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-lg">{tool.name}</h4>
-                          <p className="text-sm opacity-80 mt-1 line-clamp-3">
+                          <h4 className="text-xl font-medium text-lg">{tool.name}</h4>
+                          <p className="text-md opacity-80 mt-1 line-clamp-3">
                             {tool.description}
                           </p>
                         </div>
