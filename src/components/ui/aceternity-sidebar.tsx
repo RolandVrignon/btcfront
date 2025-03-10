@@ -31,15 +31,15 @@ const itemVariants = {
   expanded: {
     opacity: 1,
     display: "block",
-    transition: { duration: 0.2 }
+    transition: { duration: 0.2 },
   },
   collapsed: {
     opacity: 0,
     display: "none",
     transition: {
       opacity: { duration: 0.1 },
-      display: { delay: 0.2 }
-    }
+      display: { delay: 0.2 },
+    },
   },
 };
 
@@ -47,11 +47,11 @@ const itemVariants = {
 const iconVariants = {
   expanded: {
     opacity: 1,
-    transition: { duration: 0.2 }
+    transition: { duration: 0.2 },
   },
   collapsed: {
     opacity: 0,
-    transition: { duration: 0.1 }
+    transition: { duration: 0.1 },
   },
 };
 
@@ -59,16 +59,22 @@ const iconVariants = {
 const overlayVariants = {
   expanded: {
     opacity: 0,
-    transition: { duration: 0.1 }
+    transition: { duration: 0.1 },
   },
   collapsed: {
     opacity: 1,
-    transition: { duration: 0.2, delay: 0.1 }
-  }
+    transition: { duration: 0.2, delay: 0.1 },
+  },
 };
 
 // Composant réutilisable pour le texte avec effet de marquee
-function MarqueeText({ children, className }: { children: React.ReactNode; className?: string }) {
+function MarqueeText({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   const [isHovered, setIsHovered] = useState(false);
   const textRef = useRef<HTMLSpanElement>(null);
   const [shouldMarquee, setShouldMarquee] = useState(false);
@@ -105,7 +111,9 @@ function MarqueeText({ children, className }: { children: React.ReactNode; class
       <span className="mx-4">•</span>
       {children}
     </>
-  ) : children;
+  ) : (
+    children
+  );
 
   return (
     <motion.div
@@ -118,8 +126,10 @@ function MarqueeText({ children, className }: { children: React.ReactNode; class
         ref={textRef}
         className={cn(
           "inline-block w-full transition-all duration-200 leading-none flex items-center",
-          shouldMarquee ? "animate-marquee" : "truncate group-hover:translate-x-1 pt-1",
-          className
+          shouldMarquee
+            ? "animate-marquee"
+            : "truncate group-hover:translate-x-1 pt-1",
+          className,
         )}
       >
         {content}
@@ -128,7 +138,10 @@ function MarqueeText({ children, className }: { children: React.ReactNode; class
   );
 }
 
-export function AceternitySidebar({ className, userId }: AceternitySidebarProps) {
+export function AceternitySidebar({
+  className,
+  userId,
+}: AceternitySidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -172,7 +185,7 @@ export function AceternitySidebar({ className, userId }: AceternitySidebarProps)
       <motion.div
         className={cn(
           "flex flex-col h-full bg-background z-10 overflow-hidden",
-          className
+          className,
         )}
         initial="collapsed"
         animate={isExpanded ? "expanded" : "collapsed"}
@@ -195,9 +208,7 @@ export function AceternitySidebar({ className, userId }: AceternitySidebarProps)
                 >
                   <Plus className="h-5 w-5" />
                 </motion.div>
-                <div className="text-md whitespace-nowrap">
-                  Nouveau projet
-                </div>
+                <div className="text-md whitespace-nowrap">Nouveau projet</div>
                 {/* Overlay pour centrer l'icône quand la sidebar est fermée */}
                 <motion.div
                   className="absolute inset-0 flex items-center rounded-3xl justify-center bg-stone-900 pointer-events-none"
@@ -223,16 +234,14 @@ export function AceternitySidebar({ className, userId }: AceternitySidebarProps)
               {isLoading ? (
                 <ScrollArea className="h-[100%]">
                   <div className="flex flex-col h-[300px] gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
-                      (index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 rounded-lg"
-                        >
-                          <Skeleton className="h-8 w-full" />
-                        </div>
-                      ),
-                    )}
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-lg"
+                      >
+                        <Skeleton className="h-8 w-full" />
+                      </div>
+                    ))}
                   </div>
                 </ScrollArea>
               ) : projects.length > 0 ? (
@@ -242,7 +251,9 @@ export function AceternitySidebar({ className, userId }: AceternitySidebarProps)
                       <SidebarProjectItem
                         key={project.id}
                         project={project}
-                        isActive={pathname === `/dashboard/project/${project.id}`}
+                        isActive={
+                          pathname === `/dashboard/project/${project.id}`
+                        }
                       />
                     ))}
                   </div>
@@ -269,7 +280,10 @@ export function AceternitySidebar({ className, userId }: AceternitySidebarProps)
               >
                 <LogOut className="h-5 w-5" />
               </motion.div>
-              <motion.div className="text-md whitespace-nowrap" variants={itemVariants}>
+              <motion.div
+                className="text-md whitespace-nowrap"
+                variants={itemVariants}
+              >
                 Déconnexion
               </motion.div>
               {/* Overlay pour centrer l'icône quand la sidebar est fermée */}
@@ -300,7 +314,7 @@ function SidebarProjectItem({ project, isActive }: SidebarProjectItemProps) {
         "flex items-center h-10 gap-2 py-2 px-2 rounded-md text-md transition-colors group relative",
         isActive
           ? "bg-accent text-accent-foreground"
-          : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground",
       )}
     >
       <motion.div
@@ -309,16 +323,12 @@ function SidebarProjectItem({ project, isActive }: SidebarProjectItemProps) {
       >
         <FileText className="h-5 w-5 flex-shrink-0" />
       </motion.div>
-      <MarqueeText>
-        {project.name || "Sans nom"}
-      </MarqueeText>
+      <MarqueeText>{project.name || "Sans nom"}</MarqueeText>
       {/* Overlay pour centrer l'icône quand la sidebar est fermée */}
       <motion.div
         className={cn(
           "absolute inset-0 flex items-center justify-center rounded-md pointer-events-none",
-          isActive
-            ? "bg-accent"
-            : "bg-transparent"
+          isActive ? "bg-accent" : "bg-transparent",
         )}
         variants={overlayVariants}
       >

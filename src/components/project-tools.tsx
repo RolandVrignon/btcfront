@@ -736,7 +736,9 @@ export function ProjectTools({
                           {tool.icon}
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-xl font-medium text-lg">{tool.name}</h4>
+                          <h4 className="text-xl font-medium text-lg">
+                            {tool.name}
+                          </h4>
                           <p className="text-md opacity-80 mt-1 line-clamp-3">
                             {tool.description}
                           </p>

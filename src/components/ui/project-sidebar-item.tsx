@@ -11,7 +11,10 @@ interface ProjectSidebarItemProps {
   isActive: boolean;
 }
 
-export function ProjectSidebarItem({ project, isActive }: ProjectSidebarItemProps) {
+export function ProjectSidebarItem({
+  project,
+  isActive,
+}: ProjectSidebarItemProps) {
   const [isHovered, setIsHovered] = React.useState(false);
 
   // Calculer la durée de l'animation en fonction de la longueur du nom du projet
@@ -37,7 +40,7 @@ export function ProjectSidebarItem({ project, isActive }: ProjectSidebarItemProp
         <div
           className={cn(
             "truncate transition-opacity duration-200",
-            isHovered ? "opacity-0" : "opacity-100"
+            isHovered ? "opacity-0" : "opacity-100",
           )}
         >
           {project.name || "Sans nom"}
@@ -47,10 +50,10 @@ export function ProjectSidebarItem({ project, isActive }: ProjectSidebarItemProp
         <div
           className={cn(
             "absolute top-0 left-0 w-full whitespace-nowrap transition-opacity duration-200",
-            isHovered ? "opacity-100 animate-marquee-scroll" : "opacity-0"
+            isHovered ? "opacity-100 animate-marquee-scroll" : "opacity-0",
           )}
           style={{
-            animationDuration: animationDuration
+            animationDuration: animationDuration,
           }}
         >
           {project.name || "Sans nom"}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
