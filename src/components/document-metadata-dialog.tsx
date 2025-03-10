@@ -47,6 +47,7 @@ export function DocumentMetadataDialog({
     console.log("fileName:", fileName);
     console.log("projectId:", projectId);
     console.log("isFileReady:", isFileReady);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

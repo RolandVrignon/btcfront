@@ -33,7 +33,7 @@ RUN pnpm prisma generate
 COPY . .
 
 # Construction de l'application en ignorant les erreurs de linting et de type
-RUN SKIP_TYPE_CHECK=true pnpm exec next build --no-lint
+RUN SKIP_TYPE_CHECK=true pnpm exec next build
 
 # Étape 2: Image de production
 FROM node:20-alpine AS runner
@@ -52,7 +52,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copie des fichiers nécessaires depuis l'étape de build
-COPY --from=builder /app/next.config.mjs ./
+COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules

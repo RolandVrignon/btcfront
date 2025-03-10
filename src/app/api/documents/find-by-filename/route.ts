@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       try {
         errorData = JSON.parse(errorText);
         console.error("Données d'erreur parsées:", errorData);
-      } catch (e) {
+      } catch {
         console.error("Impossible de parser la réponse d'erreur comme JSON");
         errorData = { message: errorText };
       }

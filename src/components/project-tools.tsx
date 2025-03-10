@@ -9,6 +9,9 @@ import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/selected-files-list";
 import { UploadingFile } from "@/src/types/project";
 import { Skeleton } from "@/src/components/ui/skeleton";
+import { ProjectMapDialog } from "@/src/components/project-map-dialog";
+import { Button } from "@/src/components/ui/button";
+import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 
 import {
   FileText,
@@ -655,19 +658,35 @@ export function ProjectTools({
       <div className="mt-[-35vh] pb-[80vh] inset-0 m-auto w-full px-40">
         <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-white">
           {!isLoading ? (
-            <div className="rounded-[20px] p-6 bg-black/5">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center">
+            <div className="flex flex-col gap-4 justify-center items-center rounded-[20px] px-[15%] py-[4vh] bg-black/5 relative">
+              <h1 className="text-3xl font-bold">
                 {project
                   ? project.name || "Nouveau projet"
                   : "BTP Consultants IA"}
               </h1>
-              <h2 className="text-xl md:text-2xl font-medium text-center">
+              <h2 className="text-md font-light text-center">
                 {project && project.description ? (
                   <p>{project.description}</p>
                 ) : (
                   <p>Votre boîte à outils pour le Contrôle Technique</p>
                 )}
               </h2>
+
+              {/* Bouton de carte si le projet a une adresse */}
+              {project && project.ai_address && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute bottom-1 right-1 flex items-center rounded-full bg-white hover:bg-blue-50"
+                  onClick={() => {
+                    // Ouvrir la dialog de carte
+                    document.getElementById("map-dialog-trigger")?.click();
+                  }}
+                >
+                  <GoogleMapsIcon size={16} className="flex-shrink-0" />
+                  Ouvrir dans Maps
+                </Button>
+              )}
             </div>
           ) : (
             <Skeleton className="rounded-[20px] h-[20vh] w-full" />
@@ -731,6 +750,11 @@ export function ProjectTools({
             )}
         </div>
       </div>
+
+      {/* Afficher le bouton de carte uniquement si le projet existe et a une adresse */}
+      {!isLoading && project && project.ai_address && (
+        <ProjectMapDialog project={project} />
+      )}
     </div>
   );
 }

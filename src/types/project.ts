@@ -3,6 +3,11 @@ export type ProjectStatus = "en_cours" | "terminé" | "erreur";
 export interface Project {
   id: string;
   name?: string;
+  description?: string;
+  ai_address?: string;
+  ai_city?: string;
+  ai_zip_code?: string;
+  ai_country?: string;
   date?: string;
   status?: ProjectStatus;
   externalId?: string;

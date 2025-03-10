@@ -8,9 +8,10 @@ import { cn } from "@/src/lib/utils";
 import { Button } from "@/src/components/ui/button";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import { Project } from "@/src/types/project";
-import { Loader2, LogOut, FileText } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Image from "next/image";
 import { Skeleton } from "@/src/components/ui/skeleton";
+import { ProjectSidebarItem } from "@/src/components/ui/project-sidebar-item";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   userId?: string;
@@ -119,19 +120,11 @@ export function Sidebar({ className, userId, ...props }: SidebarProps) {
               <ScrollArea className="h-[100%]">
                 <div className="flex flex-col h-[300px] gap-2 px-2">
                   {projects.map((project) => (
-                    <Link
+                    <ProjectSidebarItem
                       key={project.id}
-                      href={`/dashboard/project/${project.id}`}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
-                        pathname === `/dashboard/project/${project.id}`
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent/50 hover:text-accent-foreground",
-                      )}
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span className="truncate">{project.name}</span>
-                    </Link>
+                      project={project}
+                      isActive={pathname === `/dashboard/project/${project.id}`}
+                    />
                   ))}
                 </div>
               </ScrollArea>

@@ -15,7 +15,8 @@ services:
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=TSnFU4uXXyPQW22fzcbKV
       - NEXT_PUBLIC_CTIA_API_KEY=sk_43898650f1c6d5c9998163a996376c8251b4ea93185576cd
-      - NEXT_PUBLIC_CTIA_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_CTIA_API_URL=https://aec-api.normx.co
+      - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyAAMLlD94EZFBBQLmBgM1gqA0obNrbF5ng
       - PRISMA_MIGRATE=false
     restart: unless-stopped
     healthcheck:

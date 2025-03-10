@@ -3,7 +3,7 @@ import { db } from "@/src/lib/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } },
+  { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
     const searchParams = request.nextUrl.searchParams;

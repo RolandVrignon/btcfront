@@ -4,7 +4,7 @@ import { authOptions } from "@/src/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { externalId: string } },
+  { params }: { params: Promise<{ externalId: string }> },
 ) {
   try {
     // Vérifier l'authentification
@@ -15,6 +15,7 @@ export async function GET(
 
     // Utiliser les paramètres de manière asynchrone
     const { externalId } = await params;
+
     if (!externalId) {
       return NextResponse.json(
         { error: "ID externe manquant" },
