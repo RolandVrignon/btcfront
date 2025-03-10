@@ -96,10 +96,25 @@ const config: Config = {
             height: "0",
           },
         },
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
+        "marquee-infinite": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
+        "marquee-scroll": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(calc(-100% - 1rem))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "marquee": "marquee 10s linear infinite",
+        "marquee-infinite": "marquee-infinite 15s linear infinite",
+        "marquee-scroll": "marquee-scroll 10s linear infinite",
       },
     },
   },
