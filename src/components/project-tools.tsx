@@ -8,6 +8,7 @@ import { Project } from "@/src/types/project";
 import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/selected-files-list";
 import { UploadingFile } from "@/src/types/project";
+import { Skeleton } from "@/src/components/ui/skeleton";
 
 import {
   FileText,
@@ -83,8 +84,11 @@ export function ProjectTools({
   ];
 
   useEffect(() => {
-    if (!project) return;
-    console.log("project:", project);
+    if (!project) {
+      console.log("project not existing:");
+    } else {
+      console.log("project:", project);
+    }
   }, [project]);
 
   useEffect(() => {
@@ -186,18 +190,17 @@ export function ProjectTools({
         }
       }
 
-      // 3. Mettre à jour l'état local
-      setProject({
+      const obj = {
         id: data.id,
         name: data.name || "Nouveau projet",
         date: new Date().toISOString(),
-      });
-
-      return {
-        id: data.id,
-        name: data.name || "Nouveau projet",
-        date: new Date().toISOString(),
+        externalId: data.id,
       };
+
+      // 3. Mettre à jour l'état local
+      setProject(obj);
+
+      return obj;
     } catch (error) {
       console.error("Erreur lors de la création du projet:", error);
       return null;
@@ -353,16 +356,19 @@ export function ProjectTools({
       return;
     }
 
-    let projectId = project?.id;
+    let projectId = project?.externalId;
 
-    if (!project?.id) {
+    if (!project) {
       console.log("Création d'un nouveau projet");
       const newProject = await createProject();
-      projectId = newProject?.id;
+      projectId = newProject?.externalId;
+      console.log("projectId:", projectId);
       if (!newProject) {
         console.error("Erreur lors de la création du projet");
         setIsUploading(false);
         return;
+      } else {
+        console.log("Projet créé avec succès:", newProject);
       }
     }
 
@@ -569,7 +575,7 @@ export function ProjectTools({
             ),
           );
 
-          monitorDocumentProcessing(
+          await monitorDocumentProcessing(
             documentId,
             projectId,
             setUploadingFiles,
@@ -591,6 +597,12 @@ export function ProjectTools({
         body: JSON.stringify(body),
       });
 
+      console.log("LETS GO HANDLE PROJECT UPDATE");
+
+      await handleProjectUpdate(projectId);
+
+      console.log("HANDLE PROJECT UPDATE THEORICALLY DONE");
+
       setIsUploading(false);
     } catch (error) {
       console.error("Erreur lors de la confirmation des uploads:", error);
@@ -602,6 +614,29 @@ export function ProjectTools({
     console.log(`Outil sélectionné: ${toolId}`);
     // Ici, vous pourriez naviguer vers une page spécifique à l'outil
     // ou ouvrir une modale, etc.
+  };
+
+  const handleProjectUpdate = async (projectId: string) => {
+    console.log("handleProjectUpdate");
+
+    console.log("url fetch:", `/api/projects/${projectId}`);
+
+    const res = await fetch(`/api/projects/${projectId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Erreur lors de la récupération du projet");
+      return;
+    }
+
+    const data = await res.json();
+    console.log("data:", data);
+
+    setProject(data);
   };
 
   return (
@@ -619,22 +654,24 @@ export function ProjectTools({
 
       <div className="mt-[-35vh] pb-[80vh] inset-0 m-auto w-full px-40">
         <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-white">
-          <div className="rounded-[20px] p-6 bg-black/5">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center">
-              {project
-                ? project.name || "Nouveau projet"
-                : "BTP Consultants IA"}
-            </h1>
-            <h2 className="text-xl md:text-2xl font-medium text-center">
-              {project
-                ? project.date
-                  ? `Projet créé le ${new Date(project.date).toLocaleDateString(
-                      "fr-FR",
-                    )}`
-                  : "Projet en cours de création..."
-                : "Votre boîte à outils pour le Contrôle Technique"}
-            </h2>
-          </div>
+          {!isLoading ? (
+            <div className="rounded-[20px] p-6 bg-black/5">
+              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center">
+                {project
+                  ? project.name || "Nouveau projet"
+                  : "BTP Consultants IA"}
+              </h1>
+              <h2 className="text-xl md:text-2xl font-medium text-center">
+                {project && project.description ? (
+                  <p>{project.description}</p>
+                ) : (
+                  <p>Votre boîte à outils pour le Contrôle Technique</p>
+                )}
+              </h2>
+            </div>
+          ) : (
+            <Skeleton className="rounded-[20px] h-[20vh] w-full" />
+          )}
 
           <div className="flex flex-col items-center gap-4">
             <FileUploadZone
@@ -719,7 +756,6 @@ const monitorDocumentProcessing = async (
       });
 
       if (!response.ok) {
-        console.error("Erreur lors de la surveillance du document");
         continue;
       }
 
@@ -757,8 +793,11 @@ const monitorDocumentProcessing = async (
         ),
       );
 
+      console.log("status:", data.status);
+
       if (terminalStatuses.includes(data.status)) {
         isProcessingComplete = true;
+        console.log("isProcessingComplete:", isProcessingComplete);
       }
     }
   } catch (error) {
