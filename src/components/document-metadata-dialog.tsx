@@ -9,9 +9,22 @@ import {
   DialogFooter,
 } from "@/src/components/ui/dialog";
 import { Button } from "@/src/components/ui/button";
-import { ExternalLink, Sparkles } from "lucide-react";
+import { ExternalLink as ExternalLinkIcon } from "lucide-react";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
+import {
+  AnimatedTabs,
+  AnimatedTabsContent,
+} from "@/src/components/ui/animated-tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/src/components/ui/table";
+
 interface DocumentMetadataDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,6 +52,7 @@ export function DocumentMetadataDialog({
   const [metadata, setMetadata] = useState<Metadata | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tabIndex, setTabIndex] = useState(0);
 
   const isFileReady = fileStatus?.toLowerCase() === "ready";
 
@@ -91,49 +105,98 @@ export function DocumentMetadataDialog({
     }
   };
 
+  // Fonction pour rendre un tableau à partir d'un array
+  const renderTable = (array: unknown[]) => {
+    if (array.length === 0) return <p>Aucune donnée</p>;
+
+    // Vérifier si les éléments sont des objets
+    const isObjectArray = array.every(item => typeof item === 'object' && item !== null);
+
+    if (isObjectArray) {
+      // Extraire les clés pour les en-têtes du tableau
+      const firstItem = array[0] as Record<string, unknown>;
+      const headers = Object.keys(firstItem);
+
+      return (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                {headers.map((header, index) => (
+                  <TableHead key={index} className="font-semibold">
+                    {header}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {array.map((item, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {headers.map((header, colIndex) => (
+                    <TableCell key={colIndex}>
+                      {renderMetadataValue((item as Record<string, unknown>)[header])}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      );
+    } else {
+      // Pour les tableaux de valeurs simples
+      return (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="font-semibold">Index</TableHead>
+                <TableHead className="font-semibold">Valeur</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {array.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>{index}</TableCell>
+                  <TableCell>{renderMetadataValue(item)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      );
+    }
+  };
+
   // Fonction pour rendre une valeur de métadonnée, quelle que soit sa structure
   const renderMetadataValue = (value: unknown): React.ReactNode => {
     if (value === null || value === undefined) {
       return "N/A";
     }
 
-    if (typeof value === "object") {
-      if (Array.isArray(value)) {
-        // Si c'est un tableau d'objets avec des propriétés key/value
-        if (
-          value.length > 0 &&
-          typeof value[0] === "object" &&
-          "key" in value[0] &&
-          "value" in value[0]
-        ) {
-          return (
-            <div className="space-y-2 border rounded-md p-4">
-              {value.map((item, index) => (
-                <div key={index} className="border-t pt-2">
-                  <div className="font-medium">{item.key}</div>
-                  <div className="pl-4">{renderMetadataValue(item.value)}</div>
-                </div>
-              ))}
-            </div>
-          );
-        }
+    // Si la valeur est un objet, on cherche s'il contient un tableau à afficher directement
+    if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+      // Vérifier si l'objet ne contient qu'un seul tableau ou si la plupart des propriétés sont des tableaux
+      const entries = Object.entries(value as Record<string, unknown>);
 
-        // Si c'est un tableau simple
-        return (
-          <div className="space-y-2 border rounded-md p-2">
-            {value.map((item, index) => (
-              <div key={index} className="border rounded-md p-2">
-                {renderMetadataValue(item)}
-              </div>
-            ))}
-          </div>
-        );
+      // Si l'objet n'a qu'une seule propriété et que c'est un tableau, on l'affiche directement
+      if (entries.length === 1 && Array.isArray(entries[0][1])) {
+        return renderTable(entries[0][1] as unknown[]);
       }
 
-      // Si c'est un objet
+      // Si l'objet a plusieurs propriétés, on cherche un tableau qui pourrait être le contenu principal
+      const values = Object.values(value as Record<string, unknown>);
+      for (const val of values) {
+        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+          // Si on trouve un tableau d'objets, c'est probablement notre tableau principal
+          return renderTable(val);
+        }
+      }
+
+      // Si on n'a pas trouvé de tableau principal, on affiche l'objet normalement
       return (
         <div className="space-y-1">
-          {Object.entries(value).map(([key, val]) => (
+          {entries.map(([key, val]) => (
             <div key={key} className="border rounded-md p-2">
               <span className="font-medium">{key}: </span>
               {renderMetadataValue(val)}
@@ -141,6 +204,11 @@ export function DocumentMetadataDialog({
           ))}
         </div>
       );
+    }
+
+    // Si la valeur est déjà un tableau, on l'affiche directement
+    if (Array.isArray(value)) {
+      return renderTable(value);
     }
 
     // Pour les valeurs simples
@@ -171,17 +239,37 @@ export function DocumentMetadataDialog({
     </div>
   );
 
+  // Préparer les données pour les onglets
+  const getTabsData = () => {
+    if (!metadata) return { tabs: [], panels: [] };
+
+    if (Array.isArray(metadata)) {
+      return {
+        tabs: metadata.map((item: MetadataItem) => item.key),
+        panels: metadata.map((item: MetadataItem) => item.value),
+      };
+    } else {
+      const keys = Object.keys(metadata);
+      return {
+        tabs: keys,
+        panels: keys.map((key) => (metadata as Record<string, unknown>)[key]),
+      };
+    }
+  };
+
+  const { tabs, panels } = getTabsData();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex flex-col h-[80vh] max-w-[700px] p-0 gap-0">
-        <DialogHeader className="p-6 border-b">
+      <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] p-6 overflow-hidden flex flex-col">
+        <DialogHeader className="pb-2 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold">
             {fileName}
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 overflow-y-auto p-6">
-          {!isFileReady || isLoading ? (
+        {!isFileReady || isLoading ? (
+          <ScrollArea className="flex-grow">
             <div>
               {!isFileReady && (
                 <div className="mb-6 text-amber-600 text-sm">
@@ -191,59 +279,44 @@ export function DocumentMetadataDialog({
               )}
               <MetadataSkeleton />
             </div>
-          ) : error ? (
-            <div className="flex items-center justify-center h-full text-red-500">
-              {error}
+          </ScrollArea>
+        ) : error ? (
+          <div className="flex items-center justify-center flex-grow text-red-500">
+            {error}
+          </div>
+        ) : (
+          <div className="flex-grow flex flex-col overflow-hidden">
+            <AnimatedTabs
+              tabs={tabs.map(tab => String(tab))}
+              defaultIndex={0}
+              onChange={setTabIndex}
+              className="mb-4 flex-shrink-0"
+            />
+            <div className="flex-grow overflow-hidden">
+              {panels.map((panel, index) => (
+                <AnimatedTabsContent
+                  key={index}
+                  value={tabIndex}
+                  index={index}
+                  className="h-full"
+                >
+                  <ScrollArea className="h-full">
+                    <div className="pr-4 pb-4">
+                      {renderMetadataValue(panel)}
+                    </div>
+                  </ScrollArea>
+                </AnimatedTabsContent>
+              ))}
             </div>
-          ) : (
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center">
-                <div className="flex mr-2">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                Métadonnées du document
-              </h3>
-              <div className="rounded-md">
-                {Array.isArray(metadata) ? (
-                  <div className="divide-y">
-                    {metadata.map((item, index) => (
-                      <div key={index} className="flex flex-col gap-2 p-3">
-                        <div className="font-semibold text-primary">
-                          {item.key}
-                        </div>
-                        <div className="mt-1">
-                          {renderMetadataValue(item.value)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border rounded-2xl">
-                    {metadata &&
-                      Object.entries(metadata).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className={`flex flex-col p-3 ${Object.keys(metadata).pop() !== key ? "border-b" : ""}`}
-                        >
-                          <div className="font-medium">{key}</div>
-                          <div className="text-gray-500">
-                            {renderMetadataValue(value)}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </ScrollArea>
+          </div>
+        )}
 
-        <DialogFooter className="p-6 border-t">
+        <DialogFooter className="mt-4 pt-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={onClose}>
             Fermer
           </Button>
           <Button onClick={onOpenDocument} disabled={isLoading && isFileReady}>
-            <ExternalLink className="mr-2 h-4 w-4" />
+            <ExternalLinkIcon className="mr-2 h-4 w-4" />
             Ouvrir le fichier
           </Button>
         </DialogFooter>
