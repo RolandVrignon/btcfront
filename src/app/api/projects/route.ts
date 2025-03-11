@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
       data: {
         externalId: data.externalId,
         name: data.name || "Nouveau projet",
-        description: data.description || null,
         status: data.status || "draft",
         visibility: data.visibility || "private",
         userId: session.user.id,

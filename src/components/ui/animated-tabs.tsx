@@ -44,7 +44,7 @@ export function AnimatedTabs({
 
   return (
     <div className={cn("relative border-b", className)}>
-      <div className="flex">
+      <div className="flex" role="tablist">
         {tabs.map((tab, index) => (
           <button
             key={index}
@@ -58,6 +58,7 @@ export function AnimatedTabs({
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground",
             )}
+            role="tab"
             aria-selected={activeTab === index}
           >
             {tab}

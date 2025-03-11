@@ -46,7 +46,6 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-auto">
         <ProjectTools
           project={null}
-          userId={userId}
           setProjects={setProjects}
           isUpperLoading={false}
         />

@@ -29,10 +29,13 @@ export default function DashboardPage() {
         const data = await response.json();
 
         // Log projects with their createdAt dates for verification
-        console.log("Projects sorted by createdAt:", data.map((project: { name: string; createdAt: string }) => ({
-          name: project.name,
-          createdAt: project.createdAt
-        })));
+        console.log(
+          "Projects sorted by createdAt:",
+          data.map((project: { name: string; createdAt: string }) => ({
+            name: project.name,
+            createdAt: project.createdAt,
+          })),
+        );
 
         setProjects(data);
         setIsProjectsLoading(false);
@@ -62,6 +65,7 @@ export default function DashboardPage() {
 
     fetchProjects();
     fetchProject();
+  // eslint-disable-next-line
   }, []);
 
   if (!userId) return null;
@@ -76,7 +80,6 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-auto">
         <ProjectTools
           project={project}
-          userId={userId}
           setProjects={setProjects}
           isUpperLoading={isProjectLoading}
         />

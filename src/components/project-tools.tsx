@@ -26,9 +26,8 @@ import {
 
 interface ProjectToolsProps {
   project: Project | null;
-  userId: string;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>> | null;
-  isUpperLoading: boolean | null;
+  isUpperLoading: boolean;
 }
 interface Tool {
   id: string;
@@ -40,7 +39,6 @@ interface Tool {
 
 export function ProjectTools({
   project: initialProject,
-  userId,
   setProjects,
   isUpperLoading,
 }: ProjectToolsProps) {

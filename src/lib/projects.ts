@@ -6,20 +6,20 @@ const mockProjects: Project[] = [
     id: "1",
     name: "Résidence Les Oliviers",
     date: "2023-11-15",
-    status: "en_cours",
+    status: "COMPLETED",
   },
-  { id: "2", name: "Tour Horizon", date: "2023-10-22", status: "terminé" },
+  { id: "2", name: "Tour Horizon", date: "2023-10-22", status: "COMPLETED" },
   {
     id: "3",
     name: "Centre Commercial Atlantis",
     date: "2023-09-05",
-    status: "erreur",
+    status: "COMPLETED",
   },
   {
     id: "4",
     name: "Hôpital Saint-Michel",
     date: "2023-08-18",
-    status: "terminé",
+    status: "COMPLETED",
   },
 ];
 
