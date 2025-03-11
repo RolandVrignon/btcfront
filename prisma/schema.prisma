@@ -55,25 +55,32 @@ model VerificationToken {
 }
 
 enum ProjectVisibility {
-  private
-  public
+  PRIVATE
+  PUBLIC
 }
 
 enum ProjectStatus {
-  draft
-  in_progress
-  ready
+  DRAFT
+  PROGRESS
+  PENDING
+  COMPLETED
+  ERROR
 }
 
 model Project {
-  id          String            @id @default(cuid())
-  externalId  String            @unique
-  name        String?
-  description String?
-  visibility  ProjectVisibility @default(private)
-  status      ProjectStatus     @default(draft)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String            @id @default(cuid())
+  externalId    String            @unique
+  name          String?
+  short_summary String?
+  long_summary  String?
+  ai_address    String?
+  ai_city       String?
+  ai_zip_code   String?
+  ai_country    String?
+  visibility    ProjectVisibility @default(PRIVATE)
+  status        ProjectStatus     @default(DRAFT)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

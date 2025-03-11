@@ -10,8 +10,10 @@ import { SelectedFilesList } from "@/src/components/selected-files-list";
 import { UploadingFile } from "@/src/types/project";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { ProjectMapDialog } from "@/src/components/project-map-dialog";
+import { ProjectDetailsDialog } from "@/src/components/project-details-dialog";
 import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
+import { Info } from "lucide-react";
 
 import {
   FileText,
@@ -124,7 +126,6 @@ export function ProjectTools({
         }
 
         const documentsData = await documentsResponse.json();
-        console.log("documentsData:", documentsData);
 
         // 3. Transformer les documents en format UploadingFile
         const files = documentsData.map((doc: Record<string, unknown>) => ({
@@ -167,7 +168,6 @@ export function ProjectTools({
       }
 
       const data = await response.json();
-      console.log("Projet créé dans l'API externe:", data);
 
       if (userId) {
         const dbResponse = await fetch("/api/projects", {
@@ -198,6 +198,7 @@ export function ProjectTools({
         name: data.name || "Nouveau projet",
         date: new Date().toISOString(),
         externalId: data.id,
+        status: data.status,
       };
 
       // 3. Mettre à jour l'état local
@@ -217,10 +218,6 @@ export function ProjectTools({
     fileId: string,
   ): Promise<boolean> => {
     try {
-      console.log("Début de l'upload vers S3 via proxy");
-      console.log("Type de fichier:", file.type);
-      console.log("Taille du fichier:", file.size, "bytes");
-
       // Créer un XMLHttpRequest pour pouvoir suivre la progression
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -233,7 +230,6 @@ export function ProjectTools({
             );
 
             // Mettre à jour la progression dans l'état
-            console.log("1️⃣ setUploadingFiles - Mise à jour de la progression");
             setUploadingFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
@@ -261,13 +257,6 @@ export function ProjectTools({
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
-              const result = JSON.parse(xhr.responseText);
-              console.log("Upload réussi:", result.message);
-
-              // Mettre à jour le statut à "pending" une fois l'upload terminé
-              console.log(
-                "2️⃣ setUploadingFiles - Upload terminé, statut processing",
-              );
               setUploadingFiles((prev) =>
                 prev.map((f) =>
                   f.id === fileId
@@ -296,7 +285,6 @@ export function ProjectTools({
             }
 
             // Mettre à jour le statut en cas d'erreur
-            console.log("3️⃣ setUploadingFiles - Erreur HTTP");
             setUploadingFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
@@ -317,7 +305,6 @@ export function ProjectTools({
           console.error("Erreur réseau lors de l'upload");
 
           // Mettre à jour le statut en cas d'erreur réseau
-          console.log("4️⃣ setUploadingFiles - Erreur réseau");
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.id === fileId
@@ -362,10 +349,9 @@ export function ProjectTools({
     let projectId = project?.externalId;
 
     if (!project) {
-      console.log("Création d'un nouveau projet");
       const newProject = await createProject();
       projectId = newProject?.externalId;
-      console.log("projectId:", projectId);
+
       if (!newProject) {
         console.error("Erreur lors de la création du projet");
         setIsUploading(false);
@@ -391,21 +377,16 @@ export function ProjectTools({
       setSelectedFiles([]);
 
       const uploadPromises = uploadingFilesArray.map(async (uploadingFile) => {
-        console.log("uploadingFile:", uploadingFile);
         try {
           // Obtenir l'URL présignée
           if (!uploadingFile.file) {
             throw new Error("Fichier manquant");
           }
 
-          console.log("projectId:", projectId);
-
           const presignedUrl = await getPresignedUrl(
             uploadingFile.file,
             projectId,
           );
-
-          console.log("presignedUrl:", presignedUrl);
 
           if (!presignedUrl) {
             throw new Error("Impossible d'obtenir l'URL présignée");
@@ -435,8 +416,6 @@ export function ProjectTools({
             throw new Error("Échec de l'upload");
           }
 
-          console.log("uploadSuccess:", uploadSuccess);
-
           return {
             fileName: uploadingFile.file.name,
             fileId: uploadingFile.id,
@@ -448,7 +427,6 @@ export function ProjectTools({
           );
 
           // Mettre à jour le statut en cas d'erreur
-          console.log("7️⃣ setUploadingFiles - Erreur lors de l'upload");
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.id === uploadingFile.id
@@ -468,16 +446,12 @@ export function ProjectTools({
       // Attendre que tous les uploads soient terminés
       const results = await Promise.all(uploadPromises);
 
-      console.log("results:", results);
-
       const successfulUploads = results.filter(Boolean) as {
         fileName: string;
         fileId: string;
       }[];
 
       if (successfulUploads.length > 0) {
-        console.log("successfulUploads:", successfulUploads);
-        console.log("Start confirmation of multiple uploads");
         await confirmMultipleUploadsToBackend(
           projectId,
           successfulUploads.map((u) => u.fileName),
@@ -510,7 +484,6 @@ export function ProjectTools({
       }
 
       const data = await response.json();
-      console.log(`Document trouvé pour ${fileName}:`, data);
       return data.id || null;
     } catch (error) {
       console.error(
@@ -521,7 +494,93 @@ export function ProjectTools({
     }
   };
 
-  // Modifier la fonction confirmMultipleUploadsToBackend
+  // Modifier la fonction monitorProjectStatus pour utiliser un mécanisme de timeout basé sur le temps plutôt que sur le nombre de tentatives
+  const monitorProjectStatus = async (
+    projectId: string,
+  ): Promise<Project | null> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let isProcessingComplete = false;
+        const startTime = Date.now();
+        const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
+        console.log("🔴 Début du monitoring du projet:", projectId);
+
+        while (!isProcessingComplete && isUploadingRef.current) {
+          // Vérifier si le timeout est atteint
+          if (Date.now() - startTime > timeoutDuration) {
+            console.warn(
+              `Timeout atteint pour le projet ${projectId} après 10 minutes`,
+            );
+            reject(
+              new Error(
+                "Timeout: Le monitoring du projet a dépassé 10 minutes",
+              ),
+            );
+            return;
+          }
+
+          // Attendre un peu entre chaque requête
+          await new Promise((timeoutResolve) =>
+            setTimeout(timeoutResolve, 2000),
+          );
+
+          // Récupérer le statut du projet
+          const response = await fetch(`/api/projects/${projectId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            console.error("Erreur lors de la récupération du statut du projet");
+            continue;
+          }
+
+          const projectData = await response.json();
+          console.log(
+            `🔴 Statut actuel du projet (temps écoulé: ${Math.floor((Date.now() - startTime) / 1000)}s):`,
+            projectData.status,
+          );
+
+          // Vérifier si le traitement est terminé
+          if (
+            projectData.status === "COMPLETED" ||
+            projectData.status === "ERROR"
+          ) {
+            console.log(
+              "🔴 Traitement du projet terminé avec statut:",
+              projectData.status,
+            );
+            isProcessingComplete = true;
+
+            // Résoudre la promesse avec les données du projet
+            resolve(projectData);
+            setProject(projectData);
+            return;
+          }
+        }
+
+        // Ce code est atteint seulement si on sort de la boucle while sans avoir résolu la promesse
+        if (!isProcessingComplete) {
+          if (!isUploadingRef.current) {
+            console.log("Monitoring du projet interrompu par l'utilisateur");
+            reject(new Error("Monitoring du projet interrompu"));
+          } else {
+            console.log("Fin du monitoring du projet sans résolution");
+            reject(
+              new Error("Monitoring du projet terminé sans résultat définitif"),
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du monitoring du projet:", error);
+        reject(error);
+      }
+    });
+  };
+
+  // Modifier la fonction confirmMultipleUploadsToBackend pour utiliser la promesse
   const confirmMultipleUploadsToBackend = async (
     projectId: string | undefined,
     fileNames: string[],
@@ -553,7 +612,7 @@ export function ProjectTools({
         }),
       );
 
-      // Récupérer l'id pour chaque document via l'api externe
+      // Créer les promesses pour le traitement des documents
       const documentPromises = fileNames.map(async (fileName) => {
         let documentId: string | null = null;
         while (!documentId) {
@@ -589,9 +648,71 @@ export function ProjectTools({
         return { fileName, documentId };
       });
 
-      // Attendre que toutes les requêtes soient terminées
-      Promise.all(documentPromises);
+      // Fonction pour gérer tout le processus lié au projet
+      const projectPromise = async () => {
+        try {
+          console.log("🔴 projectPromise - projectId:", projectId);
 
+          // Vérifier si c'est le premier upload en récupérant l'état actuel du projet
+          const projectResponse = await fetch(`/api/projects/${projectId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          console.log("🔴 projectResponse:", projectResponse);
+
+          if (!projectResponse) {
+            console.error("Erreur lors de la récupération du projet");
+            return null;
+          }
+
+          const currentProject = await projectResponse.json();
+          console.log("🔴 currentProject:", currentProject);
+          const isFirstUpload =
+            !currentProject?.short_summary ||
+            currentProject.short_summary === "";
+          console.log("🔴 isFirstUpload:", isFirstUpload);
+
+          // Si c'est le premier upload, démarrer le monitoring du projet
+          if (isFirstUpload) {
+            console.log(
+              "🔴 Premier upload détecté, démarrage du monitoring du projet",
+            );
+            try {
+              // Monitorer le projet jusqu'à ce qu'il soit terminé
+              const finalProject = await monitorProjectStatus(projectId);
+              console.log(
+                "🔴 Monitoring du projet terminé avec succès:",
+                finalProject,
+              );
+              return finalProject;
+            } catch (error) {
+              console.error("Erreur lors du monitoring du projet:", error);
+              // En cas d'erreur, essayer de récupérer l'état actuel du projet
+              return await handleProjectUpdate(projectId);
+            }
+          } else {
+            // Si ce n'est pas le premier upload, simplement mettre à jour l'état du projet
+            console.log(
+              "Ce n'est pas le premier upload, mise à jour simple du projet",
+            );
+            const updatedProject = await handleProjectUpdate(projectId);
+            setIsUploading(false);
+            return updatedProject;
+          }
+        } catch (error) {
+          console.error("Erreur dans le processus de projet:", error);
+          setIsUploading(false);
+          return null;
+        }
+      };
+
+      // Attendre que les deux processus soient terminés en parallèle
+      Promise.all([Promise.all(documentPromises), projectPromise()]);
+
+      // Confirmer les uploads à l'API
       await fetch("/api/documents/confirm-multiple-uploads", {
         method: "POST",
         headers: {
@@ -599,16 +720,9 @@ export function ProjectTools({
         },
         body: JSON.stringify(body),
       });
-
-      console.log("LETS GO HANDLE PROJECT UPDATE");
-
-      await handleProjectUpdate(projectId);
-
-      console.log("HANDLE PROJECT UPDATE THEORICALLY DONE");
-
-      setIsUploading(false);
     } catch (error) {
       console.error("Erreur lors de la confirmation des uploads:", error);
+      setIsUploading(false);
       return null;
     }
   };
@@ -624,22 +738,28 @@ export function ProjectTools({
 
     console.log("url fetch:", `/api/projects/${projectId}`);
 
-    const res = await fetch(`/api/projects/${projectId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (!res.ok) {
-      console.error("Erreur lors de la récupération du projet");
-      return;
+      if (!res.ok) {
+        console.error("Erreur lors de la récupération du projet");
+        return null;
+      }
+
+      const data = await res.json();
+      console.log("data:", data);
+
+      setProject(data);
+      return data;
+    } catch (error) {
+      console.error("Erreur lors de la récupération du projet:", error);
+      return null;
     }
-
-    const data = await res.json();
-    console.log("data:", data);
-
-    setProject(data);
   };
 
   return (
@@ -655,38 +775,91 @@ export function ProjectTools({
         />
       </div>
 
-      <div className="mt-[-35vh] pb-[30vh] inset-0 m-auto w-full px-40">
+      <div className="mt-[-35vh] pb-[30vh] inset-0 m-auto w-full px-40 max-w-[1200px]">
         <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-gray-50">
           {!isLoading ? (
             <div className="flex flex-col gap-4 justify-center items-center rounded-[20px] px-[15%] py-[4vh] bg-black/5 relative">
-              <h1 className="text-3xl font-bold">
-                {project
-                  ? project.name || "Nouveau projet"
-                  : "BTP Consultants IA"}
-              </h1>
-              <h2 className="text-md font-light text-center">
-                {project && project.description ? (
-                  <p>{project.description}</p>
-                ) : (
-                  <p>Votre boîte à outils pour le Contrôle Technique</p>
-                )}
-              </h2>
-
-              {/* Bouton de carte si le projet a une adresse */}
-              {project && project.ai_address && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="absolute bottom-1 right-1 flex items-center rounded-full bg-white hover:bg-blue-50"
-                  onClick={() => {
-                    // Ouvrir la dialog de carte
-                    document.getElementById("map-dialog-trigger")?.click();
-                  }}
-                >
-                  <GoogleMapsIcon size={16} className="flex-shrink-0" />
-                  Ouvrir dans Maps
-                </Button>
+              {!project ? (
+                // Cas 1: Pas de projet - Appel à l'action
+                <>
+                  <h1 className="text-3xl font-bold text-center">
+                    BTP Consultants IA
+                  </h1>
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <h2 className="text-md font-light">
+                      Votre boîte à outils pour le Contrôle Technique
+                    </h2>
+                    <p className="text-blue-600 mt-2 max-w-md">
+                      Déposez vos premiers fichiers pour une analyse métier
+                      complète.
+                    </p>
+                  </div>
+                </>
+              ) : project.status === "COMPLETED" ? (
+                // Cas 2: Projet terminé - Affichage du titre et du résumé
+                <div className="pb-10 flex flex-col">
+                  <h1 className="text-3xl font-bold">
+                    {project.name || "Nouveau projet"}
+                  </h1>
+                  <h2 className="text-md font-light">
+                    {project.short_summary}
+                  </h2>
+                </div>
+              ) : project.status === "ERROR" ? (
+                // Cas 3: Projet en erreur - Message d'erreur
+                <>
+                  <h1 className="text-3xl font-bold text-red-600">
+                    {project.name || "Nouveau projet"}
+                  </h1>
+                  <h2 className="text-md font-light text-center text-red-600">
+                    Une erreur est survenue lors du traitement de ce projet.
+                    Veuillez réessayer ou contacter le support.
+                  </h2>
+                </>
+              ) : (
+                // Cas 4: Projet en cours (DRAFT, PENDING, PROCESSING) - Skeleton
+                <>
+                  <div className="flex flex-col items-center gap-4 w-full">
+                    <Skeleton className="h-15 w-3/4 rounded-lg animate-pulse" />
+                    <Skeleton className="h-10 w-full rounded-lg animate-pulse" />
+                  </div>
+                </>
               )}
+
+              {/* Boutons d'action en bas à droite */}
+              <div className="absolute bottom-1 right-1 flex items-center gap-2">
+                {project && project.long_summary && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center rounded-full bg-white hover:bg-blue-50"
+                    onClick={() => {
+                      // Ouvrir la dialog de détails
+                      document
+                        .getElementById("details-dialog-trigger")
+                        ?.click();
+                    }}
+                  >
+                    <Info className="h-4 w-4 mr-1" />
+                    En savoir plus
+                  </Button>
+                )}
+
+                {project && project.ai_address && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center rounded-full bg-white hover:bg-blue-50"
+                    onClick={() => {
+                      // Ouvrir la dialog de carte
+                      document.getElementById("map-dialog-trigger")?.click();
+                    }}
+                  >
+                    <GoogleMapsIcon size={16} className="flex-shrink-0 mr-1" />
+                    Ouvrir dans Maps
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <Skeleton className="rounded-[20px] h-[20vh] w-full" />
@@ -757,6 +930,11 @@ export function ProjectTools({
       {!isLoading && project && project.ai_address && (
         <ProjectMapDialog project={project} />
       )}
+
+      {/* Afficher la modale de détails du projet */}
+      {!isLoading && project && project.long_summary && (
+        <ProjectDetailsDialog project={project} />
+      )}
     </div>
   );
 }
@@ -769,8 +947,29 @@ const monitorDocumentProcessing = async (
 ) => {
   try {
     let isProcessingComplete = false;
+    const startTime = Date.now();
+    const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
 
     while (!isProcessingComplete && isUploadingRef.current) {
+      // Vérifier si le timeout est atteint
+      if (Date.now() - startTime > timeoutDuration) {
+        console.warn(
+          `Timeout atteint pour le document ${documentId} après 10 minutes`,
+        );
+        setUploadingFiles((prev) =>
+          prev.map((f) =>
+            f.id === documentId
+              ? {
+                  ...f,
+                  status: "error" as const,
+                  processingMessage: "Timeout après 10 minutes de traitement",
+                }
+              : f,
+          ),
+        );
+        return; // Sortir de la fonction
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const response = await fetch("/api/documents/monitor", {
@@ -786,7 +985,6 @@ const monitorDocumentProcessing = async (
       }
 
       const data = await response.json();
-      console.log("data:", data);
 
       const terminalStatuses = ["READY", "END", "ERROR"];
 
@@ -802,39 +1000,31 @@ const monitorDocumentProcessing = async (
 
       const mappedStatus = statusMap[data.status as keyof typeof statusMap];
 
-      console.log("mappedStatus:", mappedStatus);
-
-      console.log(
-        "1️⃣1️⃣ setUploadingFiles - Mise à jour du statut pendant le monitoring",
-      );
-      console.log("mappedStatus:", mappedStatus);
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.id === documentId
             ? {
                 ...f,
                 status: mappedStatus,
+                processingMessage: data.processingMessage || undefined,
               }
             : f,
         ),
       );
 
-      console.log("status:", data.status);
-
       if (terminalStatuses.includes(data.status)) {
         isProcessingComplete = true;
-        console.log("isProcessingComplete:", isProcessingComplete);
       }
     }
   } catch (error) {
     console.error("Erreur lors du monitoring du document:", error);
-    console.log("1️⃣2️⃣ setUploadingFiles - Erreur pendant le monitoring");
     setUploadingFiles((prev) =>
       prev.map((f) =>
         f.id === documentId
           ? {
               ...f,
               status: "error" as const,
+              processingMessage: "Erreur lors du monitoring du document",
             }
           : f,
       ),

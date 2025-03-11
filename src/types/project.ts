@@ -1,9 +1,15 @@
-export type ProjectStatus = "en_cours" | "terminé" | "erreur";
+export type ProjectStatus =
+  | "DRAFT"
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "ERROR";
 
 export interface Project {
   id: string;
   name?: string;
-  description?: string;
+  short_summary?: string;
+  long_summary?: string;
   ai_address?: string;
   ai_city?: string;
   ai_zip_code?: string;

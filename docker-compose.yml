@@ -11,7 +11,7 @@ services:
     container_name: btpc-front
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:TSnFU4uXXyPQW22fzcbKV@roland-aec-agents-front.c96wswwy05s8.eu-west-1.rds.amazonaws.com:5432/aec-front?schema=public
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/btpc?schema=public
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=TSnFU4uXXyPQW22fzcbKV
       - NEXT_PUBLIC_CTIA_API_KEY=sk_43898650f1c6d5c9998163a996376c8251b4ea93185576cd
@@ -25,3 +25,26 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  postgres:
+    image: postgres:17.3
+    container_name: btpc-postgres-front
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=btpc
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    driver: local

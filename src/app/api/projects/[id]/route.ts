@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { Project } from "@/src/types/project";
+import prisma from "@/src/lib/prisma";
 
 export async function GET(
   request: NextRequest,
@@ -50,32 +51,65 @@ export async function GET(
     }
 
     const externalProjectData = await response.json();
-    console.log("externalProjectData:", externalProjectData);
 
     // Filtrer les données pour ne retourner que les champs correspondant au type Project
     const filteredProjectData: Project = {
       id: externalProjectData?.id,
       name: externalProjectData?.name,
-      description: externalProjectData?.description,
-      ai_address: externalProjectData?.address,
-      ai_city: externalProjectData?.city,
-      ai_zip_code: externalProjectData?.zipCode,
-      ai_country: externalProjectData?.country,
+      short_summary: externalProjectData?.short_summary,
+      long_summary: externalProjectData?.long_summary,
+      ai_address: externalProjectData?.ai_address,
+      ai_city: externalProjectData?.ai_city,
+      ai_zip_code: externalProjectData?.ai_zip_code,
+      ai_country: externalProjectData?.ai_country,
+      status: externalProjectData?.status,
     };
 
-    console.log("filteredProjectData:", filteredProjectData);
+    if (
+      filteredProjectData.status === "COMPLETED" ||
+      filteredProjectData.status === "ERROR"
+    ) {
+      try {
+        // Utiliser upsert pour créer ou mettre à jour le projet
+        await prisma.project.upsert({
+          where: {
+            externalId: id,
+          },
+          update: {
+            short_summary: filteredProjectData.short_summary,
+            long_summary: filteredProjectData.long_summary,
+            name: filteredProjectData.name,
+            ai_address: filteredProjectData.ai_address,
+            ai_city: filteredProjectData.ai_city,
+            ai_zip_code: filteredProjectData.ai_zip_code,
+            ai_country: filteredProjectData.ai_country,
+            status: filteredProjectData.status,
+          },
+          create: {
+            externalId: id,
+            short_summary: filteredProjectData.short_summary,
+            long_summary: filteredProjectData.long_summary,
+            name: filteredProjectData.name,
+            ai_address: filteredProjectData.ai_address,
+            ai_city: filteredProjectData.ai_city,
+            ai_zip_code: filteredProjectData.ai_zip_code,
+            ai_country: filteredProjectData.ai_country,
+            status: filteredProjectData.status,
+            userId: session.user.id, // Ajouter l'ID de l'utilisateur pour la relation
+          },
+        });
+      } catch (error) {
+        console.error(
+          "Erreur lors de la création ou mise à jour du projet:",
+          error,
+        );
+      }
 
-    await prisma.project.update({
-      where: {
-        externalId: id,
-      },
-      data: {
-        description: filteredProjectData.description,
-        name: filteredProjectData.name,
-      },
-    });
-
-    return NextResponse.json(filteredProjectData);
+      return NextResponse.json(filteredProjectData);
+    } else {
+      console.log("🔴 Project still in progress");
+      return NextResponse.json(filteredProjectData);
+    }
   } catch (error) {
     console.error("Erreur lors de la récupération du projet:", error);
     return NextResponse.json(

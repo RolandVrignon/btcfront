@@ -7,11 +7,18 @@ DOCKER_HUB_USERNAME = roland.vrignon@iadopt.fr
 DOCKER_HUB_PREFIX = iadopt
 DOCKER_IMAGE_NAME = btpc-front
 DOCKER_IMAGE_TAG = latest
+DB_USER = postgres
+DB_PASSWORD = postgres
+DB_NAME = btpc
+DB_PORT = 5434
+DB_HOST = localhost
+DATABASE_URL = postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?schema=public
+
 # Commandes principales
 .PHONY: install start build test lint clean help
 
 # Commandes Prisma
-.PHONY: prisma-init prisma-generate prisma-migrate prisma-studio prisma-push prisma-pull prisma-format prisma-validate prisma-reset
+.PHONY: prisma-init prisma-generate prisma-migrate prisma-studio prisma-push prisma-pull prisma-format prisma-validate prisma-reset db-init db-migrate db-generate
 
 # Commandes Prettier
 .PHONY: prettier prettier-check
@@ -155,3 +162,29 @@ push-image:
 	@docker push $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
 	@echo "\033[1;32mImage envoyée avec succès vers Docker Hub !\033[0m"
 	@echo "L'image est disponible à l'adresse: $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)"
+
+# Initialiser la base de données PostgreSQL
+db-init:
+	@echo "\033[1;36m=== Initialisation de la base de données PostgreSQL ===\033[0m"
+	@echo "\033[1;33mDémarrage du conteneur PostgreSQL...\033[0m"
+	@docker-compose up -d postgres
+	@echo "\033[1;33mAttente que PostgreSQL soit prêt...\033[0m"
+	@sleep 5
+	@echo "\033[1;33mCréation de la base de données $(DB_NAME)...\033[0m"
+	@docker-compose exec postgres psql -U $(DB_USER) -c "CREATE DATABASE $(DB_NAME) WITH ENCODING 'UTF8' LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8' TEMPLATE=template0;" || echo "La base de données existe déjà"
+	@echo "\033[1;32mBase de données initialisée avec succès !\033[0m"
+	@echo "URL de connexion: $(DATABASE_URL)"
+
+# Exécuter les migrations Prisma
+db-migrate:
+	@echo "\033[1;36m=== Exécution des migrations Prisma ===\033[0m"
+	@echo "\033[1;33mApplication des migrations...\033[0m"
+	@DATABASE_URL=$(DATABASE_URL) npx prisma migrate dev
+	@echo "\033[1;32mMigrations appliquées avec succès !\033[0m"
+
+# Générer le client Prisma
+db-generate:
+	@echo "\033[1;36m=== Génération du client Prisma ===\033[0m"
+	@echo "\033[1;33mGénération du client...\033[0m"
+	@DATABASE_URL=$(DATABASE_URL) npx prisma generate
+	@echo "\033[1;32mClient Prisma généré avec succès !\033[0m"
