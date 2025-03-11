@@ -797,7 +797,7 @@ export function ProjectTools({
                 </>
               ) : project.status === "COMPLETED" ? (
                 // Cas 2: Projet terminé - Affichage du titre et du résumé
-                <div className="pb-10 flex flex-col">
+                <div className="pb-10 flex flex-col gap-4">
                   <h1 className="text-3xl font-bold">
                     {project.name || "Nouveau projet"}
                   </h1>

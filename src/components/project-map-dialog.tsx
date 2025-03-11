@@ -142,8 +142,8 @@ export function ProjectMapDialog({ project }: ProjectMapDialogProps) {
           <GoogleMapsIcon size={16} />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] h-[600px]">
-        <DialogHeader>
+      <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] p-6 overflow-hidden">
+        <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2">
             <span>Localisation du projet</span>
             <Button
@@ -157,7 +157,7 @@ export function ProjectMapDialog({ project }: ProjectMapDialogProps) {
             </Button>
           </DialogTitle>
         </DialogHeader>
-        <div className="w-full h-full min-h-[500px] rounded-md overflow-hidden relative">
+        <div className="w-full h-[calc(90vh-100px)] min-h-[450px] rounded-md overflow-hidden relative mt-0">
           {(isLoading || isApiKeyLoading) && (
             <div className="absolute inset-0 z-10">
               <Skeleton className="w-full h-full" />
