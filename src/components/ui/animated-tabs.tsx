@@ -56,7 +56,7 @@ export function AnimatedTabs({
               "px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
               activeTab === index
                 ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             aria-selected={activeTab === index}
           >
@@ -97,7 +97,7 @@ export function AnimatedTabsContent({
       className={cn(
         "transition-opacity duration-300 ease-in-out",
         isActive ? "opacity-100" : "absolute opacity-0 pointer-events-none",
-        className
+        className,
       )}
     >
       {children}

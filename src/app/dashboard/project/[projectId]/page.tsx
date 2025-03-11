@@ -56,10 +56,15 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const projectWithoutNull = {
     id: project.externalId,
     name: project.name || undefined,
-    description: project.description || undefined,
+    short_summary: project.short_summary || undefined,
+    long_summary: project.long_summary || undefined,
     status: project.status as ProjectType["status"],
+    ai_address: project.ai_address || undefined,
+    ai_city: project.ai_city || undefined,
+    ai_zip_code: project.ai_zip_code || undefined,
+    ai_country: project.ai_country || undefined,
     ...extendedProject,
   };
 
-  return <ProjectTools project={projectWithoutNull} userId={session.user.id} />;
+  return <ProjectTools project={projectWithoutNull} userId={session.user.id} setProjects={null} />;
 }

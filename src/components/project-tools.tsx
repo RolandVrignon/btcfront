@@ -27,6 +27,7 @@ import {
 interface ProjectToolsProps {
   project: Project | null;
   userId: string;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>> | null;
 }
 interface Tool {
   id: string;
@@ -39,6 +40,7 @@ interface Tool {
 export function ProjectTools({
   project: initialProject,
   userId,
+  setProjects,
 }: ProjectToolsProps) {
   const [project, setProject] = useState<Project | null>(initialProject);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
@@ -557,6 +559,9 @@ export function ProjectTools({
             // Résoudre la promesse avec les données du projet
             resolve(projectData);
             setProject(projectData);
+            if (setProjects) {
+              setProjects((prev: Project[]) => [...prev, projectData]);
+            }
             return;
           }
         }
@@ -883,7 +888,7 @@ export function ProjectTools({
             {(uploadingFiles.length > 0 || isLoading) && (
               <FileUploadList
                 files={uploadingFiles}
-                projectId={project?.id}
+                projectId={project?.externalId}
                 isLoading={isLoading}
               />
             )}

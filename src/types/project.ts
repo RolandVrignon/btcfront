@@ -17,6 +17,7 @@ export interface Project {
   date?: string;
   status?: ProjectStatus;
   externalId?: string;
+  userId?: string;
 }
 
 export interface UploadingFile {

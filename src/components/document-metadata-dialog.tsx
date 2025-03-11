@@ -89,7 +89,7 @@ export function DocumentMetadataDialog({
         body: JSON.stringify({ fileName, projectId }),
       });
 
-      if (!response.ok) {
+      if (!response) {
         throw new Error("Erreur lors de la récupération des métadonnées");
       }
 
@@ -110,7 +110,9 @@ export function DocumentMetadataDialog({
     if (array.length === 0) return <p>Aucune donnée</p>;
 
     // Vérifier si les éléments sont des objets
-    const isObjectArray = array.every(item => typeof item === 'object' && item !== null);
+    const isObjectArray = array.every(
+      (item) => typeof item === "object" && item !== null,
+    );
 
     if (isObjectArray) {
       // Extraire les clés pour les en-têtes du tableau
@@ -134,7 +136,9 @@ export function DocumentMetadataDialog({
                 <TableRow key={rowIndex}>
                   {headers.map((header, colIndex) => (
                     <TableCell key={colIndex}>
-                      {renderMetadataValue((item as Record<string, unknown>)[header])}
+                      {renderMetadataValue(
+                        (item as Record<string, unknown>)[header],
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -187,7 +191,11 @@ export function DocumentMetadataDialog({
       // Si l'objet a plusieurs propriétés, on cherche un tableau qui pourrait être le contenu principal
       const values = Object.values(value as Record<string, unknown>);
       for (const val of values) {
-        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+        if (
+          Array.isArray(val) &&
+          val.length > 0 &&
+          typeof val[0] === "object"
+        ) {
           // Si on trouve un tableau d'objets, c'est probablement notre tableau principal
           return renderTable(val);
         }
@@ -287,7 +295,7 @@ export function DocumentMetadataDialog({
         ) : (
           <div className="flex-grow flex flex-col overflow-hidden">
             <AnimatedTabs
-              tabs={tabs.map(tab => String(tab))}
+              tabs={tabs.map((tab) => String(tab))}
               defaultIndex={0}
               onChange={setTabIndex}
               className="mb-4 flex-shrink-0"

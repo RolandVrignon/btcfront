@@ -54,7 +54,7 @@ export async function GET(
 
     // Filtrer les données pour ne retourner que les champs correspondant au type Project
     const filteredProjectData: Project = {
-      id: externalProjectData?.id,
+      id: "",
       name: externalProjectData?.name,
       short_summary: externalProjectData?.short_summary,
       long_summary: externalProjectData?.long_summary,
@@ -63,6 +63,7 @@ export async function GET(
       ai_zip_code: externalProjectData?.ai_zip_code,
       ai_country: externalProjectData?.ai_country,
       status: externalProjectData?.status,
+      externalId: externalProjectData?.id,
     };
 
     if (
@@ -71,7 +72,7 @@ export async function GET(
     ) {
       try {
         // Utiliser upsert pour créer ou mettre à jour le projet
-        await prisma.project.upsert({
+        const project = await prisma.project.upsert({
           where: {
             externalId: id,
           },
@@ -98,6 +99,8 @@ export async function GET(
             userId: session.user.id, // Ajouter l'ID de l'utilisateur pour la relation
           },
         });
+
+        filteredProjectData.id = project.id;
       } catch (error) {
         console.error(
           "Erreur lors de la création ou mise à jour du projet:",

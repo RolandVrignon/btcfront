@@ -12,8 +12,9 @@ import { Skeleton } from "@/src/components/ui/skeleton";
 import { motion } from "framer-motion";
 
 interface AceternitySidebarProps {
-  userId?: string;
   className?: string;
+  projects: Project[];
+  isLoading: boolean;
 }
 
 // Variantes d'animation pour la sidebar
@@ -140,40 +141,12 @@ function MarqueeText({
 
 export function AceternitySidebar({
   className,
-  userId,
+  projects,
+  isLoading,
 }: AceternitySidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  React.useEffect(() => {
-    const fetchProjects = async () => {
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/projects/user/${userId}`);
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des projets");
-        }
-
-        const data = await response.json();
-        setProjects(data);
-      } catch (error) {
-        console.error("Erreur lors du chargement des projets:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProjects();
-  }, [userId]);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
