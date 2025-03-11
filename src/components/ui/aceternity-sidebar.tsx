@@ -282,7 +282,7 @@ interface SidebarProjectItemProps {
 function SidebarProjectItem({ project, isActive }: SidebarProjectItemProps) {
   return (
     <Link
-      href={`/dashboard/project/${project.id}`}
+      href={`/dashboard/project/${project.externalId}`}
       className={cn(
         "flex items-center h-10 gap-2 py-2 px-2 rounded-md text-md transition-colors group relative",
         isActive

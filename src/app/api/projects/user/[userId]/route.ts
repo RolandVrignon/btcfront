@@ -18,7 +18,7 @@ export async function GET(
         userId: userId,
       },
       orderBy: {
-        updatedAt: "desc",
+        createdAt: "desc",
       },
       skip,
       take: limit,

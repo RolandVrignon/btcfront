@@ -5,7 +5,6 @@
 .border-top-left {
   border-top-left-radius: 40px;
 }
-
 /* Animation de marquee pour les textes tronqués */
 @keyframes marquee {
   0% {

@@ -28,6 +28,7 @@ interface ProjectToolsProps {
   project: Project | null;
   userId: string;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>> | null;
+  isUpperLoading: boolean | null;
 }
 interface Tool {
   id: string;
@@ -41,13 +42,14 @@ export function ProjectTools({
   project: initialProject,
   userId,
   setProjects,
+  isUpperLoading,
 }: ProjectToolsProps) {
   const [project, setProject] = useState<Project | null>(initialProject);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { getPresignedUrl } = usePresignedUrl();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isUpperLoading);
   const isUploadingRef = useRef(false);
 
   const tools: Tool[] = [
@@ -91,33 +93,27 @@ export function ProjectTools({
   ];
 
   useEffect(() => {
-    if (!project) {
+    if (!initialProject) {
       console.log("project not existing:");
     } else {
-      console.log("project:", project);
+      console.log("project:", initialProject);
+      setProject(initialProject);
     }
-  }, [project]);
 
-  useEffect(() => {
-    if (!uploadingFiles) return;
-    console.log("uploadingFiles:", uploadingFiles);
-  }, [uploadingFiles]);
-
-  useEffect(() => {
-    if (!project) return;
+    if (!initialProject) return;
 
     async function fetchProjectData() {
       try {
         setIsLoading(true);
 
-        if (!project) {
+        if (!initialProject) {
           setIsLoading(false);
           return;
         }
 
         // 2. Récupérer les documents depuis l'API externe
         const documentsResponse = await fetch(
-          `/api/documents/project/${project.id}`,
+          `/api/documents/project/${initialProject?.externalId}`,
         );
 
         if (!documentsResponse.ok) {
@@ -149,8 +145,20 @@ export function ProjectTools({
     }
 
     fetchProjectData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialProject]);
+
+  useEffect(() => {
+    if (isUpperLoading) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  }, [isUpperLoading]);
+
+  useEffect(() => {
+    if (!uploadingFiles) return;
+    console.log("uploadingFiles:", uploadingFiles);
+  }, [uploadingFiles]);
 
   useEffect(() => {
     isUploadingRef.current = isUploading;
@@ -170,30 +178,6 @@ export function ProjectTools({
       }
 
       const data = await response.json();
-
-      if (userId) {
-        const dbResponse = await fetch("/api/projects", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            externalId: data.id,
-            name: data.name || "Nouveau projet",
-            status:
-              data.status === "DRAFT" ? "draft" : data.status.toLowerCase(),
-            userId: userId,
-          }),
-        });
-
-        if (!dbResponse.ok) {
-          console.error(
-            "Erreur lors de l'enregistrement du projet dans la base de données locale",
-          );
-        } else {
-          console.log("Projet enregistré dans la base de données locale");
-        }
-      }
 
       const obj = {
         id: data.id,
@@ -783,7 +767,7 @@ export function ProjectTools({
       <div className="mt-[-35vh] pb-[30vh] inset-0 m-auto w-full px-40 max-w-[1200px]">
         <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-gray-50">
           {!isLoading ? (
-            <div className="flex flex-col gap-4 justify-center items-center rounded-[20px] px-[15%] py-[4vh] bg-black/5 relative">
+            <div className="flex flex-col gap-4 border-2 border-stone-200 justify-center items-center rounded-[20px] px-[5%] py-[4vh] relative">
               {!project ? (
                 // Cas 1: Pas de projet - Appel à l'action
                 <>
@@ -824,9 +808,9 @@ export function ProjectTools({
               ) : (
                 // Cas 4: Projet en cours (DRAFT, PENDING, PROCESSING) - Skeleton
                 <>
-                  <div className="flex flex-col items-center gap-4 w-full">
-                    <Skeleton className="h-15 w-3/4 rounded-lg animate-pulse" />
-                    <Skeleton className="h-10 w-full rounded-lg animate-pulse" />
+                  <div className="flex flex-col items-start pb-10 gap-3 w-full">
+                    <Skeleton className="h-12 w-3/4 rounded-lg animate-pulse" />
+                    <Skeleton className="h-8 w-full rounded-lg animate-pulse" />
                   </div>
                 </>
               )}

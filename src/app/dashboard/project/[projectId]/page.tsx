@@ -1,70 +1,86 @@
-import { getServerSession } from "next-auth";
-import { redirect, notFound } from "next/navigation";
-import { authOptions } from "@/src/lib/auth";
+"use client";
+
+import { useState, useEffect } from "react";
+import { AceternitySidebar } from "@/src/components/ui/aceternity-sidebar";
 import { ProjectTools } from "@/src/components/project-tools";
-import prisma from "@/src/lib/prisma";
-import { Project as ProjectType } from "@/src/types/project";
-interface ProjectPageProps {
-  params: Promise<{
-    projectId: string;
-  }>;
-}
+import { Project } from "@/src/types/project";
+import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
+export default function DashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+  const [isProjectLoading, setIsProjectLoading] = useState(true);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  const { projectId } = useParams();
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
-  const session = await getServerSession(authOptions);
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        if (!userId) return;
 
-  if (!session) {
-    redirect("/auth/signin");
-  }
+        setIsProjectsLoading(true);
 
-  const { projectId } = await params;
+        const response = await fetch(`/api/projects/user/${userId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+        const data = await response.json();
 
-  const project = await prisma.project.findUnique({
-    where: {
-      id: projectId,
-    },
-  });
+        // Log projects with their createdAt dates for verification
+        console.log("Projects sorted by createdAt:", data.map((project: { name: string; createdAt: string }) => ({
+          name: project.name,
+          createdAt: project.createdAt
+        })));
 
-  if (!project) {
-    console.log("project not found");
-    notFound();
-  }
+        setProjects(data);
+        setIsProjectsLoading(false);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
 
-  // Récupérer les informations complètes du projet depuis l'API externe
-  const apiResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_CTIA_API_URL}/projects/${project.externalId}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
-      },
-      next: { revalidate: 60 },
-    },
+    const fetchProject = async () => {
+      try {
+        if (!projectId) return;
+
+        setIsProjectLoading(true);
+
+        const response = await fetch(`/api/projects/${projectId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch project");
+        }
+        const data = await response.json();
+        console.log("data:", data);
+        setProject(data);
+        setIsProjectLoading(false);
+      } catch (error) {
+        console.error("Error fetching project:", error);
+      }
+    };
+
+    fetchProjects();
+    fetchProject();
+  }, []);
+
+  if (!userId) return null;
+
+  return (
+    <div className="flex h-screen">
+      <AceternitySidebar
+        projects={projects}
+        isLoading={isProjectsLoading}
+        className="h-[100dvh]"
+      />
+      <main className="flex-1 overflow-auto">
+        <ProjectTools
+          project={project}
+          userId={userId}
+          setProjects={setProjects}
+          isUpperLoading={isProjectLoading}
+        />
+      </main>
+    </div>
   );
-
-  let extendedProject = {};
-
-  if (apiResponse.ok) {
-    extendedProject = await apiResponse.json();
-    console.log("Données du projet depuis l'API externe:", extendedProject);
-  } else {
-    console.error(
-      "Erreur lors de la récupération des données depuis l'API externe",
-    );
-  }
-
-  const projectWithoutNull = {
-    id: project.externalId,
-    name: project.name || undefined,
-    short_summary: project.short_summary || undefined,
-    long_summary: project.long_summary || undefined,
-    status: project.status as ProjectType["status"],
-    ai_address: project.ai_address || undefined,
-    ai_city: project.ai_city || undefined,
-    ai_zip_code: project.ai_zip_code || undefined,
-    ai_country: project.ai_country || undefined,
-    ...extendedProject,
-  };
-
-  return <ProjectTools project={projectWithoutNull} userId={session.user.id} setProjects={null} />;
 }

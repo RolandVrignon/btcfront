@@ -38,9 +38,18 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen">
-      <AceternitySidebar projects={projects} isLoading={isLoading} className="h-[100dvh]" />
+      <AceternitySidebar
+        projects={projects}
+        isLoading={isLoading}
+        className="h-[100dvh]"
+      />
       <main className="flex-1 overflow-auto">
-        <ProjectTools project={null} userId={userId} setProjects={setProjects}/>
+        <ProjectTools
+          project={null}
+          userId={userId}
+          setProjects={setProjects}
+          isUpperLoading={false}
+        />
       </main>
     </div>
   );
