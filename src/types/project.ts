@@ -26,6 +26,13 @@ export interface UploadingFile {
   id: string;
   progress?: number;
   url?: string;
-  status?: "ERROR" | "UPLOAD" | "PROGRESS" | "COMPLETED" | "DRAFT" | "PENDING" | "READY";
+  status?:
+    | "ERROR"
+    | "UPLOAD"
+    | "PROGRESS"
+    | "COMPLETED"
+    | "DRAFT"
+    | "PENDING"
+    | "READY";
   processingMessage?: string;
 }
