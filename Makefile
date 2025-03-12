@@ -188,3 +188,29 @@ db-generate:
 	@echo "\033[1;33mGénération du client...\033[0m"
 	@DATABASE_URL=$(DATABASE_URL) npx prisma generate
 	@echo "\033[1;32mClient Prisma généré avec succès !\033[0m"
+
+# Database commands
+db-up:
+	@echo "\033[1;36m=== Démarrage de PostgreSQL avec Docker Compose ===\033[0m"
+	docker-compose up -d postgres
+	@echo "\033[1;33mAttente que PostgreSQL soit prêt...\033[0m"
+	@sleep 5
+	@echo "\033[1;32mPostgreSQL est prêt ! ===\033[0m"
+	@echo "Disponible sur localhost:5434"
+
+db-down:
+	@echo "\033[1;36m=== Arrêt de PostgreSQL ===\033[0m"
+	docker-compose stop postgres
+	docker-compose rm -f postgres
+
+db-logs:
+	docker-compose logs -f postgres
+
+db-shell:
+	docker-compose exec postgres psql -U postgres -d btpc
+
+db-status:
+	@echo "\033[1;36m=== Status de PostgreSQL ===\033[0m"
+	@docker-compose ps postgres
+
+.PHONY: db-up db-down db-logs db-shell db-status

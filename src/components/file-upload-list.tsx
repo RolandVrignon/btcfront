@@ -160,32 +160,27 @@ export function FileUploadList({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {file.status?.toLowerCase() === "upload" ? (
+                      {file.status === "UPLOAD" ? (
                         <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                           <LoadingSpinner />
                           Upload
                         </div>
-                      ) : file.status?.toLowerCase() === "pending" ? (
+                      ) : file.status === "PENDING" ? (
                         <div className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
                           <LoadingSpinner />
                           En attente
                         </div>
-                      ) : file.status?.toLowerCase() === "processing" ? (
+                      ) : file.status === "PROGRESS" ? (
                         <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
                           <LoadingSpinner />
                           Traitement
                         </div>
-                      ) : file.status?.toLowerCase() === "indexing" ? (
-                        <div className="flex items-center text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
-                          <LoadingSpinner />
-                          Indexation
-                        </div>
-                      ) : file.status?.toLowerCase() === "ready" ? (
+                      ) : file.status === "COMPLETED" ? (
                         <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Prêt
                         </div>
-                      ) : file.status?.toLowerCase() === "error" ? (
+                      ) : file.status === "ERROR" ? (
                         <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
                           Erreur
                         </div>
@@ -198,7 +193,7 @@ export function FileUploadList({
                   </div>
 
                   {/* Barre de progression pour l'upload */}
-                  {file.status === "upload" && (
+                  {file.status === "UPLOAD" && (
                     <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
                       <div
                         className="h-full bg-blue-500 rounded-full transition-all duration-300"

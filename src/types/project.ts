@@ -1,7 +1,7 @@
 export type ProjectStatus =
   | "DRAFT"
   | "PENDING"
-  | "PROCESSING"
+  | "PROGRESS"
   | "COMPLETED"
   | "ERROR";
 
@@ -25,14 +25,7 @@ export interface UploadingFile {
   fileName?: string;
   id: string;
   progress?: number;
-  status?:
-    | "upload"
-    | "processing"
-    | "pending"
-    | "indexing"
-    | "rafting"
-    | "ready"
-    | "end"
-    | "error";
-  url?: string; // URL S3 où le fichier a été uploadé
+  url?: string;
+  status?: "ERROR" | "UPLOAD" | "PROGRESS" | "COMPLETED" | "DRAFT" | "PENDING" | "READY";
+  processingMessage?: string;
 }

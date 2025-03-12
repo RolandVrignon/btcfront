@@ -7,13 +7,13 @@ import { FileUploadList } from "@/src/components/file-upload-list";
 import { Project } from "@/src/types/project";
 import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/selected-files-list";
-import { UploadingFile } from "@/src/types/project";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { ProjectMapDialog } from "@/src/components/project-map-dialog";
 import { ProjectDetailsDialog } from "@/src/components/project-details-dialog";
 import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
+import { UploadingFile } from "@/src/types/project";
 
 import {
   FileText,
@@ -36,6 +36,8 @@ interface Tool {
   icon: React.ReactNode;
   color: string;
 }
+
+type DocumentStatus = "UPLOAD" | "PROGRESS" | "COMPLETED" | "ERROR" | "READY";
 
 export function ProjectTools({
   project: initialProject,
@@ -247,7 +249,7 @@ export function ProjectTools({
                     ? {
                         ...f,
                         progress: 100,
-                        status: "processing",
+                        status: "PROGRESS" as DocumentStatus,
                       }
                     : f,
                 ),
@@ -274,7 +276,7 @@ export function ProjectTools({
                 f.id === fileId
                   ? {
                       ...f,
-                      status: "error",
+                      status: "ERROR" as DocumentStatus,
                       processingMessage: `Erreur HTTP: ${xhr.status}`,
                     }
                   : f,
@@ -294,7 +296,7 @@ export function ProjectTools({
               f.id === fileId
                 ? {
                     ...f,
-                    status: "error",
+                    status: "ERROR" as DocumentStatus,
                     processingMessage: "Erreur réseau lors de l'upload",
                   }
                 : f,
@@ -353,7 +355,7 @@ export function ProjectTools({
           id: file.name,
           fileName: file.name,
           progress: 0,
-          status: "upload",
+          status: "UPLOAD" as DocumentStatus,
         }),
       );
 
@@ -381,7 +383,7 @@ export function ProjectTools({
               f.id === uploadingFile.id
                 ? {
                     ...f,
-                    status: "upload",
+                    status: "UPLOAD" as DocumentStatus,
                     progress: 0,
                     processingMessage: "Démarrage de l'upload...",
                   }
@@ -416,7 +418,7 @@ export function ProjectTools({
               f.id === uploadingFile.id
                 ? {
                     ...f,
-                    status: "error",
+                    status: "ERROR" as DocumentStatus,
                     processingMessage: "Erreur lors de l'upload",
                   }
                 : f,
@@ -592,7 +594,7 @@ export function ProjectTools({
           if (matchingFile) {
             return {
               ...f,
-              status: "processing" as const,
+              status: "PROGRESS" as DocumentStatus,
             };
           }
           return f;
@@ -948,7 +950,7 @@ const monitorDocumentProcessing = async (
             f.id === documentId
               ? {
                   ...f,
-                  status: "error" as const,
+                  status: "ERROR" as DocumentStatus,
                   processingMessage: "Timeout après 10 minutes de traitement",
                 }
               : f,
@@ -973,26 +975,14 @@ const monitorDocumentProcessing = async (
 
       const data = await response.json();
 
-      const terminalStatuses = ["READY", "END", "ERROR"];
-
-      const statusMap = {
-        READY: "ready" as const,
-        END: "ready" as const,
-        ERROR: "error" as const,
-        PROCESSING: "processing" as const,
-        INDEXING: "indexing" as const,
-        RAFTING: "rafting" as const,
-        NOT_STARTED: "pending" as const,
-      };
-
-      const mappedStatus = statusMap[data.status as keyof typeof statusMap];
+      const terminalStatuses = ["COMPLETED", "ERROR"];
 
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.id === documentId
             ? {
                 ...f,
-                status: mappedStatus,
+                status: data.status as DocumentStatus,
                 processingMessage: data.processingMessage || undefined,
               }
             : f,
@@ -1010,7 +1000,7 @@ const monitorDocumentProcessing = async (
         f.id === documentId
           ? {
               ...f,
-              status: "error" as const,
+              status: "ERROR" as DocumentStatus,
               processingMessage: "Erreur lors du monitoring du document",
             }
           : f,

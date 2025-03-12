@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
     fetchProjects();
     fetchProject();
-  // eslint-disable-next-line
+    // eslint-disable-next-line
   }, []);
 
   if (!userId) return null;

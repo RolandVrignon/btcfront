@@ -16,15 +16,8 @@ import {
   AnimatedTabs,
   AnimatedTabsContent,
 } from "@/src/components/ui/animated-tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/src/components/ui/table";
-
+import { DataTable } from "@/src/components/ui/data-table";
+import type { Row } from "@tanstack/react-table";
 interface DocumentMetadataDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -54,7 +47,7 @@ export function DocumentMetadataDialog({
   const [error, setError] = useState<string | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
 
-  const isFileReady = fileStatus?.toLowerCase() === "ready";
+  const isFileReady = fileStatus === "COMPLETED";
 
   useEffect(() => {
     console.log("isOpen:", isOpen);
@@ -119,54 +112,44 @@ export function DocumentMetadataDialog({
       const firstItem = array[0] as Record<string, unknown>;
       const headers = Object.keys(firstItem);
 
+      const columns = headers.map((header) => ({
+        accessorKey: header,
+        header: header,
+        cell: ({ row }: { row: Row<Record<string, unknown>> }) =>
+          renderMetadataValue(row.getValue(header)),
+      }));
+
       return (
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                {headers.map((header, index) => (
-                  <TableHead key={index} className="font-semibold">
-                    {header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {array.map((item, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {headers.map((header, colIndex) => (
-                    <TableCell key={colIndex}>
-                      {renderMetadataValue(
-                        (item as Record<string, unknown>)[header],
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="rounded-lg overflow-hidden">
+          <DataTable
+            columns={columns}
+            data={array as Record<string, unknown>[]}
+          />
         </div>
       );
     } else {
       // Pour les tableaux de valeurs simples
+      const columns = [
+        {
+          accessorKey: "index",
+          header: "Index",
+        },
+        {
+          accessorKey: "value",
+          header: "Valeur",
+          cell: ({ row }: { row: Row<{ index: number; value: unknown }> }) =>
+            renderMetadataValue(row.getValue("value")),
+        },
+      ];
+
+      const data = array.map((item, index) => ({
+        index,
+        value: item,
+      }));
+
       return (
         <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Index</TableHead>
-                <TableHead className="font-semibold">Valeur</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {array.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{index}</TableCell>
-                  <TableCell>{renderMetadataValue(item)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable columns={columns} data={data} />
         </div>
       );
     }
