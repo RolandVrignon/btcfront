@@ -880,7 +880,7 @@ export function ProjectTools({
 
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
-              (file) => file.status && file.status.toLowerCase() === "ready",
+              (file) => file.status && file.status === "COMPLETED",
             ) && (
               <div className="mt-4">
                 <h3 className="text-xl font-semibold mb-4">
