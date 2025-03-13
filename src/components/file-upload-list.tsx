@@ -178,7 +178,7 @@ export function FileUploadList({
                       ) : file.status === "COMPLETED" ? (
                         <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Prêt
+                          Voir plus
                         </div>
                       ) : file.status === "ERROR" ? (
                         <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">

@@ -14,6 +14,7 @@ import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
+import { ProjectToolsList } from "@/src/components/project-tools-list";
 
 import {
   FileText,
@@ -28,13 +29,6 @@ interface ProjectToolsProps {
   project: Project | null;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>> | null;
   isUpperLoading: boolean;
-}
-interface Tool {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
 }
 
 type DocumentStatus = "UPLOAD" | "PROGRESS" | "COMPLETED" | "ERROR" | "READY";
@@ -51,46 +45,6 @@ export function ProjectTools({
   const { getPresignedUrl } = usePresignedUrl();
   const [isLoading, setIsLoading] = useState(isUpperLoading);
   const isUploadingRef = useRef(false);
-
-  const tools: Tool[] = [
-    {
-      id: "descriptif",
-      name: "Descriptif sommaire des travaux",
-      description:
-        "Obtenir un descriptif sommaire des travaux décrits dans le/les CCTP, en vue de rédiger le RICT.",
-      icon: <FileText className="h-12 w-12" />,
-      color: "bg-blue-100 text-blue-700",
-    },
-    {
-      id: "comparateur",
-      name: "Comparateur d'indice",
-      description:
-        "Identifier les différences tant sur le fond (ajouts, suppression, modifications) que sur la forme des deux documents.",
-      icon: <GitCompare className="h-12 w-12" />,
-      color: "bg-green-100 text-green-700",
-    },
-    {
-      id: "thermique",
-      name: "Analyse Etude Thermique",
-      description: "Analyse de la conformité de l'étude thermique.",
-      icon: <Thermometer className="h-12 w-12" />,
-      color: "bg-red-100 text-red-700",
-    },
-    {
-      id: "incoherences",
-      name: "Incohérences",
-      description: "Détection des incohérences dans le projet.",
-      icon: <AlertTriangle className="h-12 w-12" />,
-      color: "bg-amber-100 text-amber-700",
-    },
-    {
-      id: "suggestions",
-      name: "Suggestions",
-      description: "Propositions d'améliorations pour votre projet.",
-      icon: <Lightbulb className="h-12 w-12" />,
-      color: "bg-purple-100 text-purple-700",
-    },
-  ];
 
   useEffect(() => {
     if (!initialProject) {
@@ -716,12 +670,6 @@ export function ProjectTools({
     }
   };
 
-  const handleToolClick = (toolId: string) => {
-    console.log(`Outil sélectionné: ${toolId}`);
-    // Ici, vous pourriez naviguer vers une page spécifique à l'outil
-    // ou ouvrir une modale, etc.
-  };
-
   const handleProjectUpdate = async (projectId: string) => {
     console.log("handleProjectUpdate");
 
@@ -881,37 +829,7 @@ export function ProjectTools({
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
               (file) => file.status && file.status === "COMPLETED",
-            ) && (
-              <div className="mt-4">
-                <h3 className="text-xl font-semibold mb-4">
-                  Outils disponibles
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tools.map((tool) => (
-                    <div
-                      key={tool.id}
-                      className={`rounded-xl p-4 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent hover:border-current`}
-                      onClick={() => handleToolClick(tool.id)}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="rounded-full p-2 bg-white/80">
-                          {tool.icon}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-xl font-medium text-lg">
-                            {tool.name}
-                          </h4>
-                          <p className="text-md opacity-80 mt-1 line-clamp-3">
-                            {tool.description}
-                          </p>
-                        </div>
-                        <ArrowRight className="h-5 w-5 self-center opacity-70" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            ) && <ProjectToolsList projectId={project?.externalId} />}
         </div>
       </div>
 
