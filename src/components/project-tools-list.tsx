@@ -11,7 +11,6 @@ import {
   Construction,
   Loader2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -21,7 +20,6 @@ interface Deliverable {
   id: string;
   type: string;
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "ERROR";
-  content?: any;
 }
 
 interface Tool {

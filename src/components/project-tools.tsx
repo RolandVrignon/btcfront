@@ -15,15 +15,7 @@ import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
 import { ProjectToolsList } from "@/src/components/project-tools-list";
-
-import {
-  FileText,
-  GitCompare,
-  Thermometer,
-  AlertTriangle,
-  Lightbulb,
-  ArrowRight,
-} from "lucide-react";
+import { ProjectChatbot } from "./projects/ProjectChatbot";
 
 interface ProjectToolsProps {
   project: Project | null;
@@ -826,10 +818,22 @@ export function ProjectTools({
             )}
           </div>
 
+          {/* Modification temporaire pour tester l'affichage sans condition */}
+          <ProjectChatbot />
+          
+          {/* Condition originale commentée pour test
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
               (file) => file.status && file.status === "COMPLETED",
-            ) && <ProjectToolsList projectId={project?.externalId} />}
+            ) && <ProjectChatbot />
+          }
+          */}
+
+          {uploadingFiles.length > 0 &&
+            uploadingFiles.every(
+              (file) => file.status && file.status === "COMPLETED",
+            ) && <ProjectToolsList projectId={project?.externalId} />
+          }
         </div>
       </div>
 
