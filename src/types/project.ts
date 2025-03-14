@@ -35,4 +35,5 @@ export interface UploadingFile {
     | "PENDING"
     | "READY";
   processingMessage?: string;
+  tags?: string[];
 }

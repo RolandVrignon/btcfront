@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/deliverable-result-dialog";
 
 interface Deliverable {
@@ -263,7 +263,6 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
 
   return (
     <div className="mt-4">
-      <Toaster position="top-right" />
       <h3 className="text-xl font-semibold mb-4">Outils disponibles</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {tools.map((tool) => (

@@ -76,6 +76,9 @@ export function ProjectTools({
           id: doc.id as string,
           status: doc.status as string,
           fileName: doc.filename as string,
+          tags: Array.isArray(doc.ai_Type_document)
+            ? [...doc.ai_Type_document]
+            : [],
         }));
 
         // 4. Mettre à jour l'état des fichiers
@@ -705,9 +708,9 @@ export function ProjectTools({
       </div>
 
       <div className="mt-[-35vh] pb-[30vh] inset-0 m-auto w-full px-40 max-w-[1200px]">
-        <div className="flex flex-col w-full rounded-[30px] relative p-4 gap-4 bg-gray-50">
+        <div className="flex flex-col w-full rounded-3xl relative p-4 gap-4 bg-gray-50">
           {!isLoading ? (
-            <div className="flex flex-col gap-4 border-2 border-stone-200 justify-center items-center rounded-[20px] px-[5%] py-[4vh] relative">
+            <div className="flex flex-col gap-4 border-2 border-stone-200 justify-center items-center rounded-xl px-[5%] py-[4vh] relative">
               {!project ? (
                 // Cas 1: Pas de projet - Appel à l'action
                 <>
@@ -821,9 +824,7 @@ export function ProjectTools({
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
               (file) => file.status && file.status === "COMPLETED",
-            ) && <ProjectChatbot />
-          }
-         
+            ) && <ProjectChatbot />}
 
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
@@ -894,19 +895,21 @@ const monitorDocumentProcessing = async (
 
       const terminalStatuses = ["COMPLETED", "ERROR"];
 
-      setUploadingFiles((prev) =>
-        prev.map((f) =>
-          f.id === documentId
-            ? {
-                ...f,
-                status: data.status as DocumentStatus,
-                processingMessage: data.processingMessage || undefined,
-              }
-            : f,
-        ),
-      );
-
       if (terminalStatuses.includes(data.status)) {
+        setUploadingFiles((prev) =>
+          prev.map((f) =>
+            f.id === documentId
+              ? {
+                  ...f,
+                  status: data.status as DocumentStatus,
+                  tags: Array.isArray(data.ai_Type_document)
+                    ? [...data.ai_Type_document]
+                    : [],
+                }
+              : f,
+          ),
+        );
+
         isProcessingComplete = true;
       }
     }

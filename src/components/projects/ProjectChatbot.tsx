@@ -29,7 +29,7 @@ export function ProjectChatbot() {
   };
 
   return (
-    <>
+    <div className="mt-4">
       <h3 className="text-xl font-semibold mb-4">Chatbot Intelligent</h3>
       <div className="w-full h-[25vh] flex flex-col items-center justify-center font-medium rounded-xl hover:cursor-pointer relative overflow-hidden bg-stone-100">
         <div
@@ -86,6 +86,6 @@ export function ProjectChatbot() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

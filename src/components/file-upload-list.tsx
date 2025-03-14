@@ -6,7 +6,7 @@ import {
   FileText,
   Image as ImageIcon,
   FileSpreadsheet,
-  CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/src/components/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/project";
@@ -126,14 +126,13 @@ export function FileUploadList({
 
   return (
     <>
-      <div className="w-full">
+      <div className="mt-4">
         <h3 className="text-xl font-semibold mb-4">
           Fichiers ({isLoading ? "..." : files.length})
         </h3>
         <ScrollArea className="border rounded-lg flex flex-col max-h-[30vh] overflow-y-auto">
           {isLoading
-            ? // Skeleton loader
-              Array.from({ length: 3 }).map((_, index) => (
+            ? Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
                   className="p-2 border-b animate-pulse"
@@ -153,42 +152,52 @@ export function FileUploadList({
                   className="p-2 border-b hover:bg-gray-100 cursor-pointer transition-colors group"
                   onClick={() => handleFileClick(file.id)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-shrink-0 max-w-[80%] items-center gap-2">
-                      <div className="text-muted-foreground">
+                  <div className="grid grid-cols-10 items-center w-full">
+                    <div className="col-span-6 flex items-center overflow-hidden">
+                      <div className="text-muted-foreground flex-shrink-0 mr-2">
                         {getFileIcon(file.fileName ?? "")}
                       </div>
-                      <div className="flex items-center gap-2 truncate">
+                      <div className="truncate min-w-0">
                         <p className="font-medium truncate">{file.fileName}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="col-span-4 flex gap-2 items-center justify-end">
+                      {file.tags &&
+                        file.tags.length > 0 &&
+                        file.tags.map((tag) => (
+                          <div
+                            key={tag}
+                            className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full whitespace-nowrap"
+                          >
+                            {tag}
+                          </div>
+                        ))}
                       {file.status === "UPLOAD" ? (
-                        <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full whitespace-nowrap">
                           <LoadingSpinner />
                           Upload
                         </div>
                       ) : file.status === "PENDING" ? (
-                        <div className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full whitespace-nowrap">
                           <LoadingSpinner />
                           En attente
                         </div>
                       ) : file.status === "PROGRESS" ? (
-                        <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                        <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
                           <LoadingSpinner />
                           Traitement
                         </div>
                       ) : file.status === "COMPLETED" ? (
-                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                        <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center whitespace-nowrap">
+                          <ExternalLink className="h-3 w-3 mr-1" />
                           Voir plus
                         </div>
                       ) : file.status === "ERROR" ? (
-                        <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                        <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full whitespace-nowrap">
                           Erreur
                         </div>
                       ) : (
-                        <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                        <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full whitespace-nowrap">
                           {file.status}
                         </div>
                       )}
