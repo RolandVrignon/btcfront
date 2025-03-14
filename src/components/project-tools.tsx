@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { FileUploadZone } from "@/src/components/file-upload-zone";
 import { FileUploadList } from "@/src/components/file-upload-list";
-import { Project } from "@/src/types/project";
+import { Project, PublicDocumentList } from "@/src/types/project";
 import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/selected-files-list";
 import { Skeleton } from "@/src/components/ui/skeleton";
@@ -15,7 +15,7 @@ import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
 import { ProjectToolsList } from "@/src/components/project-tools-list";
-import { ProjectChatbot } from "./projects/ProjectChatbot";
+import { ProjectChatbot } from "./project-chatbot";
 
 interface ProjectToolsProps {
   project: Project | null;
@@ -30,13 +30,19 @@ export function ProjectTools({
   setProjects,
   isUpperLoading,
 }: ProjectToolsProps) {
-  const [project, setProject] = useState<Project | null>(initialProject);
+  const [project, setProject] = useState<Project | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { getPresignedUrl } = usePresignedUrl();
   const [isLoading, setIsLoading] = useState(isUpperLoading);
   const isUploadingRef = useRef(false);
+
+  useEffect(() => {
+    if (project) {
+      console.log("project:", project);
+    }
+  }, [project]);
 
   useEffect(() => {
     if (!initialProject) {
@@ -56,6 +62,19 @@ export function ProjectTools({
           setIsLoading(false);
           return;
         }
+
+        setProject({
+          ...initialProject,
+        });
+
+        const publicDocuments = await searchPublicDocuments(
+          initialProject.ai_city || "",
+        );
+
+        setProject({
+          ...initialProject,
+          documents: publicDocuments as PublicDocumentList,
+        });
 
         // 2. Récupérer les documents depuis l'API externe
         const documentsResponse = await fetch(
@@ -429,7 +448,17 @@ export function ProjectTools({
     }
   };
 
-  // Modifier la fonction monitorProjectStatus pour utiliser un mécanisme de timeout basé sur le temps plutôt que sur le nombre de tentatives
+  const searchPublicDocuments = async (
+    city: string,
+  ): Promise<PublicDocumentList> => {
+    const response = await fetch(
+      `/api/tools/search-public-documents?city=${city}`,
+    );
+    const data = await response.json();
+    console.log("🔴 data:", data);
+    return data;
+  };
+
   const monitorProjectStatus = async (
     projectId: string,
   ): Promise<Project | null> => {
@@ -438,7 +467,6 @@ export function ProjectTools({
         let isProcessingComplete = false;
         const startTime = Date.now();
         const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
-        console.log("🔴 Début du monitoring du projet:", projectId);
 
         while (!isProcessingComplete && isUploadingRef.current) {
           // Vérifier si le timeout est atteint
@@ -473,27 +501,28 @@ export function ProjectTools({
           }
 
           const projectData = await response.json();
-          console.log(
-            `🔴 Statut actuel du projet (temps écoulé: ${Math.floor((Date.now() - startTime) / 1000)}s):`,
-            projectData.status,
-          );
 
           // Vérifier si le traitement est terminé
           if (
             projectData.status === "COMPLETED" ||
             projectData.status === "ERROR"
           ) {
-            console.log(
-              "🔴 Traitement du projet terminé avec statut:",
-              projectData.status,
-            );
             isProcessingComplete = true;
-
-            // Résoudre la promesse avec les données du projet
+            setProject(projectData);
+            const publicDocuments = await searchPublicDocuments(
+              projectData.ai_city,
+            );
+            projectData.documents = publicDocuments as PublicDocumentList;
             resolve(projectData);
             setProject(projectData);
             if (setProjects) {
-              setProjects((prev: Project[]) => [...prev, projectData]);
+              setProjects((prev: Project[]) => [
+                ...prev,
+                {
+                  ...projectData,
+                  documents: publicDocuments as PublicDocumentList,
+                },
+              ]);
             }
             return;
           }
@@ -518,7 +547,6 @@ export function ProjectTools({
     });
   };
 
-  // Modifier la fonction confirmMultipleUploadsToBackend pour utiliser la promesse
   const confirmMultipleUploadsToBackend = async (
     projectId: string | undefined,
     fileNames: string[],
@@ -760,22 +788,25 @@ export function ProjectTools({
 
               {/* Boutons d'action en bas à droite */}
               <div className="absolute bottom-1 right-1 flex items-center gap-2">
-                {project && project.long_summary && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center rounded-full bg-white hover:bg-blue-50"
-                    onClick={() => {
-                      // Ouvrir la dialog de détails
-                      document
-                        .getElementById("details-dialog-trigger")
-                        ?.click();
-                    }}
-                  >
-                    <Info className="h-4 w-4 mr-1" />
-                    En savoir plus
-                  </Button>
-                )}
+                {project &&
+                  project.long_summary &&
+                  project.documents &&
+                  project.documents.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center rounded-full bg-white hover:bg-blue-50"
+                      onClick={() => {
+                        // Ouvrir la dialog de détails
+                        document
+                          .getElementById("details-dialog-trigger")
+                          ?.click();
+                      }}
+                    >
+                      <Info className="h-4 w-4 mr-1" />
+                      Données publiques
+                    </Button>
+                  )}
 
                 {project && project.ai_address && (
                   <Button

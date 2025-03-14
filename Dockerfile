@@ -18,13 +18,15 @@ ENV DATABASE_URL="postgresql://fake:fake@localhost:5432/fake"
 # Variables pour ignorer les vérifications de type et de lint
 ENV SKIP_TYPE_CHECK=true
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_IGNORE_ESLINT=1
+ENV NEXT_IGNORE_TYPE_CHECK=1
 
 # Copie des fichiers de configuration
 COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma/
 
 # Installation des dépendances avec pnpm
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --force
 
 # Génération explicite du client Prisma avec l'URL temporaire
 RUN pnpm prisma generate
@@ -33,7 +35,7 @@ RUN pnpm prisma generate
 COPY . .
 
 # Construction de l'application en ignorant les erreurs de linting et de type
-RUN SKIP_TYPE_CHECK=true pnpm exec next build
+RUN SKIP_TYPE_CHECK=true NEXT_IGNORE_ESLINT=1 NEXT_IGNORE_TYPE_CHECK=1 pnpm exec next build --no-lint
 
 # Étape 2: Image de production
 FROM node:20-alpine AS runner

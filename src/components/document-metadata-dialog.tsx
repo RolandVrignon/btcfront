@@ -169,15 +169,19 @@ export function DocumentMetadataDialog({
             // Si le champ est "Page", rendre un lien cliquable
             if (field === "Page") {
               const pageNumber = row.getValue(field);
-              return (
-                <Button
-                  variant="link"
-                  className="p-0 h-auto text-blue-600 hover:text-blue-800 hover:underline"
-                  onClick={() => handlePageClick(Number(pageNumber))}
-                >
-                  {String(pageNumber)}
-                </Button>
-              );
+              if (Number(pageNumber) === 0) {
+                return "-";
+              } else {
+                return (
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-blue-600 hover:text-blue-800 hover:underline"
+                    onClick={() => handlePageClick(Number(pageNumber))}
+                  >
+                    {String(pageNumber)}
+                  </Button>
+                );
+              }
             }
             return renderMetadataValue(row.getValue(field));
           },
@@ -376,10 +380,6 @@ export function DocumentMetadataDialog({
 
   // Fonction intermédiaire pour gérer le clic sur un numéro de page
   const handlePageClick = (pageNumber: number) => {
-    // Fermer la modale des métadonnées
-    onClose();
-
-    // Ouvrir le document à la page spécifiée
     onOpenDocument(pageNumber);
   };
 

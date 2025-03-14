@@ -5,6 +5,12 @@ export type ProjectStatus =
   | "COMPLETED"
   | "ERROR";
 
+export interface PublicDocument {
+  type: string;
+  lien: string;
+}
+
+export type PublicDocumentList = PublicDocument[];
 export interface Project {
   id: string;
   name?: string;
@@ -18,6 +24,7 @@ export interface Project {
   status?: ProjectStatus;
   externalId?: string;
   userId?: string;
+  documents?: PublicDocumentList;
 }
 
 export interface UploadingFile {

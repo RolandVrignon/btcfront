@@ -74,7 +74,6 @@ export function DeliverableResultDialog({
       setTabs(tabs);
       setContents(contents);
     }
-    // eslint-disable-next-line
   }, [deliverable]);
 
   useEffect(() => {

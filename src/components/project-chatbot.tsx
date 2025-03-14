@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/src/components/ui/dialog";
 import { Clock } from "lucide-react";
-import { PlaceholdersAndVanishInput } from "../ui/placeholder-vanish-input";
+import { PlaceholdersAndVanishInput } from "./ui/placeholder-vanish-input";
 
 export function ProjectChatbot() {
   const [isOpen, setIsOpen] = useState(false);
