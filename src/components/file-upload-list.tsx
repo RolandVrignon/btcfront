@@ -127,7 +127,7 @@ export function FileUploadList({
         <h3 className="text-xl font-semibold mb-4">
           Fichiers ({isLoading ? "..." : files.length})
         </h3>
-        <ScrollArea className="border rounded-lg flex flex-col min-h-[30vh] max-h-[30vh] overflow-y-auto">
+        <ScrollArea className="border rounded-lg flex flex-col max-h-[30vh] overflow-y-auto">
           {isLoading
             ? // Skeleton loader
               Array.from({ length: 3 }).map((_, index) => (
