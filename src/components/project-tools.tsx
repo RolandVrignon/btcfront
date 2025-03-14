@@ -818,22 +818,17 @@ export function ProjectTools({
             )}
           </div>
 
-          {/* Modification temporaire pour tester l'affichage sans condition */}
-          <ProjectChatbot />
-          
-          {/* Condition originale commentée pour test
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
               (file) => file.status && file.status === "COMPLETED",
             ) && <ProjectChatbot />
           }
-          */}
+         
 
           {uploadingFiles.length > 0 &&
             uploadingFiles.every(
               (file) => file.status && file.status === "COMPLETED",
-            ) && <ProjectToolsList projectId={project?.externalId} />
-          }
+            ) && <ProjectToolsList projectId={project?.externalId} />}
         </div>
       </div>
 

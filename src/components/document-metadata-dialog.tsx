@@ -23,7 +23,7 @@ interface DocumentMetadataDialogProps {
   onClose: () => void;
   fileName: string;
   projectId: string;
-  onOpenDocument: () => void;
+  onOpenDocument: (pageNumber?: number) => void;
   fileStatus?: string;
 }
 
@@ -98,9 +98,50 @@ export function DocumentMetadataDialog({
     }
   };
 
+  // Préparer les données pour les onglets
+  const getTabsData = () => {
+    if (!metadata) return { tabs: [], panels: [] };
+
+    // Vérifier si nous avons une structure avec __data et __fieldOrder au niveau supérieur
+    if (
+      typeof metadata === "object" &&
+      !Array.isArray(metadata) &&
+      metadata.__data &&
+      metadata.__fieldOrder
+    ) {
+      // Récupérer l'ordre des onglets depuis __fieldOrder
+      const fieldOrder = metadata.__fieldOrder as string[];
+      const rootData = metadata.__data as Record<string, unknown>;
+
+      // Créer les tabs dans l'ordre spécifié par __fieldOrder
+      const orderedTabs = fieldOrder;
+
+      // Créer les panels correspondants en accédant aux données dans __data
+      const panels = orderedTabs.map((tab) => rootData[tab]);
+
+      return { tabs: orderedTabs, panels };
+    }
+
+    if (Array.isArray(metadata)) {
+      return {
+        tabs: metadata.map((item: MetadataItem) => item.key),
+        panels: metadata.map((item: MetadataItem) => item.value),
+      };
+    } else {
+      const keys = Object.keys(metadata);
+      return {
+        tabs: keys,
+        panels: keys.map((key) => (metadata as Record<string, unknown>)[key]),
+      };
+    }
+  };
+
+  const { tabs, panels } = getTabsData();
+
   // Fonction pour rendre un tableau à partir d'un array
   const renderTable = (array: unknown[]) => {
     if (array.length === 0) return <p>Aucune donnée</p>;
+    console.log("array:", array);
 
     // Vérifier si les éléments sont des objets
     const isObjectArray = array.every(
@@ -108,25 +149,103 @@ export function DocumentMetadataDialog({
     );
 
     if (isObjectArray) {
-      // Extraire les clés pour les en-têtes du tableau
+      // Vérifier si nous avons une structure avec __data et __fieldOrder
       const firstItem = array[0] as Record<string, unknown>;
-      const headers = Object.keys(firstItem);
 
-      const columns = headers.map((header) => ({
-        accessorKey: header,
-        header: header,
-        cell: ({ row }: { row: Row<Record<string, unknown>> }) =>
-          renderMetadataValue(row.getValue(header)),
-      }));
+      // Cas où l'objet contient __data et __fieldOrder
+      if (
+        firstItem.__data !== undefined &&
+        firstItem.__fieldOrder !== undefined &&
+        Array.isArray(firstItem.__fieldOrder)
+      ) {
+        // Récupérer l'ordre des champs depuis __fieldOrder du premier élément
+        const fieldOrder = firstItem.__fieldOrder as string[];
 
-      return (
-        <div className="rounded-lg overflow-hidden">
-          <DataTable
-            columns={columns}
-            data={array as Record<string, unknown>[]}
-          />
-        </div>
-      );
+        // Créer les colonnes en respectant l'ordre défini
+        const columns = fieldOrder.map((field) => ({
+          accessorKey: field,
+          header: field,
+          cell: ({ row }: { row: Row<Record<string, unknown>> }) => {
+            // Si le champ est "Page", rendre un lien cliquable
+            if (field === "Page") {
+              const pageNumber = row.getValue(field);
+              return (
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-blue-600 hover:text-blue-800 hover:underline"
+                  onClick={() => handlePageClick(Number(pageNumber))}
+                >
+                  {String(pageNumber)}
+                </Button>
+              );
+            }
+            return renderMetadataValue(row.getValue(field));
+          },
+        }));
+
+        // Transformer les données pour l'affichage
+        const tableData = array.map((item) => {
+          const dataItem = (item as Record<string, unknown>).__data;
+          return dataItem && typeof dataItem === "object"
+            ? (dataItem as Record<string, unknown>)
+            : {};
+        });
+
+        return (
+          <div className="rounded-lg overflow-hidden">
+            <DataTable columns={columns} data={tableData} />
+          </div>
+        );
+      } else {
+        // Cas standard : utiliser les clés de l'objet directement
+        const headers = Object.keys(firstItem);
+
+        // Filtrer les clés spéciales comme __fieldOrder pour qu'elles n'apparaissent pas dans le tableau
+        const filteredHeaders = headers.filter(
+          (header) => !header.startsWith("__"),
+        );
+
+        // Si l'objet a un __fieldOrder, l'utiliser pour ordonner les colonnes
+        let orderedHeaders = filteredHeaders;
+        if (firstItem.__fieldOrder && Array.isArray(firstItem.__fieldOrder)) {
+          const fieldOrder = firstItem.__fieldOrder as string[];
+          // Ordonner les en-têtes selon fieldOrder, puis ajouter les en-têtes qui ne sont pas dans fieldOrder
+          orderedHeaders = [
+            ...fieldOrder.filter((field) => filteredHeaders.includes(field)),
+            ...filteredHeaders.filter((header) => !fieldOrder.includes(header)),
+          ];
+        }
+
+        const columns = orderedHeaders.map((header) => ({
+          accessorKey: header,
+          header: header,
+          cell: ({ row }: { row: Row<Record<string, unknown>> }) => {
+            // Si le champ est "Page", rendre un lien cliquable
+            if (header === "Page") {
+              const pageNumber = row.getValue(header);
+              return (
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-blue-600 hover:text-blue-800 hover:underline"
+                  onClick={() => handlePageClick(Number(pageNumber))}
+                >
+                  {String(pageNumber)}
+                </Button>
+              );
+            }
+            return renderMetadataValue(row.getValue(header));
+          },
+        }));
+
+        return (
+          <div className="rounded-lg overflow-hidden">
+            <DataTable
+              columns={columns}
+              data={array as Record<string, unknown>[]}
+            />
+          </div>
+        );
+      }
     } else {
       // Pour les tableaux de valeurs simples
       const columns = [
@@ -137,8 +256,26 @@ export function DocumentMetadataDialog({
         {
           accessorKey: "value",
           header: "Valeur",
-          cell: ({ row }: { row: Row<{ index: number; value: unknown }> }) =>
-            renderMetadataValue(row.getValue("value")),
+          cell: ({ row }: { row: Row<{ index: number; value: unknown }> }) => {
+            const value = row.getValue("value");
+            // Si la valeur est un numéro de page (vérifier si c'est un nombre et si la clé est "Page")
+            // Convertir l'index en string pour la comparaison
+            if (
+              typeof value === "number" &&
+              String(row.original.index) === "Page"
+            ) {
+              return (
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-blue-600 hover:text-blue-800 hover:underline"
+                  onClick={() => handlePageClick(value)}
+                >
+                  {value}
+                </Button>
+              );
+            }
+            return renderMetadataValue(value);
+          },
         },
       ];
 
@@ -163,8 +300,39 @@ export function DocumentMetadataDialog({
 
     // Si la valeur est un objet, on cherche s'il contient un tableau à afficher directement
     if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+      const objValue = value as Record<string, unknown>;
+
+      // Vérifier si nous avons une structure avec __data et __fieldOrder
+      if (
+        objValue.__data &&
+        objValue.__fieldOrder &&
+        Array.isArray(objValue.__fieldOrder)
+      ) {
+        // Si c'est un tableau (__isArray est true), on l'affiche directement
+        if (objValue.__isArray && Array.isArray(objValue.__data)) {
+          // Ajouter __fieldOrder à chaque élément du tableau pour que renderTable puisse l'utiliser
+          // mais s'assurer que __fieldOrder ne sera pas affiché comme une colonne
+          const dataWithFieldOrder = objValue.__data.map((item) => {
+            if (typeof item === "object" && item !== null) {
+              // Utiliser Symbol pour s'assurer que __fieldOrder ne sera pas énuméré
+              // lors de la création des colonnes
+              return {
+                ...(item as object),
+                __fieldOrder: objValue.__fieldOrder,
+              };
+            }
+            return item;
+          });
+
+          return renderTable(dataWithFieldOrder);
+        }
+
+        // Sinon, on utilise __data comme valeur principale
+        return renderMetadataValue(objValue.__data);
+      }
+
       // Vérifier si l'objet ne contient qu'un seul tableau ou si la plupart des propriétés sont des tableaux
-      const entries = Object.entries(value as Record<string, unknown>);
+      const entries = Object.entries(objValue);
 
       // Si l'objet n'a qu'une seule propriété et que c'est un tableau, on l'affiche directement
       if (entries.length === 1 && Array.isArray(entries[0][1])) {
@@ -172,7 +340,7 @@ export function DocumentMetadataDialog({
       }
 
       // Si l'objet a plusieurs propriétés, on cherche un tableau qui pourrait être le contenu principal
-      const values = Object.values(value as Record<string, unknown>);
+      const values = Object.values(objValue);
       for (const val of values) {
         if (
           Array.isArray(val) &&
@@ -206,6 +374,15 @@ export function DocumentMetadataDialog({
     return String(value);
   };
 
+  // Fonction intermédiaire pour gérer le clic sur un numéro de page
+  const handlePageClick = (pageNumber: number) => {
+    // Fermer la modale des métadonnées
+    onClose();
+
+    // Ouvrir le document à la page spécifiée
+    onOpenDocument(pageNumber);
+  };
+
   // Composant pour afficher un skeleton de chargement
   const MetadataSkeleton = () => (
     <div className="space-y-4">
@@ -229,26 +406,6 @@ export function DocumentMetadataDialog({
       </div>
     </div>
   );
-
-  // Préparer les données pour les onglets
-  const getTabsData = () => {
-    if (!metadata) return { tabs: [], panels: [] };
-
-    if (Array.isArray(metadata)) {
-      return {
-        tabs: metadata.map((item: MetadataItem) => item.key),
-        panels: metadata.map((item: MetadataItem) => item.value),
-      };
-    } else {
-      const keys = Object.keys(metadata);
-      return {
-        tabs: keys,
-        panels: keys.map((key) => (metadata as Record<string, unknown>)[key]),
-      };
-    }
-  };
-
-  const { tabs, panels } = getTabsData();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -306,7 +463,10 @@ export function DocumentMetadataDialog({
           <Button variant="outline" onClick={onClose}>
             Fermer
           </Button>
-          <Button onClick={onOpenDocument} disabled={isLoading && isFileReady}>
+          <Button
+            onClick={() => onOpenDocument(0)}
+            disabled={isLoading && isFileReady}
+          >
             <ExternalLinkIcon className="mr-2 h-4 w-4" />
             Ouvrir le fichier
           </Button>

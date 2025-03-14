@@ -78,11 +78,12 @@ export function FileUploadList({
   };
 
   // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
-  const openFileInNewTab = async () => {
+  const openFileInNewTab = async (page: number = 0) => {
     console.log("openFileInNewTab:");
 
     console.log("selectedFile:", selectedFile);
     console.log("projectId:", projectId);
+    console.log("page:", page);
 
     if (!selectedFile || !projectId) return;
 
@@ -111,7 +112,9 @@ export function FileUploadList({
       console.log("data:", data);
 
       if (data.url) {
-        window.open(data.url, "_blank");
+        // Ajouter le numéro de page à l'URL si une page est spécifiée
+        const urlWithPage = page > 0 ? `${data.url}#page=${page}` : data.url;
+        window.open(urlWithPage, "_blank");
       } else {
         throw new Error("URL de visualisation non disponible");
       }

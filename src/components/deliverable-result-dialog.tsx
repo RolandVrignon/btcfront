@@ -17,12 +17,6 @@ import {
   AnimatedTabs,
   AnimatedTabsContent,
 } from "@/src/components/ui/animated-tabs";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import rehypeSlug from "rehype-slug";
-import rehypeSanitize from "rehype-sanitize";
-import rehypeExternalLinks from "rehype-external-links";
 import { DataTable } from "@/src/components/ui/data-table";
 import type { Row } from "@tanstack/react-table";
 import { RenderMarkdown } from "@/src/components/ui/render-markdown";
