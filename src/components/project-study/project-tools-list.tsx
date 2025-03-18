@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
 import { toast } from "sonner";
-import { DeliverableResultDialog } from "@/src/components/deliverable-result-dialog";
+import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
 
 interface Deliverable {
   id: string;
@@ -262,7 +262,7 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 w-full">
       <h3 className="text-xl font-semibold mb-4">Outils disponibles</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {tools.map((tool) => (

@@ -2,19 +2,19 @@
 
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { FileUploadZone } from "@/src/components/file-upload-zone";
-import { FileUploadList } from "@/src/components/file-upload-list";
+import { FileUploadZone } from "@/src/components/project-study/file-upload-zone";
+import { FileUploadList } from "@/src/components/project-study/file-upload-list";
 import { Project, PublicDocumentList } from "@/src/types/project";
 import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
-import { SelectedFilesList } from "@/src/components/selected-files-list";
+import { SelectedFilesList } from "@/src/components/project-study/selected-files-list";
 import { Skeleton } from "@/src/components/ui/skeleton";
-import { ProjectMapDialog } from "@/src/components/project-map-dialog";
-import { ProjectDetailsDialog } from "@/src/components/project-details-dialog";
+import { ProjectMapDialog } from "@/src/components/project-study/dialogs/project-map-dialog";
+import { ProjectDetailsDialog } from "@/src/components/project-study/dialogs/project-details-dialog";
 import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
-import { ProjectToolsList } from "@/src/components/project-tools-list";
+import { ProjectToolsList } from "@/src/components/project-study/project-tools-list";
 import { ProjectChatbot } from "./project-chatbot";
 
 interface ProjectToolsProps {
@@ -30,29 +30,29 @@ export function ProjectTools({
   setProjects,
   isUpperLoading,
 }: ProjectToolsProps) {
-  const [project, setProject] = useState<Project | null>(null);
+  const [project, setProject] = useState<Project | null>(initialProject);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { getPresignedUrl } = usePresignedUrl();
-  const [isLoading, setIsLoading] = useState(isUpperLoading);
-  const isUploadingRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (project) {
-      console.log("project:", project);
-    }
-  }, [project]);
+  const isUploadingRef = useRef(false);
+  const isFetchingProjectData = useRef(false);
 
   useEffect(() => {
     if (!initialProject) {
-      console.log("project not existing:");
-    } else {
-      console.log("project:", initialProject);
-      setProject(initialProject);
+      return;
     }
 
-    if (!initialProject) return;
+    // Si une récupération est déjà en cours, ne pas en démarrer une nouvelle
+    if (isFetchingProjectData.current) {
+      return;
+    }
+
+    // Démarrer la récupération des données
+    isFetchingProjectData.current = true;
+    fetchProjectData();
 
     async function fetchProjectData() {
       try {
@@ -65,15 +65,6 @@ export function ProjectTools({
 
         setProject({
           ...initialProject,
-        });
-
-        const publicDocuments = await searchPublicDocuments(
-          initialProject.ai_city || "",
-        );
-
-        setProject({
-          ...initialProject,
-          documents: publicDocuments as PublicDocumentList,
         });
 
         // 2. Récupérer les documents depuis l'API externe
@@ -103,16 +94,30 @@ export function ProjectTools({
         // 4. Mettre à jour l'état des fichiers
         setUploadingFiles(files);
         setIsLoading(false);
+
+        if (!project?.documents || (project?.documents && project?.documents.length === 0)) {
+          const publicDocuments = await searchPublicDocuments(
+            initialProject.ai_city || "",
+          );
+
+          setProject({
+            ...initialProject,
+            documents: publicDocuments as PublicDocumentList,
+          });
+        }
+
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des données du projet:",
           error,
         );
+      } finally {
+        // Réinitialiser le verrou
+        isFetchingProjectData.current = false;
         setIsLoading(false);
       }
     }
-
-    fetchProjectData();
+  // eslint-disable-next-line
   }, [initialProject]);
 
   useEffect(() => {
@@ -125,7 +130,6 @@ export function ProjectTools({
 
   useEffect(() => {
     if (!uploadingFiles) return;
-    console.log("uploadingFiles:", uploadingFiles);
   }, [uploadingFiles]);
 
   useEffect(() => {
@@ -165,7 +169,6 @@ export function ProjectTools({
     }
   };
 
-  // Modifier la fonction uploadFileToS3 pour utiliser à nouveau le proxy API mais avec suivi de progression
   const uploadFileToS3 = async (
     file: File,
     presignedUrl: string,
@@ -310,8 +313,6 @@ export function ProjectTools({
         console.error("Erreur lors de la création du projet");
         setIsUploading(false);
         return;
-      } else {
-        console.log("Projet créé avec succès:", newProject);
       }
     }
 
@@ -455,7 +456,6 @@ export function ProjectTools({
       `/api/tools/search-public-documents?city=${city}`,
     );
     const data = await response.json();
-    console.log("🔴 data:", data);
     return data;
   };
 
@@ -531,10 +531,8 @@ export function ProjectTools({
         // Ce code est atteint seulement si on sort de la boucle while sans avoir résolu la promesse
         if (!isProcessingComplete) {
           if (!isUploadingRef.current) {
-            console.log("Monitoring du projet interrompu par l'utilisateur");
             reject(new Error("Monitoring du projet interrompu"));
           } else {
-            console.log("Fin du monitoring du projet sans résolution");
             reject(
               new Error("Monitoring du projet terminé sans résultat définitif"),
             );
@@ -562,8 +560,6 @@ export function ProjectTools({
         fileNames,
       };
 
-      console.log("body:", body);
-
       // Mettre à jour le statut des fichiers
       setUploadingFiles((prev) =>
         prev.map((f) => {
@@ -587,11 +583,8 @@ export function ProjectTools({
             await new Promise((resolve) => setTimeout(resolve, 1000));
           }
         }
-        console.log("documentId:", documentId);
 
         if (documentId) {
-          console.log("9️⃣ setUploadingFiles - Mise à jour de l'ID du document");
-
           setUploadingFiles((prev) =>
             prev.map((f) =>
               f.file && f.file.name === fileName
@@ -617,8 +610,6 @@ export function ProjectTools({
       // Fonction pour gérer tout le processus lié au projet
       const projectPromise = async () => {
         try {
-          console.log("🔴 projectPromise - projectId:", projectId);
-
           // Vérifier si c'est le premier upload en récupérant l'état actuel du projet
           const projectResponse = await fetch(`/api/projects/${projectId}`, {
             method: "GET",
@@ -627,32 +618,21 @@ export function ProjectTools({
             },
           });
 
-          console.log("🔴 projectResponse:", projectResponse);
-
           if (!projectResponse) {
             console.error("Erreur lors de la récupération du projet");
             return null;
           }
 
           const currentProject = await projectResponse.json();
-          console.log("🔴 currentProject:", currentProject);
           const isFirstUpload =
             !currentProject?.short_summary ||
             currentProject.short_summary === "";
-          console.log("🔴 isFirstUpload:", isFirstUpload);
 
           // Si c'est le premier upload, démarrer le monitoring du projet
           if (isFirstUpload) {
-            console.log(
-              "🔴 Premier upload détecté, démarrage du monitoring du projet",
-            );
             try {
               // Monitorer le projet jusqu'à ce qu'il soit terminé
               const finalProject = await monitorProjectStatus(projectId);
-              console.log(
-                "🔴 Monitoring du projet terminé avec succès:",
-                finalProject,
-              );
               return finalProject;
             } catch (error) {
               console.error("Erreur lors du monitoring du projet:", error);
@@ -661,9 +641,6 @@ export function ProjectTools({
             }
           } else {
             // Si ce n'est pas le premier upload, simplement mettre à jour l'état du projet
-            console.log(
-              "Ce n'est pas le premier upload, mise à jour simple du projet",
-            );
             const updatedProject = await handleProjectUpdate(projectId);
             setIsUploading(false);
             return updatedProject;
@@ -694,9 +671,6 @@ export function ProjectTools({
   };
 
   const handleProjectUpdate = async (projectId: string) => {
-    console.log("handleProjectUpdate");
-
-    console.log("url fetch:", `/api/projects/${projectId}`);
 
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
@@ -712,7 +686,6 @@ export function ProjectTools({
       }
 
       const data = await res.json();
-      console.log("data:", data);
 
       setProject(data);
       return data;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AceternitySidebar } from "@/src/components/ui/aceternity-sidebar";
-import { ProjectTools } from "@/src/components/project-tools";
+import { AceternitySidebar } from "@/src/components/sidebar";
+import { ProjectTools } from "@/src/components/project-study";
 import { Project } from "@/src/types/project";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
@@ -16,6 +16,9 @@ export default function DashboardPage() {
   const { projectId } = useParams();
 
   useEffect(() => {
+
+    if (!userId) return;
+
     const fetchProjects = async () => {
       try {
         if (!userId) return;
@@ -23,19 +26,11 @@ export default function DashboardPage() {
         setIsProjectsLoading(true);
 
         const response = await fetch(`/api/projects/user/${userId}`);
+
         if (!response.ok) {
           throw new Error("Failed to fetch projects");
         }
         const data = await response.json();
-
-        // Log projects with their createdAt dates for verification
-        console.log(
-          "Projects sorted by createdAt:",
-          data.map((project: { name: string; createdAt: string }) => ({
-            name: project.name,
-            createdAt: project.createdAt,
-          })),
-        );
 
         setProjects(data);
         setIsProjectsLoading(false);
@@ -55,7 +50,6 @@ export default function DashboardPage() {
           throw new Error("Failed to fetch project");
         }
         const data = await response.json();
-        console.log("data:", data);
         setProject(data);
         setIsProjectLoading(false);
       } catch (error) {
@@ -66,9 +60,7 @@ export default function DashboardPage() {
     fetchProjects();
     fetchProject();
     // eslint-disable-next-line
-  }, []);
-
-  if (!userId) return null;
+  }, [userId]);
 
   return (
     <div className="flex h-screen">

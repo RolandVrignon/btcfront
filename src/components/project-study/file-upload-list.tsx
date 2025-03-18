@@ -8,7 +8,7 @@ import {
   FileSpreadsheet,
   ExternalLink,
 } from "lucide-react";
-import { DocumentMetadataDialog } from "@/src/components/document-metadata-dialog";
+import { DocumentMetadataDialog } from "@/src/components/project-study/dialogs/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/project";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import dynamic from "next/dynamic";
@@ -126,7 +126,7 @@ export function FileUploadList({
 
   return (
     <>
-      <div className="mt-4">
+      <div className="mt-4 w-full">
         <h3 className="text-xl font-semibold mb-4">
           Fichiers ({isLoading ? "..." : files.length})
         </h3>

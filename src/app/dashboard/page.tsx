@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AceternitySidebar } from "@/src/components/ui/aceternity-sidebar";
-import { ProjectTools } from "@/src/components/project-tools";
+import { AceternitySidebar } from "@/src/components/sidebar";
+import { ProjectTools } from "@/src/components/project-study";
 import { Project } from "@/src/types/project";
 import { useSession } from "next-auth/react";
 

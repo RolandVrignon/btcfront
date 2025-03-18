@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cn } from "@/src/lib/utils";
-import { ThemeProvider } from "@/src/components/theme-provider";
 import { SessionProvider } from "@/src/components/auth/session-provider";
 import { Toaster } from "sonner";
 
@@ -24,14 +23,7 @@ export default async function RootLayout({
         className={cn("bg-background font-sans antialiased", inter.variable)}
       >
         <SessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
             {children}
-          </ThemeProvider>
         </SessionProvider>
         <Toaster position="top-right" />
       </body>

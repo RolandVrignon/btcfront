@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -39,12 +39,6 @@ interface ProjectDetailsDialogProps {
 
 export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   const [tabIndex, setTabIndex] = useState(0);
-
-  useEffect(() => {
-    if (project) {
-      console.log("🔴 project details dialog state:", project);
-    }
-  }, [project]);
 
   if (!project) return null;
 
