@@ -12,6 +12,7 @@ import { Skeleton } from "@/src/components/ui/skeleton";
 import { motion } from "framer-motion";
 
 interface SidebarProps {
+  projectRef: React.MutableRefObject<Project | null>;
   setProject: React.Dispatch<React.SetStateAction<Project | null>>;
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>;
   setSelectedFiles: React.Dispatch<React.SetStateAction<File[]>>;
@@ -144,6 +145,7 @@ function MarqueeText({
 }
 
 export function Sidebar({
+  projectRef,
   setProject,
   setUploadingFiles,
   setSelectedFiles,
@@ -163,6 +165,8 @@ export function Sidebar({
   };
 
   const handleNewProject = () => {
+    if (!projectRef) return;
+    projectRef.current = null;
     setProject(null);
     setUploadingFiles([]);
     setSelectedFiles([]);

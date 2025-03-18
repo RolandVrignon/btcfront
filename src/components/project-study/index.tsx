@@ -16,10 +16,11 @@ import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
 import { ProjectToolsList } from "@/src/components/project-study/project-tools-list";
 import { ProjectChatbot } from "./project-chatbot";
-import { uploadAllFilesUtils } from "./utils";
+import { uploadAllFilesUtils, monitorDocumentProcessing } from "./utils";
 
 interface ProjectToolsProps {
   project: Project | null;
+  projectRef: React.MutableRefObject<Project | null>;
   setProject: React.Dispatch<React.SetStateAction<Project | null>>;
   uploadingFiles: UploadingFile[];
   selectedFiles: File[];
@@ -33,6 +34,7 @@ interface ProjectToolsProps {
 
 export function ProjectStudy({
   project,
+  projectRef,
   setProject,
   uploadingFiles,
   selectedFiles,
@@ -47,6 +49,16 @@ export function ProjectStudy({
   const [isLoading, setIsLoading] = useState(true);
 
   const isUploadingRef = useRef(false);
+  const isMonitoringRef = useRef(false);
+
+  useEffect(() => {
+    if (!project) return;
+    if (!projectRef) return;
+
+    if (project) {
+      projectRef.current = project;
+    }
+  }, [project, projectRef]);
 
   useEffect(() => {
     if (isUpperLoading) {
@@ -58,7 +70,27 @@ export function ProjectStudy({
 
   useEffect(() => {
     if (!uploadingFiles) return;
-  }, [uploadingFiles]);
+    if (!uploadingFiles.length) return;
+    if (!project) return;
+    if (!project.externalId) return;
+    if (!setUploadingFiles) return;
+    if (!isUploadingRef) return;
+    if (!projectRef.current) return;
+    if (isMonitoringRef.current) return;
+    isMonitoringRef.current = true;
+
+    // Pour chaque fichier en cours de traitement, surveiller son statut
+    uploadingFiles.forEach((file) => {
+      if (file.status !== 'COMPLETED' && file.status !== 'ERROR' && file.id) {
+        monitorDocumentProcessing(
+          projectRef,
+          file.id,
+          project?.externalId || '',
+          setUploadingFiles
+        );
+      }
+    });
+  }, [uploadingFiles, setUploadingFiles, project, isUploadingRef, projectRef]);
 
   useEffect(() => {
     isUploadingRef.current = isUploading;
@@ -74,9 +106,9 @@ export function ProjectStudy({
 
   const uploadAllFiles = async () => {
     uploadAllFilesUtils(
+      projectRef,
       selectedFiles,
       setUploadingFiles,
-      isUploadingRef,
       setProject,
       setProjects,
       setIsUploading,

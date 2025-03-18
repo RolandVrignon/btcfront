@@ -13,6 +13,8 @@ import { useParams } from "next/navigation";
 import { searchPublicDocuments } from "@/src/components/project-study/utils";
 
 export default function DashboardPage() {
+  const projectRef = useRef<Project | null>(null);
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [project, setProject] = useState<Project | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
@@ -179,6 +181,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen">
       <Sidebar
+        projectRef={projectRef}
         setProject={setProject}
         setUploadingFiles={setUploadingFiles}
         setSelectedFiles={setSelectedFiles}
@@ -189,6 +192,7 @@ export default function DashboardPage() {
       />
       <main className="flex-1 overflow-auto">
         <ProjectStudy
+          projectRef={projectRef}
           project={project}
           setProject={setProject}
           uploadingFiles={uploadingFiles}

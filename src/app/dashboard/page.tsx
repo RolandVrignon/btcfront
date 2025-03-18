@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/src/components/sidebar";
 import { ProjectStudy } from "@/src/components/project-study";
 import { Project, UploadingFile } from "@/src/types/project";
 import { useSession } from "next-auth/react";
 
 export default function DashboardPage() {
+  const projectRef = useRef<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -69,6 +70,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen">
       <Sidebar
+        projectRef={projectRef}
         setProject={setProject}
         setUploadingFiles={setUploadingFiles}
         setSelectedFiles={setSelectedFiles}
@@ -79,6 +81,7 @@ export default function DashboardPage() {
       />
       <main className="flex-1 overflow-auto">
         <ProjectStudy
+          projectRef={projectRef}
           project={project}
           setProject={setProject}
           uploadingFiles={uploadingFiles}

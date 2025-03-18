@@ -56,17 +56,20 @@ export const searchPublicDocuments = async (
 };
 
 export const monitorDocumentProcessing = async (
+  projectRef: React.MutableRefObject<Project | null>,
   documentId: string,
   projectId: string,
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
-  isUploadingRef: React.MutableRefObject<boolean>,
 ) => {
   try {
     let isProcessingComplete = false;
     const startTime = Date.now();
-    const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
+    const timeoutDuration = 10 * 60 * 1000;
 
-    while (!isProcessingComplete && isUploadingRef.current) {
+    console.log('projectRef.current?.externalId:', projectRef.current?.externalId)
+    console.log('projectId:', projectId)
+
+    while (!isProcessingComplete && projectRef.current?.externalId === projectId) {
       // Vérifier si le timeout est atteint
       if (Date.now() - startTime > timeoutDuration) {
         console.warn(
@@ -139,9 +142,9 @@ export const monitorDocumentProcessing = async (
 };
 
 export const monitorProjectStatus = async (
+  projectRef: React.MutableRefObject<Project | null>,
   projectId: string,
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
-  isUploadingRef: React.MutableRefObject<boolean>,
 ): Promise<Project | null> => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -149,7 +152,7 @@ export const monitorProjectStatus = async (
       const startTime = Date.now();
       const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
 
-      while (!isProcessingComplete && isUploadingRef.current) {
+      while (!isProcessingComplete && (projectRef.current?.externalId === projectId)) {
         // Vérifier si le timeout est atteint
         if (Date.now() - startTime > timeoutDuration) {
           console.warn(
@@ -193,17 +196,6 @@ export const monitorProjectStatus = async (
           resolve(projectData);
           setProject(projectData);
           return;
-        }
-      }
-
-      // Ce code est atteint seulement si on sort de la boucle while sans avoir résolu la promesse
-      if (!isProcessingComplete) {
-        if (!isUploadingRef.current) {
-          reject(new Error("Monitoring du projet interrompu"));
-        } else {
-          reject(
-            new Error("Monitoring du projet terminé sans résultat définitif"),
-          );
         }
       }
     } catch (error) {
@@ -390,12 +382,11 @@ export const handleProjectUpdate = async (
 };
 
 export const confirmMultipleUploadsToBackend = async (
+  projectRef: React.MutableRefObject<Project | null>,
   projectId: string | undefined,
   fileNames: string[],
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
-  isUploadingRef: React.MutableRefObject<boolean>,
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>,
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
   if (!projectId) {
@@ -446,10 +437,10 @@ export const confirmMultipleUploadsToBackend = async (
         );
 
         await monitorDocumentProcessing(
+          projectRef,
           documentId,
           projectId,
           setUploadingFiles,
-          isUploadingRef,
         );
       }
 
@@ -481,9 +472,9 @@ export const confirmMultipleUploadsToBackend = async (
           try {
             // Monitorer le projet jusqu'à ce qu'il soit terminé
             const finalProject = await monitorProjectStatus(
+              projectRef,
               projectId,
               setProject,
-              isUploadingRef,
             );
             return finalProject;
           } catch (error) {
@@ -526,9 +517,9 @@ export const confirmMultipleUploadsToBackend = async (
 };
 
 export const uploadAllFilesUtils = async (
+  projectRef: React.MutableRefObject<Project | null>,
   selectedFiles: File[],
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
-  isUploadingRef: React.MutableRefObject<boolean>,
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>,
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -652,12 +643,11 @@ export const uploadAllFilesUtils = async (
 
     if (successfulUploads.length > 0) {
       await confirmMultipleUploadsToBackend(
+        projectRef,
         projectId,
         successfulUploads.map((u) => u.fileName),
         setUploadingFiles,
-        isUploadingRef,
         setProject,
-        setProjects,
         setIsUploading,
       );
     }
