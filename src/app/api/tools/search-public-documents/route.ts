@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
     console.log("🔴 data:", data);
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des projets:", error);
+  } catch {
+    console.error("src > api > tools > search-public-documents > route.ts - error");
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },

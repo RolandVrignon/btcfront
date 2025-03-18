@@ -203,9 +203,7 @@ export function ProjectStudy({
               {/* Boutons d'action en bas à droite */}
               <div className="absolute bottom-1 right-1 flex items-center gap-2">
                 {project &&
-                  project.long_summary &&
-                  project.documents &&
-                  project.documents.length > 0 && (
+                  project.long_summary && (
                     <Button
                       variant="outline"
                       size="sm"

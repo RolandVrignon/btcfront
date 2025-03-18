@@ -192,10 +192,12 @@ export const monitorProjectStatus = async (
         ) {
           isProcessingComplete = true;
           setProject(projectData);
-          const publicDocuments = await searchPublicDocuments(
-            projectData.ai_city,
-          );
-          projectData.documents = publicDocuments as PublicDocumentList;
+          if (projectData.ai_city) {
+            const publicDocuments = await searchPublicDocuments(
+              projectData.ai_city,
+            );
+            projectData.documents = publicDocuments as PublicDocumentList;
+          }
           resolve(projectData);
           setProject(projectData);
           return;

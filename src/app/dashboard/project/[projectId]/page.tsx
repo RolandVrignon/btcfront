@@ -153,17 +153,20 @@ export default function DashboardPage() {
         setIsProjectLoading(false);
 
         if (
-          !project?.documents ||
-          (project?.documents && project?.documents.length === 0)
+          (!project?.documents ||
+            (project?.documents && project?.documents.length === 0)) &&
+          project?.ai_city
         ) {
           const publicDocuments = await searchPublicDocuments(
-            project.ai_city || "",
+            project.ai_city,
           );
 
-          setProject({
-            ...project,
-            documents: publicDocuments as PublicDocumentList,
-          });
+          if (publicDocuments.length > 0) {
+            setProject({
+              ...project,
+              documents: publicDocuments as PublicDocumentList,
+            });
+          }
         }
       } catch (error) {
         console.error(
