@@ -55,64 +55,58 @@ export async function GET(
     // Filtrer les données pour ne retourner que les champs correspondant au type Project
     const filteredProjectData: Project = {
       id: "",
-      name: externalProjectData?.name,
-      short_summary: externalProjectData?.short_summary,
-      long_summary: externalProjectData?.long_summary,
-      ai_address: externalProjectData?.ai_address,
-      ai_city: externalProjectData?.ai_city,
-      ai_zip_code: externalProjectData?.ai_zip_code,
-      ai_country: externalProjectData?.ai_country,
-      status: externalProjectData?.status,
-      externalId: externalProjectData?.id,
+      name: externalProjectData?.name || "",
+      short_summary: externalProjectData?.short_summary || "",
+      long_summary: externalProjectData?.long_summary || "",
+      ai_address: externalProjectData?.ai_address || "",
+      ai_city: externalProjectData?.ai_city || "",
+      ai_zip_code: externalProjectData?.ai_zip_code || "",
+      ai_country: externalProjectData?.ai_country || "",
+      status: externalProjectData?.status || "",
+      externalId: externalProjectData?.id || "",
     };
 
-    if (
-      filteredProjectData.status === "COMPLETED" ||
-      filteredProjectData.status === "ERROR"
-    ) {
-      try {
-        // Utiliser upsert pour créer ou mettre à jour le projet
-        const project = await prisma.project.upsert({
-          where: {
-            externalId: id,
-          },
-          update: {
-            short_summary: filteredProjectData.short_summary,
-            long_summary: filteredProjectData.long_summary,
-            name: filteredProjectData.name,
-            ai_address: filteredProjectData.ai_address,
-            ai_city: filteredProjectData.ai_city,
-            ai_zip_code: filteredProjectData.ai_zip_code,
-            ai_country: filteredProjectData.ai_country,
-            status: filteredProjectData.status,
-          },
-          create: {
-            externalId: id,
-            short_summary: filteredProjectData.short_summary,
-            long_summary: filteredProjectData.long_summary,
-            name: filteredProjectData.name,
-            ai_address: filteredProjectData.ai_address,
-            ai_city: filteredProjectData.ai_city,
-            ai_zip_code: filteredProjectData.ai_zip_code,
-            ai_country: filteredProjectData.ai_country,
-            status: filteredProjectData.status,
-            userId: session.user.id, // Ajouter l'ID de l'utilisateur pour la relation
-          },
-        });
+    try {
+      // Utiliser upsert pour créer ou mettre à jour le projet
+      const project = await prisma.project.upsert({
+        where: {
+          externalId: id,
+        },
+        update: {
+          short_summary: filteredProjectData.short_summary,
+          long_summary: filteredProjectData.long_summary,
+          name: filteredProjectData.name,
+          ai_address: filteredProjectData.ai_address,
+          ai_city: filteredProjectData.ai_city,
+          ai_zip_code: filteredProjectData.ai_zip_code,
+          ai_country: filteredProjectData.ai_country,
+          status: filteredProjectData.status,
+        },
+        create: {
+          externalId: id,
+          short_summary: filteredProjectData.short_summary,
+          long_summary: filteredProjectData.long_summary,
+          name: filteredProjectData.name,
+          ai_address: filteredProjectData.ai_address,
+          ai_city: filteredProjectData.ai_city,
+          ai_zip_code: filteredProjectData.ai_zip_code,
+          ai_country: filteredProjectData.ai_country,
+          status: filteredProjectData.status,
+          userId: session.user.id,
+        },
+      });
 
-        filteredProjectData.id = project.id;
-      } catch (error) {
-        console.error(
-          "Erreur lors de la création ou mise à jour du projet:",
-          error,
-        );
-      }
+      filteredProjectData.id = project.id;
 
       return NextResponse.json(filteredProjectData);
-    } else {
-      console.log("🔴 Project still in progress");
-      return NextResponse.json(filteredProjectData);
+    } catch (error) {
+      console.error(
+        "Erreur lors de la création ou mise à jour du projet:",
+        error,
+      );
     }
+
+    return NextResponse.json(filteredProjectData);
   } catch (error) {
     console.error("Erreur lors de la récupération du projet:", error);
     return NextResponse.json(

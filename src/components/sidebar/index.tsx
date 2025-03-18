@@ -6,12 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/src/lib/utils";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
-import { Project } from "@/src/types/project";
+import { Project, UploadingFile } from "@/src/types/project";
 import { LogOut, Plus, FileText } from "lucide-react";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { motion } from "framer-motion";
 
-interface AceternitySidebarProps {
+interface SidebarProps {
+  setProject: React.Dispatch<React.SetStateAction<Project | null>>;
+  setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>;
+  setSelectedFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   className?: string;
   projects: Project[];
   isLoading: boolean;
@@ -139,18 +143,30 @@ function MarqueeText({
   );
 }
 
-export function AceternitySidebar({
+export function Sidebar({
+  setProject,
+  setUploadingFiles,
+  setSelectedFiles,
   className,
   projects,
   isLoading,
-}: AceternitySidebarProps) {
+  setIsUploading,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
+    window.location.reload();
     router.push("/auth/signin");
+  };
+
+  const handleNewProject = () => {
+    setProject(null);
+    setUploadingFiles([]);
+    setSelectedFiles([]);
+    setIsUploading(false);
   };
 
   return (
@@ -174,6 +190,7 @@ export function AceternitySidebar({
               <Link
                 href="/dashboard"
                 className="flex items-center h-10 gap-2 px-2 py-2 rounded-md bg-stone-900 text-white hover:bg-stone-800 rounded-3xl transition-colors group relative"
+                onClick={handleNewProject}
               >
                 <motion.div
                   className="w-6 h-6 flex items-center rounded-3xl justify-center flex-shrink-0"

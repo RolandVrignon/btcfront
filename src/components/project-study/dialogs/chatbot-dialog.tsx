@@ -7,7 +7,11 @@ interface ChatbotDialogProps {
   inputValue: string;
 }
 
-export function ChatbotDialog({ isOpen, setIsOpen, inputValue }: ChatbotDialogProps) {
+export function ChatbotDialog({
+  isOpen,
+  setIsOpen,
+  inputValue,
+}: ChatbotDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="min-w-[90vw] min-h-[90vh] p-0 overflow-hidden rounded-xl flex flex-col">

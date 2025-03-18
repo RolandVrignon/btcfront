@@ -44,3 +44,10 @@ export interface UploadingFile {
   processingMessage?: string;
   tags?: string[];
 }
+
+export type DocumentStatus =
+  | "UPLOAD"
+  | "PROGRESS"
+  | "COMPLETED"
+  | "ERROR"
+  | "READY";
