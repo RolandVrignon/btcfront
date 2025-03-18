@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch {
-    console.error("src > api > tools > search-public-documents > route.ts - error");
+    console.error(
+      "src > api > tools > search-public-documents > route.ts - error",
+    );
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },

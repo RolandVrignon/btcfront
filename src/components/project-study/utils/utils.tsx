@@ -109,7 +109,9 @@ export const monitorDocumentProcessing = async (
 
       // Vérifier que les deux statuts ont atteint un état terminal
       const isStatusTerminal = terminalStatuses.includes(data.status);
-      const isIndexationStatusTerminal = terminalStatuses.includes(data.indexation_status);
+      const isIndexationStatusTerminal = terminalStatuses.includes(
+        data.indexation_status,
+      );
 
       setUploadingFiles((prev) =>
         prev.map((f) =>

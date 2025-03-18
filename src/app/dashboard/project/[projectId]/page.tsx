@@ -157,9 +157,7 @@ export default function DashboardPage() {
             (project?.documents && project?.documents.length === 0)) &&
           project?.ai_city
         ) {
-          const publicDocuments = await searchPublicDocuments(
-            project.ai_city,
-          );
+          const publicDocuments = await searchPublicDocuments(project.ai_city);
 
           if (publicDocuments.length > 0) {
             setProject({

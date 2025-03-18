@@ -172,7 +172,7 @@ export function FileUploadList({
                           >
                             {tag}
                           </div>
-                      ))}
+                        ))}
 
                       {file.status === "UPLOAD" ? (
                         <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full whitespace-nowrap">

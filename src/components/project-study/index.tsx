@@ -202,23 +202,22 @@ export function ProjectStudy({
 
               {/* Boutons d'action en bas à droite */}
               <div className="absolute bottom-1 right-1 flex items-center gap-2">
-                {project &&
-                  project.long_summary && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center rounded-full bg-white hover:bg-blue-50"
-                      onClick={() => {
-                        // Ouvrir la dialog de détails
-                        document
-                          .getElementById("details-dialog-trigger")
-                          ?.click();
-                      }}
-                    >
-                      <Info className="h-4 w-4 mr-1" />
-                      Données publiques
-                    </Button>
-                  )}
+                {project && project.long_summary && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center rounded-full bg-white hover:bg-blue-50"
+                    onClick={() => {
+                      // Ouvrir la dialog de détails
+                      document
+                        .getElementById("details-dialog-trigger")
+                        ?.click();
+                    }}
+                  >
+                    <Info className="h-4 w-4 mr-1" />
+                    Données publiques
+                  </Button>
+                )}
 
                 {project && project.ai_address && (
                   <Button

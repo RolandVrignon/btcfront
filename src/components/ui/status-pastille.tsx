@@ -29,11 +29,7 @@ export function StatusPastille({
 
   return (
     <div
-      className={cn(
-        "w-2 h-2 rounded-full",
-        getStatusColor(status),
-        className
-      )}
+      className={cn("w-2 h-2 rounded-full", getStatusColor(status), className)}
       {...props}
     />
   );
