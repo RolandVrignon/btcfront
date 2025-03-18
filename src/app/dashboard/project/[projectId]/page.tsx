@@ -10,7 +10,7 @@ import {
 } from "@/src/types/project";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
-import { searchPublicDocuments } from "@/src/components/project-study/utils";
+import { searchPublicDocuments } from "@/src/components/project-study/utils/utils";
 
 export default function DashboardPage() {
   const projectRef = useRef<Project | null>(null);

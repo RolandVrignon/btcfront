@@ -66,12 +66,6 @@ export const monitorDocumentProcessing = async (
     const startTime = Date.now();
     const timeoutDuration = 10 * 60 * 1000;
 
-    console.log(
-      "projectRef.current?.externalId:",
-      projectRef.current?.externalId,
-    );
-    console.log("projectId:", projectId);
-
     while (
       !isProcessingComplete &&
       projectRef.current?.externalId === projectId

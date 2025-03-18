@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { FileUploadZone } from "@/src/components/project-study/file-upload-zone";
-import { FileUploadList } from "@/src/components/project-study/file-upload-list";
+import { FileUploadZone } from "@/src/components/project-study/components/file-upload-zone";
+import { FileUploadList } from "@/src/components/project-study/components/file-upload-list";
 import { Project } from "@/src/types/project";
 import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
-import { SelectedFilesList } from "@/src/components/project-study/selected-files-list";
+import { SelectedFilesList } from "@/src/components/project-study/components/selected-files-list";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { ProjectMapDialog } from "@/src/components/project-study/dialogs/project-map-dialog";
 import { ProjectDetailsDialog } from "@/src/components/project-study/dialogs/project-details-dialog";
@@ -14,13 +14,13 @@ import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
-import { ProjectToolsList } from "@/src/components/project-study/project-tools-list";
-import { ProjectChatbot } from "./project-chatbot";
+import { ProjectToolsList } from "@/src/components/project-study/components/project-tools-list";
+import { ProjectChatbot } from "./components/project-chatbot";
 import {
   uploadAllFilesUtils,
   monitorDocumentProcessing,
   monitorProjectStatus,
-} from "./utils";
+} from "./utils/utils";
 
 interface ProjectToolsProps {
   project: Project | null;

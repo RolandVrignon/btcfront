@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlaceholdersAndVanishInput } from "../ui/placeholder-vanish-input";
+import { PlaceholdersAndVanishInput } from "../../ui/placeholder-vanish-input";
 import { ChatbotDialog } from "@/src/components/project-study/dialogs/chatbot-dialog";
 
 export function ProjectChatbot() {
