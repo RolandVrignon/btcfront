@@ -66,10 +66,16 @@ export const monitorDocumentProcessing = async (
     const startTime = Date.now();
     const timeoutDuration = 10 * 60 * 1000;
 
-    console.log('projectRef.current?.externalId:', projectRef.current?.externalId)
-    console.log('projectId:', projectId)
+    console.log(
+      "projectRef.current?.externalId:",
+      projectRef.current?.externalId,
+    );
+    console.log("projectId:", projectId);
 
-    while (!isProcessingComplete && projectRef.current?.externalId === projectId) {
+    while (
+      !isProcessingComplete &&
+      projectRef.current?.externalId === projectId
+    ) {
       // Vérifier si le timeout est atteint
       if (Date.now() - startTime > timeoutDuration) {
         console.warn(
@@ -152,7 +158,10 @@ export const monitorProjectStatus = async (
       const startTime = Date.now();
       const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
 
-      while (!isProcessingComplete && (projectRef.current?.externalId === projectId)) {
+      while (
+        !isProcessingComplete &&
+        projectRef.current?.externalId === projectId
+      ) {
         // Vérifier si le timeout est atteint
         if (Date.now() - startTime > timeoutDuration) {
           console.warn(

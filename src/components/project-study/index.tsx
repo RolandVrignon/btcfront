@@ -16,7 +16,11 @@ import { Info } from "lucide-react";
 import { UploadingFile } from "@/src/types/project";
 import { ProjectToolsList } from "@/src/components/project-study/project-tools-list";
 import { ProjectChatbot } from "./project-chatbot";
-import { uploadAllFilesUtils, monitorDocumentProcessing } from "./utils";
+import {
+  uploadAllFilesUtils,
+  monitorDocumentProcessing,
+  monitorProjectStatus,
+} from "./utils";
 
 interface ProjectToolsProps {
   project: Project | null;
@@ -51,6 +55,7 @@ export function ProjectStudy({
   const isUploadingRef = useRef(false);
   const isMonitoringRef = useRef(false);
 
+  // Mettre à jour le projet dans le ref et surveiller son statut s'il n'est pas terminé
   useEffect(() => {
     if (!project) return;
     if (!projectRef) return;
@@ -58,7 +63,20 @@ export function ProjectStudy({
     if (project) {
       projectRef.current = project;
     }
-  }, [project, projectRef]);
+
+    if (!setProject) return;
+
+    if (
+      projectRef.current?.status !== "COMPLETED" &&
+      projectRef.current?.status !== "ERROR"
+    ) {
+      monitorProjectStatus(
+        projectRef,
+        projectRef.current?.externalId || "",
+        setProject,
+      );
+    }
+  }, [project, projectRef, setProject]);
 
   useEffect(() => {
     if (isUpperLoading) {
@@ -68,6 +86,7 @@ export function ProjectStudy({
     }
   }, [isUpperLoading]);
 
+  // Surveiller le statut des fichiers en cours de traitement
   useEffect(() => {
     if (!uploadingFiles) return;
     if (!uploadingFiles.length) return;
@@ -81,12 +100,12 @@ export function ProjectStudy({
 
     // Pour chaque fichier en cours de traitement, surveiller son statut
     uploadingFiles.forEach((file) => {
-      if (file.status !== 'COMPLETED' && file.status !== 'ERROR' && file.id) {
+      if (file.status !== "COMPLETED" && file.status !== "ERROR" && file.id) {
         monitorDocumentProcessing(
           projectRef,
           file.id,
-          project?.externalId || '',
-          setUploadingFiles
+          project?.externalId || "",
+          setUploadingFiles,
         );
       }
     });
