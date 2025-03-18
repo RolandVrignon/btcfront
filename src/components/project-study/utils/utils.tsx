@@ -81,6 +81,7 @@ export const monitorDocumentProcessing = async (
               ? {
                   ...f,
                   status: "ERROR" as Status,
+                  indexation_status: "ERROR" as Status,
                   processingMessage: "Timeout après 10 minutes de traitement",
                 }
               : f,
@@ -141,6 +142,7 @@ export const monitorDocumentProcessing = async (
           ? {
               ...f,
               status: "ERROR" as Status,
+              indexation_status: "ERROR" as Status,
               processingMessage: "Erreur lors du monitoring du document",
             }
           : f,
@@ -302,6 +304,7 @@ export const uploadFileToS3 = async (
                       ...f,
                       progress: 100,
                       status: "PROGRESS" as Status,
+                      indexation_status: "PENDING" as Status,
                     }
                   : f,
               ),
@@ -329,6 +332,7 @@ export const uploadFileToS3 = async (
                 ? {
                     ...f,
                     status: "ERROR" as Status,
+                    indexation_status: "ERROR" as Status,
                     processingMessage: `Erreur HTTP: ${xhr.status}`,
                   }
                 : f,
@@ -421,6 +425,7 @@ export const confirmMultipleUploadsToBackend = async (
           return {
             ...f,
             status: "PROGRESS" as Status,
+            indexation_status: "PENDING" as Status,
           };
         }
         return f;

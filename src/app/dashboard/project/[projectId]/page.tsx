@@ -7,6 +7,7 @@ import {
   Project,
   UploadingFile,
   PublicDocumentList,
+  Status,
 } from "@/src/types/project";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
@@ -141,7 +142,8 @@ export default function DashboardPage() {
         // 3. Transformer les documents en format UploadingFile
         const files = documentsData.map((doc: Record<string, unknown>) => ({
           id: doc.id as string,
-          status: doc.status as string,
+          status: doc.status as Status,
+          indexation_status: doc.indexation_status as Status,
           fileName: doc.filename as string,
           tags: Array.isArray(doc.ai_Type_document)
             ? [...doc.ai_Type_document]
