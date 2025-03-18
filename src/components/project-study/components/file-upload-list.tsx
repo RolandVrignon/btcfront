@@ -203,7 +203,6 @@ export function FileUploadList({
                           {file.status}
                         </div>
                       )}
-
                       {file.indexation_status === "PENDING" ? (
                         <StatusPastille status="pending" />
                       ) : file.indexation_status === "PROGRESS" ? (
