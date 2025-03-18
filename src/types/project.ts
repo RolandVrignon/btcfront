@@ -5,6 +5,14 @@ export type ProjectStatus =
   | "COMPLETED"
   | "ERROR";
 
+export type Status =
+  | "UPLOAD"
+  | "DRAFT"
+  | "PENDING"
+  | "PROGRESS"
+  | "COMPLETED"
+  | "ERROR";
+
 export interface PublicDocument {
   type: string;
   lien: string;
@@ -33,21 +41,8 @@ export interface UploadingFile {
   id: string;
   progress?: number;
   url?: string;
-  status?:
-    | "ERROR"
-    | "UPLOAD"
-    | "PROGRESS"
-    | "COMPLETED"
-    | "DRAFT"
-    | "PENDING"
-    | "READY";
+  status?: Status;
+  indexation_status?: Status;
   processingMessage?: string;
   tags?: string[];
 }
-
-export type DocumentStatus =
-  | "UPLOAD"
-  | "PROGRESS"
-  | "COMPLETED"
-  | "ERROR"
-  | "READY";

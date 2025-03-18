@@ -12,6 +12,7 @@ import { DocumentMetadataDialog } from "@/src/components/project-study/dialogs/d
 import { UploadingFile } from "@/src/types/project";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import dynamic from "next/dynamic";
+import { StatusPastille } from "../../ui/status-pastille";
 
 // Composant spinner qui ne sera rendu que côté client
 const LoadingSpinner = dynamic(
@@ -171,7 +172,8 @@ export function FileUploadList({
                           >
                             {tag}
                           </div>
-                        ))}
+                      ))}
+
                       {file.status === "UPLOAD" ? (
                         <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full whitespace-nowrap">
                           <LoadingSpinner />
@@ -185,7 +187,7 @@ export function FileUploadList({
                       ) : file.status === "PROGRESS" ? (
                         <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
                           <LoadingSpinner />
-                          Traitement
+                          Extraction des métadonnées
                         </div>
                       ) : file.status === "COMPLETED" ? (
                         <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center whitespace-nowrap">
@@ -200,6 +202,21 @@ export function FileUploadList({
                         <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full whitespace-nowrap">
                           {file.status}
                         </div>
+                      )}
+
+                      {file.indexation_status === "PENDING" ? (
+                        <StatusPastille status="pending" />
+                      ) : file.indexation_status === "PROGRESS" ? (
+                        <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
+                          <LoadingSpinner />
+                          Indexation
+                        </div>
+                      ) : file.indexation_status === "COMPLETED" ? (
+                        <StatusPastille status="completed" />
+                      ) : file.indexation_status === "ERROR" ? (
+                        <StatusPastille status="error" />
+                      ) : (
+                        <StatusPastille status="pending" />
                       )}
                     </div>
                   </div>

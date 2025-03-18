@@ -1,7 +1,7 @@
 import {
   PublicDocumentList,
   UploadingFile,
-  DocumentStatus,
+  Status,
   Project,
 } from "@/src/types/project";
 
@@ -80,7 +80,7 @@ export const monitorDocumentProcessing = async (
             f.id === documentId
               ? {
                   ...f,
-                  status: "ERROR" as DocumentStatus,
+                  status: "ERROR" as Status,
                   processingMessage: "Timeout après 10 minutes de traitement",
                 }
               : f,
@@ -107,21 +107,27 @@ export const monitorDocumentProcessing = async (
 
       const terminalStatuses = ["COMPLETED", "ERROR"];
 
-      if (terminalStatuses.includes(data.status)) {
-        setUploadingFiles((prev) =>
-          prev.map((f) =>
-            f.id === documentId
-              ? {
-                  ...f,
-                  status: data.status as DocumentStatus,
-                  tags: Array.isArray(data.ai_Type_document)
-                    ? [...data.ai_Type_document]
-                    : [],
-                }
-              : f,
-          ),
-        );
+      // Vérifier que les deux statuts ont atteint un état terminal
+      const isStatusTerminal = terminalStatuses.includes(data.status);
+      const isIndexationStatusTerminal = terminalStatuses.includes(data.indexation_status);
 
+      setUploadingFiles((prev) =>
+        prev.map((f) =>
+          f.id === documentId
+            ? {
+                ...f,
+                status: data.status as Status,
+                indexation_status: data.indexation_status as Status,
+                tags: Array.isArray(data.ai_Type_document)
+                  ? [...data.ai_Type_document]
+                  : [],
+              }
+            : f,
+        ),
+      );
+
+      // Le traitement est complet uniquement si les deux statuts sont terminaux
+      if (isStatusTerminal && isIndexationStatusTerminal) {
         isProcessingComplete = true;
       }
     }
@@ -132,7 +138,7 @@ export const monitorDocumentProcessing = async (
         f.id === documentId
           ? {
               ...f,
-              status: "ERROR" as DocumentStatus,
+              status: "ERROR" as Status,
               processingMessage: "Erreur lors du monitoring du document",
             }
           : f,
@@ -293,7 +299,7 @@ export const uploadFileToS3 = async (
                   ? {
                       ...f,
                       progress: 100,
-                      status: "PROGRESS" as DocumentStatus,
+                      status: "PROGRESS" as Status,
                     }
                   : f,
               ),
@@ -320,7 +326,7 @@ export const uploadFileToS3 = async (
               f.id === fileId
                 ? {
                     ...f,
-                    status: "ERROR" as DocumentStatus,
+                    status: "ERROR" as Status,
                     processingMessage: `Erreur HTTP: ${xhr.status}`,
                   }
                 : f,
@@ -340,7 +346,7 @@ export const uploadFileToS3 = async (
             f.id === fileId
               ? {
                   ...f,
-                  status: "ERROR" as DocumentStatus,
+                  status: "ERROR" as Status,
                   processingMessage: "Erreur réseau lors de l'upload",
                 }
               : f,
@@ -412,7 +418,7 @@ export const confirmMultipleUploadsToBackend = async (
         if (matchingFile) {
           return {
             ...f,
-            status: "PROGRESS" as DocumentStatus,
+            status: "PROGRESS" as Status,
           };
         }
         return f;
@@ -563,7 +569,7 @@ export const uploadAllFilesUtils = async (
       id: file.name,
       fileName: file.name,
       progress: 0,
-      status: "UPLOAD" as DocumentStatus,
+      status: "UPLOAD" as Status,
     }));
 
     setUploadingFiles((prev) => [...uploadingFilesArray, ...prev]);
@@ -591,7 +597,7 @@ export const uploadAllFilesUtils = async (
             f.id === uploadingFile.id
               ? {
                   ...f,
-                  status: "UPLOAD" as DocumentStatus,
+                  status: "UPLOAD" as Status,
                   progress: 0,
                   processingMessage: "Démarrage de l'upload...",
                 }
@@ -627,7 +633,7 @@ export const uploadAllFilesUtils = async (
             f.id === uploadingFile.id
               ? {
                   ...f,
-                  status: "ERROR" as DocumentStatus,
+                  status: "ERROR" as Status,
                   processingMessage: "Erreur lors de l'upload",
                 }
               : f,
