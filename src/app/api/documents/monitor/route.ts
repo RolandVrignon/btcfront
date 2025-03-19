@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     if (!documentId || !projectId) {
       return NextResponse.json(
         { error: "documentId et projectId sont requis" },
-        { status: 400 },
+        { status: 208 },
       );
     }
 

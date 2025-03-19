@@ -38,16 +38,16 @@ export function FileUploadList({
     } else if (fileName.endsWith(".csv")) {
       return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
     } else if (
-      fileName.endsWith(".docx") ||
-      fileName.endsWith(".doc") ||
-      fileName.endsWith(".xls") ||
-      fileName.endsWith(".xlsx")
+      fileName.toLowerCase().endsWith(".docx") ||
+      fileName.toLowerCase().endsWith(".doc") ||
+      fileName.toLowerCase().endsWith(".xls") ||
+      fileName.toLowerCase().endsWith(".xlsx")
     ) {
       return <FileText className="h-5 w-5 text-blue-600" />;
     } else if (
-      fileName.endsWith(".jpg") ||
-      fileName.endsWith(".jpeg") ||
-      fileName.endsWith(".png")
+      fileName.toLowerCase().endsWith(".jpg") ||
+      fileName.toLowerCase().endsWith(".jpeg") ||
+      fileName.toLowerCase().endsWith(".png")
     ) {
       return <ImageIcon className="h-5 w-5 text-purple-500" />;
     }
