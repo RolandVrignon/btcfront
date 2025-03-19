@@ -303,7 +303,7 @@ export const uploadFileToS3 = async (
                   ? {
                       ...f,
                       progress: 100,
-                      status: "PROGRESS" as Status,
+                      status: "PENDING" as Status,
                       indexation_status: "PENDING" as Status,
                     }
                   : f,
@@ -424,7 +424,7 @@ export const confirmMultipleUploadsToBackend = async (
         if (matchingFile) {
           return {
             ...f,
-            status: "PROGRESS" as Status,
+            status: "PENDING" as Status,
             indexation_status: "PENDING" as Status,
           };
         }

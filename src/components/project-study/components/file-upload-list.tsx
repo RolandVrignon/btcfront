@@ -181,8 +181,7 @@ export function FileUploadList({
                         </div>
                       ) : file.status === "PENDING" ? (
                         <div className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full whitespace-nowrap">
-                          <LoadingSpinner />
-                          En attente
+                          Extraction en attente
                         </div>
                       ) : file.status === "PROGRESS" ? (
                         <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
