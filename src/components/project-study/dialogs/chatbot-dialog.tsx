@@ -1,5 +1,11 @@
 import { Clock } from "lucide-react";
-import { Dialog, DialogContent } from "@/src/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/src/components/ui/dialog";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
 interface ChatbotDialogProps {
   isOpen: boolean;
@@ -15,6 +21,11 @@ export function ChatbotDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="min-w-[90vw] min-h-[90vh] p-0 overflow-hidden rounded-xl flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="sr-only">Chatbot</DialogTitle>
+          <DialogDescription className="sr-only">Chatbot</DialogDescription>
+        </DialogHeader>
+
         <div className="absolute top-0 left-0 p-6 text-left">
           <div className="flex items-center gap-3">
             <Clock className="h-6 w-6 text-blue-500" />

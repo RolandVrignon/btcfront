@@ -124,6 +124,8 @@ export function DeliverableResultDialog({
 
   // Fonction pour rendre un tableau à partir d'un array
   const renderTable = (array: unknown[]) => {
+    console.log("renderTable:", array);
+
     if (array.length === 0) return <p>Aucune donnée</p>;
 
     // Vérifier si les éléments sont des objets
@@ -139,8 +141,30 @@ export function DeliverableResultDialog({
       const columns = headers.map((header) => ({
         accessorKey: header,
         header: header,
-        cell: ({ row }: { row: Row<Record<string, unknown>> }) =>
-          renderResultValue(row.getValue(header)),
+        cell: ({ row }: { row: Row<Record<string, unknown>> }) => {
+          const value = row.getValue(header);
+
+          // Vérifier si la valeur est un tableau de chaînes
+          if (
+            Array.isArray(value) &&
+            value.every((item) => typeof item === "string")
+          ) {
+            return (
+              <div className="flex flex-wrap gap-1">
+                {value.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            );
+          }
+
+          return renderResultValue(value);
+        },
       }));
 
       return (
@@ -246,7 +270,10 @@ export function DeliverableResultDialog({
           <DialogTitle className="text-xl font-semibold">
             {toolName || getTabTitle(deliverable?.type || "")}
           </DialogTitle>
-          <DialogDescription>Résultats de l&apos;analyse</DialogDescription>
+          <DialogDescription className="sr-only">
+            Résultats du livrable{" "}
+            {toolName || getTabTitle(deliverable?.type || "")}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (

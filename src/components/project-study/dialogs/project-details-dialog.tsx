@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -58,6 +59,9 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
           <DialogTitle className="text-xl font-semibold">
             {project.name || "Détails du projet"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Détails du projet {project.name || "Détails du projet"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-grow flex flex-col overflow-hidden mt-4">

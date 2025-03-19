@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/src/components/ui/dialog";
 import { Button } from "@/src/components/ui/button";
 import { ExternalLink as ExternalLinkIcon } from "lucide-react";
@@ -18,6 +19,7 @@ import {
 } from "@/src/components/ui/animated-tabs";
 import { DataTable } from "@/src/components/ui/data-table";
 import type { Row } from "@tanstack/react-table";
+
 interface DocumentMetadataDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -49,24 +51,7 @@ export function DocumentMetadataDialog({
 
   const isFileReady = fileStatus === "COMPLETED";
 
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!fileName) return;
-    if (!projectId) return;
-
-    console.log("Fetching ai_metadatas for file:", fileName);
-
-    if (isOpen) {
-      if (isFileReady) {
-        fetchMetadata();
-      } else {
-        setIsLoading(true);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, fileName, projectId, isFileReady]);
-
-  const fetchMetadata = async () => {
+  const fetchMetadata = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -92,7 +77,24 @@ export function DocumentMetadataDialog({
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsLoading(false);
     }
-  };
+  }, [fileName, projectId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!fileName) return;
+    if (!projectId) return;
+    if (!fetchMetadata) return;
+
+    console.log("Fetching ai_metadatas for file:", fileName);
+
+    if (isOpen) {
+      if (isFileReady) {
+        fetchMetadata();
+      } else {
+        setIsLoading(true);
+      }
+    }
+  }, [isOpen, fileName, projectId, isFileReady, fetchMetadata]);
 
   // Préparer les données pour les onglets
   const getTabsData = () => {
@@ -409,6 +411,9 @@ export function DocumentMetadataDialog({
           <DialogTitle className="text-xl font-semibold">
             {fileName}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Métadonnées du document {fileName}
+          </DialogDescription>
         </DialogHeader>
 
         {!isFileReady || isLoading ? (

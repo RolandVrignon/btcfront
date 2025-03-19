@@ -10,6 +10,7 @@ import {
   Clock,
   Construction,
   Loader2,
+  Table2,
 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
@@ -29,7 +30,7 @@ interface Tool {
   description: string;
   icon: React.ReactNode;
   color: string;
-  endpoint?: string;
+  endpoint?: boolean;
   isLoading?: boolean;
 }
 
@@ -47,7 +48,17 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
         "Obtenir un descriptif sommaire des travaux décrits dans le/les CCTP, en vue de rédiger le RICT.",
       icon: <FileText className="h-12 w-12" />,
       color: "bg-blue-100 text-blue-700",
-      endpoint: "/tools/descriptif",
+      endpoint: true,
+    },
+    {
+      id: "tableau-des-documents-examinés",
+      name: "Tableau des documents examinés",
+      type: "TABLEAU_DES_DOCUMENTS_EXAMINES",
+      description:
+        "Obtenir un tableau des documents examinés avec toutes les informations importantes.",
+      icon: <Table2 className="h-12 w-12" />,
+      color: "bg-pink-100 text-pink-700",
+      endpoint: true,
     },
     {
       id: "comparateur",
@@ -65,6 +76,7 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
       description: "Analyse de la conformité de l'étude thermique.",
       icon: <Thermometer className="h-12 w-12" />,
       color: "bg-red-100 text-red-700",
+      endpoint: false,
     },
     {
       id: "incoherences",
@@ -73,6 +85,7 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
       description: "Détection des incohérences dans le projet.",
       icon: <AlertTriangle className="h-12 w-12" />,
       color: "bg-amber-100 text-amber-700",
+      endpoint: false,
     },
     {
       id: "suggestions",
@@ -81,6 +94,7 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
       description: "Propositions d'améliorations pour votre projet.",
       icon: <Lightbulb className="h-12 w-12" />,
       color: "bg-purple-100 text-purple-700",
+      endpoint: false,
     },
   ]);
 
@@ -99,22 +113,10 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
       let isComplete = false;
       let attempts = 0;
       const maxAttempts = 60; // 5 minutes with 5-second intervals
-
-      console.log("Waiting for 5 seconds...");
-
       await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      console.log("5 seconds passed...");
-      console.log("We'll start monitoring the deliverable...");
 
       while (!isComplete && attempts < maxAttempts) {
         attempts++;
-
-        console.log("Checking if deliverable is completed...");
-        console.log(
-          "/api/deliverables/${deliverableId}",
-          `/api/deliverables/${deliverableId}`,
-        );
 
         const response = await fetch(`/api/deliverables/${deliverableId}`);
 
@@ -123,9 +125,6 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
         }
 
         const deliverable: Deliverable = await response.json();
-        console.log("AAAAAAAAAAAAHHHHHHHHHHH deliverable:", deliverable);
-
-        console.log("deliverable.status:", deliverable.status);
 
         if (
           deliverable.status === "COMPLETED" ||
@@ -153,10 +152,6 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
 
           return;
         }
-
-        console.log(
-          "IS NOT COMPLETED, waiting 5 seconds before checking again...",
-        );
 
         // Wait 5 seconds before checking again
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -188,8 +183,6 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
   };
 
   const handleToolClick = async (tool: Tool) => {
-    console.log("handleToolClick:", tool);
-
     if (!tool.endpoint) {
       console.log(`Outil ${tool.id} bientôt disponible`);
       return; // Do nothing if the tool has no endpoint
@@ -226,8 +219,6 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
 
       const deliverable: Deliverable = await response.json();
 
-      console.log("deliverable:", deliverable);
-
       if (deliverable.status === "COMPLETED") {
         setSelectedDeliverable({
           id: deliverable.id,
@@ -243,8 +234,6 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
         );
         return;
       }
-
-      console.log("GO to monitorDeliverable !");
 
       monitorDeliverable(deliverable.id, tool.id, tool.name);
     } catch (error) {
@@ -284,7 +273,7 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
               <div className="rounded-full p-2 bg-white/80">
                 {tool.isLoading ? (
                   <Loader2 className="h-12 w-12 animate-spin" />
-                ) : tool.endpoint ? (
+                ) : tool.icon ? (
                   tool.icon
                 ) : (
                   <Clock className="h-12 w-12" />

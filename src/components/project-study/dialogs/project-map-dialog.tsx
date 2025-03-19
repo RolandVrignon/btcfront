@@ -5,6 +5,7 @@ import { ExternalLink, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -156,6 +157,9 @@ export function ProjectMapDialog({ project }: ProjectMapDialogProps) {
               Ouvrir dans Google Maps
             </Button>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Localisation du projet {project.name || "Localisation du projet"}
+          </DialogDescription>
         </DialogHeader>
         <div className="w-full h-[calc(90vh-100px)] min-h-[450px] rounded-md overflow-hidden relative mt-0">
           {(isLoading || isApiKeyLoading) && (
