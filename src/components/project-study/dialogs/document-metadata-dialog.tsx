@@ -50,19 +50,16 @@ export function DocumentMetadataDialog({
   const isFileReady = fileStatus === "COMPLETED";
 
   useEffect(() => {
-    console.log("isOpen:", isOpen);
-    console.log("fileName:", fileName);
-    console.log("projectId:", projectId);
-    console.log("isFileReady:", isFileReady);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!isOpen) return;
+    if (!fileName) return;
+    if (!projectId) return;
 
-  useEffect(() => {
+    console.log("Fetching ai_metadatas for file:", fileName);
+
     if (isOpen) {
       if (isFileReady) {
         fetchMetadata();
       } else {
-        // Si le fichier n'est pas prêt, on reste en état de chargement
         setIsLoading(true);
       }
     }
@@ -87,7 +84,6 @@ export function DocumentMetadataDialog({
       }
 
       const data = await response.json();
-      console.log("data:", data);
       setMetadata(data);
     } catch (error) {
       console.error("Erreur:", error);
@@ -141,7 +137,6 @@ export function DocumentMetadataDialog({
   // Fonction pour rendre un tableau à partir d'un array
   const renderTable = (array: unknown[]) => {
     if (array.length === 0) return <p>Aucune donnée</p>;
-    console.log("array:", array);
 
     // Vérifier si les éléments sont des objets
     const isObjectArray = array.every(
