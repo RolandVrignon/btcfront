@@ -11,20 +11,8 @@ import {
 import { DocumentMetadataDialog } from "@/src/components/project-study/dialogs/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/project";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
-import dynamic from "next/dynamic";
+import { LoadingSpinner } from "@/src/components/ui/loading-spinner";
 import { StatusPastille } from "../../ui/status-pastille";
-
-// Composant spinner qui ne sera rendu que côté client
-const LoadingSpinner = dynamic(
-  () =>
-    Promise.resolve(() => (
-      <div
-        className="h-3 w-3 mr-1 animate-spin rounded-full border-2 border-current border-t-transparent"
-        aria-hidden="true"
-      />
-    )),
-  { ssr: false },
-);
 
 interface FileUploadListProps {
   files: UploadingFile[];

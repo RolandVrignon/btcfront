@@ -21,7 +21,8 @@ import {
   monitorDocumentProcessing,
   monitorProjectStatus,
 } from "./utils/utils";
-
+import { TypewriterTitle } from "@/src/components/ui/typewriterTitle";
+import { LoadingSpinner } from "../ui/loading-spinner";
 interface ProjectToolsProps {
   project: Project | null;
   projectRef: React.MutableRefObject<Project | null>;
@@ -191,13 +192,13 @@ export function ProjectStudy({
                   </h2>
                 </>
               ) : (
-                // Cas 4: Projet en cours (DRAFT, PENDING, PROCESSING) - Skeleton
-                <>
-                  <div className="flex flex-col items-start pb-10 gap-3 w-full">
-                    <Skeleton className="h-12 w-3/4 rounded-lg animate-pulse" />
-                    <Skeleton className="h-8 w-full rounded-lg animate-pulse" />
+                <div className="flex flex-col gap-4 w-full justify-start">
+                  <div className="inline-flex w-fit items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
+                    <LoadingSpinner />
+                    Extraction des métadonnées du projet
                   </div>
-                </>
+                  <TypewriterTitle className="font-lg text-3xl text-[#0A0A0A] rounded-full" />
+                </div>
               )}
 
               {/* Boutons d'action en bas à droite */}
