@@ -64,7 +64,7 @@ export const monitorDocumentProcessing = async (
   try {
     let isProcessingComplete = false;
     const startTime = Date.now();
-    const timeoutDuration = 10 * 60 * 1000;
+    const timeoutDuration = 30 * 60 * 1000;
 
     while (
       !isProcessingComplete &&
@@ -90,7 +90,7 @@ export const monitorDocumentProcessing = async (
         return; // Sortir de la fonction
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const response = await fetch("/api/documents/monitor", {
         method: "POST",
@@ -141,8 +141,6 @@ export const monitorDocumentProcessing = async (
         f.id === documentId
           ? {
               ...f,
-              status: "ERROR" as Status,
-              indexation_status: "ERROR" as Status,
               processingMessage: "Erreur lors du monitoring du document",
             }
           : f,

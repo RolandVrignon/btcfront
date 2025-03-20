@@ -264,15 +264,30 @@ export function ProjectStudy({
             )}
           </div>
 
-          {uploadingFiles.length > 0 &&
-            uploadingFiles.every(
-              (file) => file.status && file.status === "COMPLETED",
-            ) && <ProjectChatbot />}
+          {uploadingFiles.length > 0 && (
+            <ProjectChatbot
+              isIndexationCompleted={
+                uploadingFiles.length > 0 &&
+                uploadingFiles.every(
+                  (file) =>
+                    file.indexation_status &&
+                    file.indexation_status === "COMPLETED",
+                )
+              }
+            />
+          )}
 
-          {uploadingFiles.length > 0 &&
-            uploadingFiles.every(
-              (file) => file.status && file.status === "COMPLETED",
-            ) && <ProjectToolsList projectId={project?.externalId} />}
+          {uploadingFiles.length > 0 && (
+            <ProjectToolsList
+              projectId={project?.externalId}
+              isToolsReady={
+                uploadingFiles.length > 0 &&
+                uploadingFiles.every(
+                  (file) => file.status && file.status === "COMPLETED",
+                )
+              }
+            />
+          )}
         </div>
       </div>
 

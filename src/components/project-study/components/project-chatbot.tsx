@@ -1,8 +1,15 @@
 import { useState } from "react";
 import { PlaceholdersAndVanishInput } from "../../ui/placeholder-vanish-input";
 import { ChatbotDialog } from "@/src/components/project-study/dialogs/chatbot-dialog";
+import { LoadingSpinner } from "../../ui/loading-spinner";
 
-export function ProjectChatbot() {
+interface ProjectChatbotProps {
+  isIndexationCompleted?: boolean;
+}
+
+export function ProjectChatbot({
+  isIndexationCompleted = false,
+}: ProjectChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -29,7 +36,15 @@ export function ProjectChatbot() {
 
   return (
     <div className="mt-4">
-      <h3 className="text-xl font-semibold mb-4">Chatbot Intelligent</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="text-xl font-semibold">Chatbot Intelligent</h3>
+        {!isIndexationCompleted && (
+          <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
+            <LoadingSpinner />
+            Mise en mémoire des documents
+          </div>
+        )}
+      </div>
       <div className="w-full h-[25vh] flex flex-col items-center justify-center font-medium rounded-xl hover:cursor-pointer relative overflow-hidden bg-stone-100">
         <div
           className="w-full h-[25vh] flex flex-col items-center justify-center font-medium rounded-xl hover:cursor-pointer relative overflow-hidden bg-stone-100"
@@ -45,13 +60,35 @@ export function ProjectChatbot() {
               onSubmit={onSubmit}
             />
           </div>
+
+          {/* Overlay de chargement qui empêche de cliquer sur l'input */}
+          {!isIndexationCompleted && (
+            <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto">
+              <div className="shiny-loading-overlay w-full h-full overflow-hidden relative flex items-center justify-center"></div>
+            </div>
+          )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes shimmer {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite linear;
+        }
+      `}</style>
 
       <ChatbotDialog
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         inputValue={inputValue}
+        isIndexationCompleted={isIndexationCompleted}
       />
     </div>
   );

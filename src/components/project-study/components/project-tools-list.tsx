@@ -16,6 +16,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
+import { LoadingSpinner } from "../../ui/loading-spinner";
 
 interface Deliverable {
   id: string;
@@ -36,9 +37,13 @@ interface Tool {
 
 interface ProjectToolsListProps {
   projectId?: string;
+  isToolsReady?: boolean;
 }
 
-export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
+export function ProjectToolsList({
+  projectId,
+  isToolsReady = false,
+}: ProjectToolsListProps) {
   const [tools, setTools] = useState<Tool[]>([
     {
       id: "descriptif",
@@ -252,13 +257,21 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
 
   return (
     <div className="mt-4 w-full">
-      <h3 className="text-xl font-semibold mb-4">Outils disponibles</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="text-xl font-semibold">Outils disponibles</h3>
+        {!isToolsReady && (
+          <div className="flex items-center text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full whitespace-nowrap">
+            <LoadingSpinner />
+            Traitement des documents en cours
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
         {tools.map((tool) => (
           <div
             key={tool.id}
-            className={`rounded-xl p-4 pt-8 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading ? "hover:border-current" : "opacity-70"} relative`}
-            onClick={() => handleToolClick(tool)}
+            className={`rounded-xl p-4 pt-8 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading && isToolsReady ? "hover:border-current" : "opacity-70"} relative`}
+            onClick={() => (isToolsReady ? handleToolClick(tool) : null)}
           >
             {!tool.endpoint && (
               <Badge
@@ -286,14 +299,36 @@ export function ProjectToolsList({ projectId }: ProjectToolsListProps) {
                 </p>
               </div>
             </div>
-            {tool.endpoint && !tool.isLoading && (
+            {tool.endpoint && !tool.isLoading && isToolsReady && (
               <div className="absolute bottom-4 right-4">
                 <ArrowRight className="h-5 w-5 opacity-70" />
               </div>
             )}
           </div>
         ))}
+
+        {/* Overlay de chargement qui empêche l'interaction quand les outils ne sont pas prêts */}
+        {!isToolsReady && (
+          <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto">
+            <div className="shiny-loading-overlay w-full h-full overflow-hidden relative flex items-center justify-center">
+            </div>
+          </div>
+        )}
       </div>
+
+      <style jsx>{`
+        @keyframes shimmer {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite linear;
+        }
+      `}</style>
 
       {selectedDeliverable && (
         <DeliverableResultDialog

@@ -11,12 +11,14 @@ interface ChatbotDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   inputValue: string;
+  isIndexationCompleted?: boolean;
 }
 
 export function ChatbotDialog({
   isOpen,
   setIsOpen,
   inputValue,
+  isIndexationCompleted = false,
 }: ChatbotDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -37,10 +39,17 @@ export function ChatbotDialog({
 
         <div className="p-6 flex-grow flex items-center justify-center">
           <div className="flex flex-col gap-6 items-center text-center max-w-2xl">
-            <p className="text-gray-600 text-lg">
-              Notre chatbot intelligent est en cours de développement et sera
-              bientôt disponible pour répondre à vos questions techniques.
-            </p>
+            {isIndexationCompleted ? (
+              <p className="text-gray-600 text-lg">
+                Notre chatbot intelligent est prêt à répondre à vos questions
+                techniques sur les documents indexés.
+              </p>
+            ) : (
+              <p className="text-gray-600 text-lg">
+                Notre chatbot intelligent est en cours de développement et sera
+                bientôt disponible pour répondre à vos questions techniques.
+              </p>
+            )}
 
             {inputValue && (
               <div className="mt-2 p-6 bg-gray-50 border border-gray-100 rounded-lg w-full">
