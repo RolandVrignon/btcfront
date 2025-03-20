@@ -270,7 +270,7 @@ export function ProjectToolsList({
         {tools.map((tool) => (
           <div
             key={tool.id}
-            className={`rounded-xl p-4 pt-8 cursor-pointer min-h-[25vh] transition-all hover:shadow-md ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading && isToolsReady ? "hover:border-current" : "opacity-70"} relative`}
+            className={`rounded-xl p-4 pt-8 ${isToolsReady ? "cursor-pointer hover:shadow-md" : "cursor-not-allowed"} min-h-[25vh] transition-all ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading && isToolsReady ? "hover:border-current" : "opacity-70"} relative`}
             onClick={() => (isToolsReady ? handleToolClick(tool) : null)}
           >
             {!tool.endpoint && (
@@ -304,16 +304,13 @@ export function ProjectToolsList({
                 <ArrowRight className="h-5 w-5 opacity-70" />
               </div>
             )}
+
+            {/* Overlay individuel pour chaque outil quand !isToolsReady */}
+            {!isToolsReady && (
+              <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto rounded-xl overflow-hidden"></div>
+            )}
           </div>
         ))}
-
-        {/* Overlay de chargement qui empêche l'interaction quand les outils ne sont pas prêts */}
-        {!isToolsReady && (
-          <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto">
-            <div className="shiny-loading-overlay w-full h-full overflow-hidden relative flex items-center justify-center">
-            </div>
-          </div>
-        )}
       </div>
 
       <style jsx>{`

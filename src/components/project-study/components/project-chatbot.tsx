@@ -63,26 +63,10 @@ export function ProjectChatbot({
 
           {/* Overlay de chargement qui empêche de cliquer sur l'input */}
           {!isIndexationCompleted && (
-            <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto">
-              <div className="shiny-loading-overlay w-full h-full overflow-hidden relative flex items-center justify-center"></div>
-            </div>
+            <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto rounded-xl hover:cursor-not-allowed"></div>
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes shimmer {
-          0% {
-            background-position: -200% 0;
-          }
-          100% {
-            background-position: 200% 0;
-          }
-        }
-        .animate-shimmer {
-          animation: shimmer 2s infinite linear;
-        }
-      `}</style>
 
       <ChatbotDialog
         isOpen={isOpen}
