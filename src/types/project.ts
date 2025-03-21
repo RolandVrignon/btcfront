@@ -19,6 +19,52 @@ export interface PublicDocument {
 }
 
 export type PublicDocumentList = PublicDocument[];
+
+export interface RisqueNaturel {
+  present: boolean;
+  libelle: string;
+}
+
+export interface RisqueTechnologique {
+  present: boolean;
+  libelle: string;
+}
+
+export interface PublicData {
+  adresse: {
+    libelle: string;
+    longitude: number;
+    latitude: number;
+  };
+  commune: {
+    libelle: string;
+    codePostal: string;
+    codeInsee: string;
+  };
+  url: string;
+  risquesNaturels: {
+    inondation: RisqueNaturel;
+    risqueCotier: RisqueNaturel;
+    seisme: RisqueNaturel;
+    mouvementTerrain: RisqueNaturel;
+    reculTraitCote: RisqueNaturel;
+    retraitGonflementArgile: RisqueNaturel;
+    avalanche: RisqueNaturel;
+    feuForet: RisqueNaturel;
+    eruptionVolcanique: RisqueNaturel;
+    cyclone: RisqueNaturel;
+    radon: RisqueNaturel;
+  };
+  risquesTechnologiques: {
+    icpe: RisqueTechnologique;
+    nucleaire: RisqueTechnologique;
+    canalisationsMatieresDangereuses: RisqueTechnologique;
+    pollutionSols: RisqueTechnologique;
+    ruptureBarrage: RisqueTechnologique;
+    risqueMinier: RisqueTechnologique;
+  };
+}
+
 export interface Project {
   id: string;
   name?: string;
@@ -33,6 +79,7 @@ export interface Project {
   externalId?: string;
   userId?: string;
   documents?: PublicDocumentList;
+  publicData?: PublicData;
 }
 
 export interface UploadingFile {

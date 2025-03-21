@@ -46,13 +46,36 @@ export const createProject = async (
 };
 
 export const searchPublicDocuments = async (
+  projectId: string,
   city: string,
 ): Promise<PublicDocumentList> => {
-  const response = await fetch(
-    `/api/tools/search-public-documents?city=${city}`,
-  );
+  const response = await fetch(`/api/tools/search-public-documents`, {
+    method: "POST",
+    body: JSON.stringify({ projectId, city }),
+  });
   const data = await response.json();
   return data;
+};
+
+export const searchPublicData = async (
+  projectId: string,
+  city: string,
+  address: string,
+  country: string,
+) => {
+  try {
+    const response = await fetch(`/api/tools/search-public-data`, {
+      method: "POST",
+      body: JSON.stringify({ projectId, city, address, country }),
+    });
+    const data = await response.json();
+    return data;
+  } catch {
+    console.error(
+      "Function searchPublicData > Erreur lors de la recherche de données publiques.",
+    );
+    return null;
+  }
 };
 
 export const monitorDocumentProcessing = async (
@@ -202,9 +225,19 @@ export const monitorProjectStatus = async (
           setProject(projectData);
           if (projectData.ai_city) {
             const publicDocuments = await searchPublicDocuments(
+              projectRef.current?.id || "",
               projectData.ai_city,
             );
             projectData.documents = publicDocuments as PublicDocumentList;
+          }
+          if (projectData.ai_city && projectData.ai_address) {
+            const publicData = await searchPublicData(
+              projectRef.current?.id || "",
+              projectData.ai_city || "",
+              projectData.ai_address || "",
+              projectData.ai_country || "",
+            );
+            projectData.publicData = publicData;
           }
           resolve(projectData);
           setProject(projectData);

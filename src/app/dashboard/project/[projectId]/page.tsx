@@ -11,7 +11,10 @@ import {
 } from "@/src/types/project";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
-import { searchPublicDocuments } from "@/src/components/project-study/utils/utils";
+import {
+  searchPublicDocuments,
+  searchPublicData,
+} from "@/src/components/project-study/utils/utils";
 
 export default function DashboardPage() {
   const projectRef = useRef<Project | null>(null);
@@ -159,13 +162,31 @@ export default function DashboardPage() {
             (project?.documents && project?.documents.length === 0)) &&
           project?.ai_city
         ) {
-          const publicDocuments = await searchPublicDocuments(project.ai_city);
+          try {
+            // Exécuter les deux requêtes en parallèle avec Promise.all
+            const [publicDocuments, publicData] = await Promise.all([
+              searchPublicDocuments(project.id, project.ai_city),
+              searchPublicData(
+                project.id,
+                project.ai_city || "",
+                project.ai_address || "",
+                project.ai_country || "",
+              ),
+            ]);
 
-          if (publicDocuments.length > 0) {
             setProject({
               ...project,
-              documents: publicDocuments as PublicDocumentList,
+              documents:
+                publicDocuments && publicDocuments.length > 0
+                  ? (publicDocuments as PublicDocumentList)
+                  : [],
+              publicData: publicData ? publicData : null,
             });
+          } catch (error) {
+            console.error(
+              "Erreur lors de la récupération des données publiques:",
+              error,
+            );
           }
         }
       } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
+import { prisma } from "@/src/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,51 +11,60 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { city, projectId } = body;
 
-    // Check if project already has publicDocuments
+    const { city, address, country, projectId } = body;
+
+    // Check if project already has publicData
     if (projectId) {
       const existingProject = await prisma.project.findUnique({
         where: { id: projectId },
-        select: { publicDocuments: true },
+        select: { publicData: true },
       });
 
-      // If publicDocuments exists and is not an empty object
       if (
-        existingProject?.publicDocuments &&
-        Object.keys(existingProject.publicDocuments as object).length > 0
+        existingProject?.publicData &&
+        Object.keys(existingProject.publicData as object).length > 0
       ) {
-        return NextResponse.json(existingProject.publicDocuments);
+        return NextResponse.json(existingProject.publicData);
       }
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
 
+    if (!city || !address || !apiUrl) {
+      return NextResponse.json(
+        { error: "Données manquantes" },
+        { status: 400 },
+      );
+    }
+
     // Appel à l'API externe
-    const response = await fetch(`${apiUrl}/tools/city-documents`, {
+    const response = await fetch(`${apiUrl}/tools/public-data`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
       },
-      body: JSON.stringify({ city }),
+      body: JSON.stringify({
+        city,
+        address,
+        country,
+      }),
     });
 
     const data = await response.json();
 
-    // Update project with publicDocuments
+    // Update project with publicData
     if (projectId) {
       await prisma.project.update({
         where: { id: projectId },
-        data: { publicDocuments: data },
+        data: { publicData: data },
       });
     }
 
     return NextResponse.json(data);
   } catch {
-    console.error(
-      "src > api > tools > search-public-documents > route.ts - error",
-    );
+    console.error("src > api > tools > search-public-data > route.ts - error");
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },

@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
-import { ExternalLink } from "lucide-react";
+import { AlertTriangle, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import {
@@ -33,6 +33,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/src/components/ui/tooltip";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
 
 interface ProjectDetailsDialogProps {
   project: Project | null;
@@ -43,11 +49,37 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
 
   if (!project) return null;
 
-  const tabs = ["Description du projet", "Documents publiques"];
+  const tabs = ["Description du projet", "Documents publiques", "Géorisques"];
 
   const handleOpenDocument = (url: string) => {
     window.open(url, "_blank");
   };
+
+  const handleOpenGeorisques = () => {
+    if (project.publicData?.url) {
+      window.open(project.publicData.url, "_blank");
+    }
+  };
+
+  // Helper function to render risque items
+  const renderRisqueItem = (
+    risque: { present: boolean; libelle: string },
+    key: string,
+  ) => (
+    <div
+      key={key}
+      className={`flex items-center p-2 rounded-md ${risque.present ? "bg-amber-50 border border-amber-200" : "bg-gray-50 border border-gray-200"}`}
+    >
+      {risque.present && (
+        <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+      )}
+      <span
+        className={risque.present ? "font-medium" : "text-muted-foreground"}
+      >
+        {risque.libelle}
+      </span>
+    </div>
+  );
 
   return (
     <Dialog>
@@ -159,6 +191,98 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                     <p className="text-muted-foreground italic">
                       Aucun document public disponible pour ce projet.
                     </p>
+                  )}
+                </div>
+              </ScrollArea>
+            </AnimatedTabsContent>
+
+            <AnimatedTabsContent value={tabIndex} index={2} className="h-full">
+              <ScrollArea className="h-[calc(90vh-180px)]">
+                <div className="pr-4">
+                  {project.publicData ? (
+                    <div className="space-y-6">
+                      {/* Localisation */}
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center">
+                            <MapPin className="h-5 w-5 mr-2" />
+                            Localisation
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <p>
+                              <span className="font-medium">Adresse : </span>
+                              {project.publicData?.adresse?.libelle ||
+                                "Non disponible"}
+                            </p>
+                            <p>
+                              <span className="font-medium">Commune : </span>
+                              {project.publicData?.commune?.libelle ||
+                                "Non disponible"}
+                              {project.publicData?.commune?.codePostal
+                                ? `(${project.publicData.commune.codePostal})`
+                                : ""}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleOpenGeorisques}
+                              className="mt-2"
+                            >
+                              Consulter sur Géorisques{" "}
+                              <ExternalLink className="h-3.5 w-3.5 ml-2" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Risques Naturels */}
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">
+                            Risques Naturels
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {Object.entries(
+                              project.publicData?.risquesNaturels || {},
+                            ).map(([key, risque]) =>
+                              renderRisqueItem(risque, `naturel-${key}`),
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Risques Technologiques */}
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">
+                            Risques Technologiques
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {Object.entries(
+                              project.publicData?.risquesTechnologiques || {},
+                            ).map(([key, risque]) =>
+                              renderRisqueItem(risque, `techno-${key}`),
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full py-12">
+                      <div className="bg-muted rounded-full p-3 mb-4">
+                        <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-muted-foreground text-center max-w-md">
+                        Aucune information de géorisques disponible pour ce
+                        projet.
+                      </p>
+                    </div>
                   )}
                 </div>
               </ScrollArea>
