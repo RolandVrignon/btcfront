@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,14 @@ interface ProjectDetailsDialogProps {
 
 export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   const [tabIndex, setTabIndex] = useState(0);
+  const [open, setOpen] = useState(false);
+
+  // Reset tab index when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setTabIndex(0);
+    }
+  }, [open]);
 
   if (!project) return null;
 
@@ -82,9 +90,9 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   );
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span id="details-dialog-trigger" className="hidden" />
+        <span id="details-dialog-trigger" className="hidden" onClick={() => setOpen(true)} />
       </DialogTrigger>
       <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] p-6 overflow-hidden">
         <DialogHeader>

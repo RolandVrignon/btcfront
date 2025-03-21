@@ -56,6 +56,13 @@ export function DeliverableResultDialog({
   >([]);
   const [tabs, setTabs] = useState<string[]>([]);
 
+  // Reset tab index when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTabIndex(0);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen && deliverableId) {
       fetchDeliverable();

@@ -51,6 +51,13 @@ export function DocumentMetadataDialog({
 
   const isFileReady = fileStatus === "COMPLETED";
 
+  // Reset tab index when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTabIndex(0);
+    }
+  }, [isOpen]);
+
   const fetchMetadata = useCallback(async () => {
     setIsLoading(true);
     setError(null);
