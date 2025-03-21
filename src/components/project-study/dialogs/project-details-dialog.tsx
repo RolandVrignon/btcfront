@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/src/components/ui/dialog";
-import { Project, PublicDocument } from "@/src/types/project";
+import { Project, PublicDocument } from "@/src/types/type";
 import { RenderMarkdown } from "@/src/components/ui/render-markdown";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import {

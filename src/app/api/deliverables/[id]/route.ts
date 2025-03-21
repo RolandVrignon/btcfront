@@ -6,8 +6,6 @@ export async function GET(
 ) {
   // Attendre les paramètres avant de les utiliser
   const { id } = await params;
-  console.log("params:", params);
-  console.log("id:", id);
 
   if (!id) {
     return NextResponse.json(

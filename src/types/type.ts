@@ -80,6 +80,7 @@ export interface Project {
   userId?: string;
   documents?: PublicDocumentList;
   publicData?: PublicData;
+  deliverables?: Deliverable[];
 }
 
 export interface UploadingFile {
@@ -92,4 +93,24 @@ export interface UploadingFile {
   indexation_status?: Status;
   processingMessage?: string;
   tags?: string[];
+}
+
+export enum DeliverableType {
+  DOCUMENTS_PUBLIQUES = "DOCUMENTS_PUBLIQUES",
+  GEORISQUES = "GEORISQUES",
+  DESCRIPTIF_SOMMAIRE_DES_TRAVAUX = "DESCRIPTIF_SOMMAIRE_DES_TRAVAUX",
+  TABLEAU_DES_DOCUMENTS_EXAMINES = "TABLEAU_DES_DOCUMENTS_EXAMINES",
+  COMPARATEUR_INDICES = "COMPARATEUR_INDICES",
+  ANALYSE_ETHUDE_THERMIQUE = "ANALYSE_ETHUDE_THERMIQUE",
+  INCOHERENCE_DE_DONNEES = "INCOHERENCE_DE_DONNEES",
+}
+export interface Deliverable {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  type: DeliverableType;
+  status: Status;
+  projectId: string;
+  short_result?: JSON;
+  long_result?: JSON;
 }

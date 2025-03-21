@@ -8,7 +8,7 @@ import {
   UploadingFile,
   PublicDocumentList,
   Status,
-} from "@/src/types/project";
+} from "@/src/types/type";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import {
@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const userId = session?.user?.id;
   const { projectId } = useParams();
   const isFetchingProjectData = useRef(false);
+  const hasBeenFetched = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -107,12 +108,17 @@ export default function DashboardPage() {
       return;
     }
 
+    if (hasBeenFetched.current) {
+      return;
+    }
+
     if (isFetchingProjectData.current) {
       return;
     }
 
     // Démarrer la récupération des données
     isFetchingProjectData.current = true;
+    hasBeenFetched.current = true;
     fetchProjectData();
 
     async function fetchProjectData() {
@@ -165,13 +171,8 @@ export default function DashboardPage() {
           try {
             // Exécuter les deux requêtes en parallèle avec Promise.all
             const [publicDocuments, publicData] = await Promise.all([
-              searchPublicDocuments(project.id, project.ai_city),
-              searchPublicData(
-                project.id,
-                project.ai_city || "",
-                project.ai_address || "",
-                project.ai_country || "",
-              ),
+              searchPublicDocuments(project?.externalId || ""),
+              searchPublicData(project?.externalId || ""),
             ]);
 
             setProject({
@@ -180,7 +181,7 @@ export default function DashboardPage() {
                 publicDocuments && publicDocuments.length > 0
                   ? (publicDocuments as PublicDocumentList)
                   : [],
-              publicData: publicData ? publicData : null,
+              publicData: publicData ? publicData : undefined,
             });
           } catch (error) {
             console.error(

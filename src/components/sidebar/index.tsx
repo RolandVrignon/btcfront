@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/src/lib/utils";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
-import { Project, UploadingFile } from "@/src/types/project";
+import { Project, UploadingFile } from "@/src/types/type";
 import { LogOut, Plus, FileText } from "lucide-react";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { motion } from "framer-motion";

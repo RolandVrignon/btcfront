@@ -3,7 +3,9 @@ import {
   UploadingFile,
   Status,
   Project,
-} from "@/src/types/project";
+  DeliverableType,
+  PublicData,
+} from "@/src/types/type";
 
 export const createProject = async (
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
@@ -47,34 +49,134 @@ export const createProject = async (
 
 export const searchPublicDocuments = async (
   projectId: string,
-  city: string,
 ): Promise<PublicDocumentList> => {
-  const response = await fetch(`/api/tools/search-public-documents`, {
-    method: "POST",
-    body: JSON.stringify({ projectId, city }),
-  });
-  const data = await response.json();
-  return data;
+  try {
+    if (!projectId) {
+      console.error("ID du projet manquant");
+      return [];
+    }
+
+    // Création initiale du livrable
+    const initialResponse = await fetch(
+      `/api/deliverables/project?projectId=${projectId}&type=${DeliverableType.DOCUMENTS_PUBLIQUES}`,
+    );
+
+    if (!initialResponse.ok) {
+      throw new Error("Échec de la création du livrable");
+    }
+
+    const deliverable = await initialResponse.json();
+
+    // Si le livrable est déjà prêt, retournez les résultats
+    if (deliverable.status === "COMPLETED") {
+      return deliverable.short_result as PublicDocumentList;
+    }
+
+    if (deliverable.status === "ERROR") {
+      console.error("Erreur lors de la génération du livrable");
+      return [];
+    }
+
+    // Polling pour attendre que le livrable soit prêt
+    const maxAttempts = 30;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempts++;
+
+      const pollResponse = await fetch(`/api/deliverables/${deliverable.id}`);
+
+      if (!pollResponse.ok) {
+        throw new Error("Échec de la récupération du statut du livrable");
+      }
+
+      const updatedDeliverable = await pollResponse.json();
+
+      if (updatedDeliverable.status === "COMPLETED") {
+        return updatedDeliverable.short_result as PublicDocumentList;
+      }
+
+      if (updatedDeliverable.status === "ERROR") {
+        console.error("Erreur lors de la génération du livrable");
+        return [];
+      }
+    }
+
+    console.error("Délai d'attente dépassé pour la génération du livrable");
+    return [];
+  } catch (error) {
+    console.error("Erreur lors de la recherche de documents publics:", error);
+    return [];
+  }
 };
 
 export const searchPublicData = async (
   projectId: string,
-  city: string,
-  address: string,
-  country: string,
-) => {
+): Promise<PublicData | undefined> => {
   try {
-    const response = await fetch(`/api/tools/search-public-data`, {
-      method: "POST",
-      body: JSON.stringify({ projectId, city, address, country }),
-    });
-    const data = await response.json();
-    return data;
-  } catch {
-    console.error(
-      "Function searchPublicData > Erreur lors de la recherche de données publiques.",
+    if (!projectId) {
+      console.error("ID du projet manquant");
+      return undefined;
+    }
+
+    // Création initiale du livrable
+    const initialResponse = await fetch(
+      `/api/deliverables/project?projectId=${projectId}&type=${DeliverableType.GEORISQUES}`,
     );
-    return null;
+
+    if (!initialResponse.ok) {
+      throw new Error("Échec de la création du livrable géorisques");
+    }
+
+    const deliverable = await initialResponse.json();
+
+    // Si le livrable est déjà prêt, retournez les résultats
+    if (deliverable.status === "COMPLETED") {
+      return deliverable.short_result as PublicData;
+    }
+
+    if (deliverable.status === "ERROR") {
+      console.error("Erreur lors de la génération des données géorisques");
+      return undefined;
+    }
+
+    // Polling pour attendre que le livrable soit prêt
+    const maxAttempts = 30;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempts++;
+
+      const pollResponse = await fetch(`/api/deliverables/${deliverable.id}`);
+
+      if (!pollResponse.ok) {
+        throw new Error(
+          "Échec de la récupération du statut du livrable géorisques",
+        );
+      }
+
+      const updatedDeliverable = await pollResponse.json();
+
+      if (updatedDeliverable.status === "COMPLETED") {
+        return updatedDeliverable.short_result as PublicData;
+      }
+
+      if (updatedDeliverable.status === "ERROR") {
+        console.error("Erreur lors de la génération des données géorisques");
+        return undefined;
+      }
+    }
+
+    console.error(
+      "Délai d'attente dépassé pour la génération des données géorisques",
+    );
+
+    return undefined;
+  } catch (error) {
+    console.error("Erreur lors de la recherche des données géorisques:", error);
+    return undefined;
   }
 };
 
@@ -224,19 +326,11 @@ export const monitorProjectStatus = async (
           isProcessingComplete = true;
           setProject(projectData);
           if (projectData.ai_city) {
-            const publicDocuments = await searchPublicDocuments(
-              projectRef.current?.id || "",
-              projectData.ai_city,
-            );
+            const publicDocuments = await searchPublicDocuments(projectId);
             projectData.documents = publicDocuments as PublicDocumentList;
           }
           if (projectData.ai_city && projectData.ai_address) {
-            const publicData = await searchPublicData(
-              projectRef.current?.id || "",
-              projectData.ai_city || "",
-              projectData.ai_address || "",
-              projectData.ai_country || "",
-            );
+            const publicData = await searchPublicData(projectId);
             projectData.publicData = publicData;
           }
           resolve(projectData);

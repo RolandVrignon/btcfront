@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { FileUploadZone } from "@/src/components/project-study/components/file-upload-zone";
 import { FileUploadList } from "@/src/components/project-study/components/file-upload-list";
-import { Project } from "@/src/types/project";
+import { Project } from "@/src/types/type";
 import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/project-study/components/selected-files-list";
 import { Skeleton } from "@/src/components/ui/skeleton";
@@ -13,7 +13,7 @@ import { ProjectDetailsDialog } from "@/src/components/project-study/dialogs/pro
 import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info } from "lucide-react";
-import { UploadingFile } from "@/src/types/project";
+import { UploadingFile } from "@/src/types/type";
 import { ProjectToolsList } from "@/src/components/project-study/components/project-tools-list";
 import { ProjectChatbot } from "./components/project-chatbot";
 import {

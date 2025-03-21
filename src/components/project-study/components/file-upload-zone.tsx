@@ -11,7 +11,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { UploadingFile } from "@/src/types/project";
+import { UploadingFile } from "@/src/types/type";
 
 interface FileUploadZoneProps {
   onFilesSelected: (files: File[]) => void;

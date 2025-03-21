@@ -1,4 +1,4 @@
-import { Project } from "@/src/types/project";
+import { Project } from "@/src/types/type";
 
 // Exemple de projets mockés
 const mockProjects: Project[] = [

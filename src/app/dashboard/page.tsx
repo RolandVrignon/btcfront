@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/src/components/sidebar";
 import { ProjectStudy } from "@/src/components/project-study";
-import { Project, UploadingFile } from "@/src/types/project";
+import { Project, UploadingFile } from "@/src/types/type";
 import { useSession } from "next-auth/react";
 
 export default function DashboardPage() {

@@ -77,8 +77,6 @@ model Project {
   ai_city         String?
   ai_zip_code     String?
   ai_country      String?
-  publicDocuments Json?             @default("{}") @db.JsonB
-  publicData      Json?             @default("{}") @db.JsonB
   visibility      ProjectVisibility @default(PRIVATE)
   status          ProjectStatus     @default(DRAFT)
   createdAt       DateTime          @default(now())

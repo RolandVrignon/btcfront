@@ -9,7 +9,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/src/components/project-study/dialogs/document-metadata-dialog";
-import { UploadingFile } from "@/src/types/project";
+import { UploadingFile } from "@/src/types/type";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import { LoadingSpinner } from "@/src/components/ui/loading-spinner";
 import { StatusPastille } from "../../ui/status-pastille";

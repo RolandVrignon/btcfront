@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Deliverable } from "@/src/types/type";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const projectId = searchParams.get("projectId");
-  console.log("projectId:", projectId);
   const type = searchParams.get("type");
-  console.log("type:", type);
 
   if (!projectId || !type) {
+    console.error("Missing projectId or type parameter");
     return NextResponse.json(
       { error: "Missing projectId or type parameter" },
       { status: 400 },
@@ -28,51 +28,46 @@ export async function GET(request: NextRequest) {
       },
     );
 
-    console.log(response);
-
     if (!response.ok) {
       throw new Error(`Failed to fetch deliverables: ${response.statusText}`);
     }
 
-    console.log(" JHUJASHEFJKdialghfjklsdghfsdjkafalkj");
-
     const deliverables = await response.json();
 
-    // Check if a deliverable with the specified type already exists
     const existingDeliverable = deliverables.find(
-      (deliverable: any) => deliverable.type === type,
+      (deliverable: Deliverable) => deliverable.type === type,
     );
 
     if (existingDeliverable) {
       return NextResponse.json(existingDeliverable);
     }
 
-    console.log("no existing deliverable found");
+    const createDeliverableApiUrl = `${apiUrl}/deliverables`;
 
-    const obj = {
-      projectId: projectId,
-      type: type,
-    };
+    if (!process.env.NEXT_PUBLIC_CTIA_API_KEY) {
+      throw new Error("NEXT_PUBLIC_CTIA_API_KEY is not set");
+    }
 
-    console.log("obj:", obj);
-
-    // If no existing deliverable found, create a new one
-    const createResponse = await fetch(`${apiUrl}/deliverables`, {
+    const createResponse = await fetch(createDeliverableApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
+        "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY,
       },
-      body: JSON.stringify(obj),
+      body: JSON.stringify({
+        projectId: projectId,
+        type: type,
+      }),
     });
 
     if (!createResponse.ok) {
-      throw new Error(
-        `Failed to create deliverable: ${createResponse.statusText}`,
+      console.error(
+        `Failed to create deliverable: ${JSON.stringify(createResponse, null, 2)}`,
       );
     }
 
     const newDeliverable = await createResponse.json();
+
     return NextResponse.json(newDeliverable);
   } catch (error) {
     console.error("Error handling deliverable:", error);

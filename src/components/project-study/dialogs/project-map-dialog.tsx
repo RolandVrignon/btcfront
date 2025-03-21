@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/src/components/ui/dialog";
 import { Button } from "@/src/components/ui/button";
-import { Project } from "@/src/types/project";
+import { Project } from "@/src/types/type";
 import { Skeleton } from "../../ui/skeleton";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 
