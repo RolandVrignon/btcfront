@@ -266,6 +266,7 @@ export function ProjectStudy({
 
           {uploadingFiles.length > 0 && (
             <ProjectChatbot
+              projectId={project?.externalId}
               isIndexationCompleted={
                 uploadingFiles.length > 0 &&
                 uploadingFiles.every(

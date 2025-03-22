@@ -5,10 +5,12 @@ import { LoadingSpinner } from "../../ui/loading-spinner";
 
 interface ProjectChatbotProps {
   isIndexationCompleted?: boolean;
+  projectId: string | undefined;
 }
 
 export function ProjectChatbot({
   isIndexationCompleted = false,
+  projectId,
 }: ProjectChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -72,7 +74,7 @@ export function ProjectChatbot({
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         inputValue={inputValue}
-        isIndexationCompleted={isIndexationCompleted}
+        projectId={projectId}
       />
     </div>
   );

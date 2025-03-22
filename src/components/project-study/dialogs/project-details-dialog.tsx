@@ -92,7 +92,11 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span id="details-dialog-trigger" className="hidden" onClick={() => setOpen(true)} />
+        <span
+          id="details-dialog-trigger"
+          className="hidden"
+          onClick={() => setOpen(true)}
+        />
       </DialogTrigger>
       <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] p-6 overflow-hidden">
         <DialogHeader>
