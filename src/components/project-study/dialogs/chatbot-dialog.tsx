@@ -96,7 +96,7 @@ export function ChatbotDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="w-[50vw] h-[90vh] max-w-[90vw] max-h-[90vh] p-6 overflow-hidden">
+      <DialogContent className="h-[90vh] max-w-[60vw] max-h-[90vh] p-6 overflow-hidden">
         <DialogHeader className="sr-only">
           <DialogTitle className="sr-only">
             Dialogue avec l&apos;assistant IA
@@ -106,7 +106,7 @@ export function ChatbotDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-grow overflow-hidden mt-4 h-full w-full rounded-2xl">
+        <div className="flex-grow overflow-hidden mt-4 h-full w-full rounded-b-3xl rounded-t-lg">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <p>Chargement de l&apos;assistant...</p>
