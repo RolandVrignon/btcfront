@@ -47,7 +47,14 @@ export function ProjectChatbot({
           </div>
         )}
       </div>
-      <div className="w-full h-[25vh] flex flex-col items-center justify-center font-medium rounded-xl hover:cursor-pointer relative overflow-hidden bg-stone-100" onClick={() => setIsOpen(true)}>
+      <div
+        className="w-full h-[25vh] flex flex-col items-center justify-center font-medium rounded-xl hover:cursor-pointer relative overflow-hidden bg-stone-100"
+        onClick={() => {
+          if (isIndexationCompleted) {
+            setIsOpen(true);
+          }
+        }}
+      >
         <div
           className="w-full h-[25vh] flex flex-col items-center justify-center font-medium rounded-xl hover:cursor-pointer relative overflow-hidden bg-stone-100"
           style={{
