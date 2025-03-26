@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectId, fileNames } = body;
+    const { projectId, downloadUrls } = body;
 
     if (
       !projectId ||
-      !fileNames ||
-      !Array.isArray(fileNames) ||
-      fileNames.length === 0
+      !downloadUrls ||
+      !Array.isArray(downloadUrls) ||
+      downloadUrls.length === 0
     ) {
       return NextResponse.json(
         { error: "projectId et fileNames sont requis" },
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           projectId,
-          fileNames,
+          downloadUrls,
         }),
       },
     );

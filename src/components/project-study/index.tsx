@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { FileUploadZone } from "@/src/components/project-study/components/file-upload-zone";
 import { FileUploadList } from "@/src/components/project-study/components/file-upload-list";
 import { Project } from "@/src/types/type";
-import { usePresignedUrl } from "@/src/lib/hooks/use-presigned-url";
+import { useBucketUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/project-study/components/selected-files-list";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { ProjectMapDialog } from "@/src/components/project-study/dialogs/project-map-dialog";
@@ -50,7 +50,7 @@ export function ProjectStudy({
   setIsUploading,
   isUpperLoading,
 }: ProjectToolsProps) {
-  const { getPresignedUrl } = usePresignedUrl();
+  const { getUploadUrl, getDownloadUrl } = useBucketUrl();
   const [isLoading, setIsLoading] = useState(true);
 
   const isUploadingRef = useRef(false);
@@ -133,7 +133,8 @@ export function ProjectStudy({
       setProjects,
       setIsUploading,
       project,
-      getPresignedUrl,
+      getUploadUrl,
+      getDownloadUrl,
       setSelectedFiles,
     );
   };

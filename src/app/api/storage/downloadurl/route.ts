@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('On va tenter de récupérer l\'url de download !!!!')
+    console.log('POPOPOPPPPPPPPPOOPOPOPOPO')
     const body = await request.json();
-    const { fileName, fileType, projectId } = body;
+    const { fileName, projectId } = body;
 
-    if (!fileName || !fileType) {
+    if (!fileName || !projectId) {
       return NextResponse.json(
         { error: "Le nom et le type du fichier sont requis" },
         { status: 400 },
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Faire la requête à l'API externe
-    const response = await fetch(`${apiUrl}/storage/presigned-url`, {
+    const response = await fetch(`${apiUrl}/storage/download-url`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,10 +33,11 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         fileName: fileName,
-        contentType: fileType,
         projectId: projectId || null,
       }),
     });
+
+    console.log('response:', response);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -48,6 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
+    console.log('data:', data)
 
     return NextResponse.json(data);
   } catch (error) {

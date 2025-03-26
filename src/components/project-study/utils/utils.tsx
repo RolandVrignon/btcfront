@@ -378,7 +378,7 @@ export const getDocumentIdByFileName = async (
 
 export const uploadFileToS3 = async (
   file: File,
-  presignedUrl: string,
+  uploadUrl: string,
   fileId: string,
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
 ): Promise<boolean> => {
@@ -412,7 +412,7 @@ export const uploadFileToS3 = async (
       // Créer un FormData pour envoyer le fichier via notre proxy API
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("presignedUrl", presignedUrl);
+      formData.append("uploadUrl", uploadUrl);
       formData.append("contentType", file.type);
 
       // Configurer la requête vers notre proxy API au lieu de directement vers S3
@@ -526,7 +526,7 @@ export const handleProjectUpdate = async (
 export const confirmMultipleUploadsToBackend = async (
   projectRef: React.MutableRefObject<Project | null>,
   projectId: string | undefined,
-  fileNames: string[],
+  successfulUploads: { fileName: string; fileId: string; downloadUrl: string | null }[],
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -539,13 +539,13 @@ export const confirmMultipleUploadsToBackend = async (
   try {
     const body = {
       projectId,
-      fileNames,
+      downloadUrls: successfulUploads.map((u) => u.downloadUrl),
     };
 
     // Mettre à jour le statut des fichiers
     setUploadingFiles((prev) =>
       prev.map((f) => {
-        const matchingFile = f.file && fileNames.includes(f.file.name);
+        const matchingFile = f.file && successfulUploads.some(u => u.fileName === f.fileName);
         if (matchingFile) {
           return {
             ...f,
@@ -558,10 +558,10 @@ export const confirmMultipleUploadsToBackend = async (
     );
 
     // Créer les promesses pour le traitement des documents
-    const documentPromises = fileNames.map(async (fileName) => {
+    const documentPromises = successfulUploads.map(async (upload) => {
       let documentId: string | null = null;
       while (!documentId) {
-        documentId = await getDocumentIdByFileName(projectId, fileName);
+        documentId = await getDocumentIdByFileName(projectId, upload.fileName);
         if (!documentId) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
@@ -570,7 +570,7 @@ export const confirmMultipleUploadsToBackend = async (
       if (documentId) {
         setUploadingFiles((prev) =>
           prev.map((f) =>
-            f.file && f.file.name === fileName
+            f.file && f.file.name === upload.fileName
               ? {
                   ...f,
                   id: documentId,
@@ -587,7 +587,7 @@ export const confirmMultipleUploadsToBackend = async (
         );
       }
 
-      return { fileName, documentId };
+      return { fileName: upload.fileName, documentId };
     });
 
     // Fonction pour gérer tout le processus lié au projet
@@ -645,6 +645,9 @@ export const confirmMultipleUploadsToBackend = async (
     Promise.all([Promise.all(documentPromises), projectPromise()]);
 
     // Confirmer les uploads à l'API
+
+    console.log('body:', body);
+
     await fetch("/api/documents/confirm-multiple-uploads", {
       method: "POST",
       headers: {
@@ -667,10 +670,14 @@ export const uploadAllFilesUtils = async (
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>,
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
   project: Project | null,
-  getPresignedUrl: (
+  getUploadUrl: (
     file: File,
     projectId?: string,
   ) => Promise<{ url: string; expiresIn: number; key: string } | null>,
+  getDownloadUrl: (
+    projectId?: string,
+    fileName? : string,
+  ) => Promise<{ url: string } | null>,
   setSelectedFiles: React.Dispatch<React.SetStateAction<File[]>>,
 ) => {
   setIsUploading(true);
@@ -715,14 +722,13 @@ export const uploadAllFilesUtils = async (
           throw new Error("Fichier manquant");
         }
 
-        const presignedUrl = await getPresignedUrl(
-          uploadingFile.file,
-          projectId,
-        );
+        const uploadUrl = await getUploadUrl(uploadingFile.file, projectId);
 
-        if (!presignedUrl) {
+        if (!uploadUrl) {
           throw new Error("Impossible d'obtenir l'URL présignée");
         }
+
+        console.log('uploadUrl:', uploadUrl);
 
         setUploadingFiles((prev) =>
           prev.map((f) =>
@@ -740,7 +746,7 @@ export const uploadAllFilesUtils = async (
         // Uploader le fichier avec suivi de progression
         const uploadSuccess = await uploadFileToS3(
           uploadingFile.file,
-          presignedUrl.url,
+          uploadUrl.url,
           uploadingFile.id,
           setUploadingFiles,
         );
@@ -749,9 +755,24 @@ export const uploadAllFilesUtils = async (
           throw new Error("Échec de l'upload");
         }
 
+        console.log('uploadingFile:', uploadingFile)
+
+        console.log('On va tenter de récupérer l\'url de download !!!!')
+        console.log('projectId:', projectId)
+        console.log('uploadingFile.file.name:', uploadingFile.file.name)
+
+        if (!projectId) {
+          throw new Error("ID du projet manquant");
+        }
+
+        const downloadUrl = await getDownloadUrl(projectId, uploadingFile.file.name);
+
+        console.log('downloadUrl:', downloadUrl)
+
         return {
           fileName: uploadingFile.file.name,
           fileId: uploadingFile.id,
+          downloadUrl: downloadUrl,
         };
       } catch (error) {
         console.error(
@@ -782,13 +803,16 @@ export const uploadAllFilesUtils = async (
     const successfulUploads = results.filter(Boolean) as {
       fileName: string;
       fileId: string;
+      downloadUrl: string | null;
     }[];
+
+    console.log('successfulUploads:', successfulUploads);
 
     if (successfulUploads.length > 0) {
       await confirmMultipleUploadsToBackend(
         projectRef,
         projectId,
-        successfulUploads.map((u) => u.fileName),
+        successfulUploads,
         setUploadingFiles,
         setProject,
         setIsUploading,

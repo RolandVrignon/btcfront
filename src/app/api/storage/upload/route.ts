@@ -4,10 +4,10 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const presignedUrl = formData.get("presignedUrl") as string;
+    const uploadUrl = formData.get("uploadUrl") as string;
     const contentType = formData.get("contentType") as string;
 
-    if (!file || !presignedUrl) {
+    if (!file || !uploadUrl) {
       return NextResponse.json(
         { error: "Le fichier et l'URL présignée sont requis" },
         { status: 400 },
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Faire la requête à S3 depuis le serveur (pas de problème CORS)
-    const response = await fetch(presignedUrl, {
+    const response = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
         "Content-Type": contentType || file.type,

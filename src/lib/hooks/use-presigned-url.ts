@@ -1,27 +1,31 @@
 import { useState } from "react";
 
-interface PresignedUrlResponse {
+interface uploadUrlResponse {
   url: string;
   expiresIn: number;
   key: string;
 }
 
-interface UsePresignedUrlProps {
-  onSuccess?: (response: PresignedUrlResponse, file: File) => void;
+interface downloadUrlResponse {
+  url: string;
+}
+
+interface UseBucketUrlProps {
+  onSuccess?: (response: uploadUrlResponse, file: File) => void;
   onError?: (error: Error) => void;
 }
 
-export function usePresignedUrl({
+export function useBucketUrl({
   onSuccess,
   onError,
-}: UsePresignedUrlProps = {}) {
+}: UseBucketUrlProps = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const getPresignedUrl = async (
+  const getUploadUrl = async (
     file: File,
     projectId?: string,
-  ): Promise<PresignedUrlResponse | null> => {
+  ): Promise<uploadUrlResponse | null> => {
     setIsLoading(true);
     setError(null);
 
@@ -34,7 +38,7 @@ export function usePresignedUrl({
 
       console.log("body:", body);
 
-      const response = await fetch("/api/storage/presignedurl", {
+      const response = await fetch("/api/storage/uploadurl", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,17 +60,19 @@ export function usePresignedUrl({
         throw new Error("La réponse de l'API ne contient pas d'URL présignée");
       }
 
-      const presignedUrlResponse: PresignedUrlResponse = {
+      const uploadUrlResponse: uploadUrlResponse = {
         url: data.url,
         expiresIn: data.expiresIn || 3600,
         key: data.key || "",
       };
 
+      console.log("uploadUrlResponse:", uploadUrlResponse);
+
       if (onSuccess) {
-        onSuccess(presignedUrlResponse, file);
+        onSuccess(uploadUrlResponse, file);
       }
 
-      return presignedUrlResponse;
+      return uploadUrlResponse;
     } catch (err) {
       const error =
         err instanceof Error
@@ -84,8 +90,46 @@ export function usePresignedUrl({
     }
   };
 
+  const getDownloadUrl = async (projectId?: string, fileName?: string) : Promise<downloadUrlResponse | null> => {
+    try {
+
+      if (!projectId || !fileName) {
+        throw new Error("Project ID et fileName sont requis");
+      }
+
+      const response = await fetch("/api/storage/downloadurl", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ projectId, fileName }),
+      });
+
+      console.log("response:", response);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error ||
+            "Erreur lors de la récupération de l'URL de téléchargement",
+        );
+      }
+
+      const data = await response.json();
+
+      return data.url;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération de l'URL de téléchargement:",
+        error,
+      );
+      return null;
+    }
+  };
+
   return {
-    getPresignedUrl,
+    getUploadUrl,
+    getDownloadUrl,
     isLoading,
     error,
   };
