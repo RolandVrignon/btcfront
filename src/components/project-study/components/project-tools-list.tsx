@@ -17,6 +17,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
 import { LoadingSpinner } from "../../ui/loading-spinner";
+import { UploadingFile } from "@/src/types/type";
 
 interface Deliverable {
   id: string;
@@ -38,11 +39,13 @@ interface Tool {
 interface ProjectToolsListProps {
   projectId?: string;
   isToolsReady?: boolean;
+  uploadFiles?: UploadingFile[];
 }
 
 export function ProjectToolsList({
   projectId,
   isToolsReady = false,
+  uploadFiles,
 }: ProjectToolsListProps) {
   const [tools, setTools] = useState<Tool[]>([
     {
@@ -105,7 +108,7 @@ export function ProjectToolsList({
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<{
-    id: string;
+    id: string[];
     toolName: string;
   } | null>(null);
 
@@ -145,7 +148,7 @@ export function ProjectToolsList({
 
           if (deliverable.status === "COMPLETED") {
             setSelectedDeliverable({
-              id: deliverableId,
+              id: [deliverableId],
               toolName: toolName,
             });
             setDialogOpen(true);
@@ -214,19 +217,31 @@ export function ProjectToolsList({
       );
 
       // Call our API to get or create a deliverable
-      const response = await fetch(
-        `/api/deliverables/project?projectId=${projectId}&type=${tool.type}`,
-      );
+      const response = await fetch(`/api/deliverables`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          projectId: projectId,
+          type: tool.type,
+          documentIds: [],
+          user_prompt: "",
+          new_deliverable: false,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to get or create deliverable");
       }
 
-      const deliverable: Deliverable = await response.json();
+      const deliverables: Deliverable[] = await response.json();
 
-      if (deliverable.status === "COMPLETED") {
+      console.log("deliverables length:", deliverables.length);
+
+      if (deliverables[0].status === "COMPLETED") {
         setSelectedDeliverable({
-          id: deliverable.id,
+          id: deliverables.map((deliverable) => deliverable.id),
           toolName: tool.name,
         });
         setDialogOpen(true);
@@ -240,7 +255,7 @@ export function ProjectToolsList({
         return;
       }
 
-      monitorDeliverable(deliverable.id, tool.id, tool.name);
+      monitorDeliverable(deliverables[0].id, tool.id, tool.name);
     } catch (error) {
       console.error("Error handling tool click:", error);
 
@@ -329,10 +344,12 @@ export function ProjectToolsList({
 
       {selectedDeliverable && (
         <DeliverableResultDialog
-          deliverableId={selectedDeliverable.id}
+          projectId={projectId || ""}
+          deliverableIds={selectedDeliverable.id}
           toolName={selectedDeliverable.toolName}
           isOpen={dialogOpen}
           onOpenChange={setDialogOpen}
+          uploadFiles={uploadFiles}
         />
       )}
     </div>

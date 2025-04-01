@@ -288,6 +288,7 @@ export function ProjectStudy({
                   (file) => file.status && file.status === "COMPLETED",
                 )
               }
+              uploadFiles={uploadingFiles}
             />
           )}
         </div>

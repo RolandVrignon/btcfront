@@ -12,13 +12,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('fileName:', fileName)
-    console.log('fileType:', fileType)
-    console.log('projectId:', projectId)
+    console.log("fileName:", fileName);
+    console.log("fileType:", fileType);
+    console.log("projectId:", projectId);
 
     // Récupérer l'URL de l'API depuis les variables d'environnement
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    console.log('apiUrl:', apiUrl)
+    console.log("apiUrl:", apiUrl);
 
     if (!apiUrl) {
       return NextResponse.json(
@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
       fileName: fileName,
       contentType: fileType,
       projectId: projectId || null,
-    }
+    };
 
-    console.log('object:', object)
+    console.log("object:", object);
 
     // Faire la requête à l'API externe
     const response = await fetch(`${apiUrl}/storage/upload-url`, {
@@ -60,8 +60,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.log('ERROOOOOOOOOOOOOOOOR:', JSON.stringify(error, null, 2))
-    console.error("Erreur lors de la génération de l'URL présignée:", JSON.stringify(error, null, 2));
+    console.log("ERROOOOOOOOOOOOOOOOR:", JSON.stringify(error, null, 2));
+    console.error(
+      "Erreur lors de la génération de l'URL présignée:",
+      JSON.stringify(error, null, 2),
+    );
     return NextResponse.json(
       { error: "Erreur serveur lors de la génération de l'URL présignée" },
       { status: 500 },

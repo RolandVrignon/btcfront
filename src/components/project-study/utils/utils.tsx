@@ -57,9 +57,16 @@ export const searchPublicDocuments = async (
     }
 
     // Création initiale du livrable
-    const initialResponse = await fetch(
-      `/api/deliverables/project?projectId=${projectId}&type=${DeliverableType.DOCUMENTS_PUBLIQUES}`,
-    );
+    const initialResponse = await fetch(`/api/deliverables`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        projectId,
+        type: DeliverableType.DOCUMENTS_PUBLIQUES,
+      }),
+    });
 
     if (!initialResponse.ok) {
       throw new Error("Échec de la création du livrable");
@@ -67,12 +74,14 @@ export const searchPublicDocuments = async (
 
     const deliverable = await initialResponse.json();
 
+    const selectedDeliverable = deliverable[0];
+
     // Si le livrable est déjà prêt, retournez les résultats
-    if (deliverable.status === "COMPLETED") {
-      return deliverable.short_result as PublicDocumentList;
+    if (selectedDeliverable.status === "COMPLETED") {
+      return selectedDeliverable.short_result as PublicDocumentList;
     }
 
-    if (deliverable.status === "ERROR") {
+    if (selectedDeliverable.status === "ERROR") {
       console.error("Erreur lors de la génération du livrable");
       return [];
     }
@@ -85,7 +94,9 @@ export const searchPublicDocuments = async (
       await new Promise((resolve) => setTimeout(resolve, 1000));
       attempts++;
 
-      const pollResponse = await fetch(`/api/deliverables/${deliverable.id}`);
+      const pollResponse = await fetch(
+        `/api/deliverables/${selectedDeliverable.id}`,
+      );
 
       if (!pollResponse.ok) {
         throw new Error("Échec de la récupération du statut du livrable");
@@ -121,9 +132,17 @@ export const searchPublicData = async (
     }
 
     // Création initiale du livrable
-    const initialResponse = await fetch(
-      `/api/deliverables/project?projectId=${projectId}&type=${DeliverableType.GEORISQUES}`,
-    );
+    const initialResponse = await fetch(`/api/deliverables`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        projectId,
+        type: DeliverableType.GEORISQUES,
+        name: "Données géorisques",
+      }),
+    });
 
     if (!initialResponse.ok) {
       throw new Error("Échec de la création du livrable géorisques");
@@ -131,12 +150,14 @@ export const searchPublicData = async (
 
     const deliverable = await initialResponse.json();
 
+    const selectedDeliverable = deliverable[0];
+
     // Si le livrable est déjà prêt, retournez les résultats
-    if (deliverable.status === "COMPLETED") {
-      return deliverable.short_result as PublicData;
+    if (selectedDeliverable.status === "COMPLETED") {
+      return selectedDeliverable.short_result as PublicData;
     }
 
-    if (deliverable.status === "ERROR") {
+    if (selectedDeliverable.status === "ERROR") {
       console.error("Erreur lors de la génération des données géorisques");
       return undefined;
     }
@@ -149,7 +170,9 @@ export const searchPublicData = async (
       await new Promise((resolve) => setTimeout(resolve, 1000));
       attempts++;
 
-      const pollResponse = await fetch(`/api/deliverables/${deliverable.id}`);
+      const pollResponse = await fetch(
+        `/api/deliverables/${selectedDeliverable.id}`,
+      );
 
       if (!pollResponse.ok) {
         throw new Error(
@@ -526,7 +549,11 @@ export const handleProjectUpdate = async (
 export const confirmMultipleUploadsToBackend = async (
   projectRef: React.MutableRefObject<Project | null>,
   projectId: string | undefined,
-  successfulUploads: { fileName: string; fileId: string; downloadUrl: string | null }[],
+  successfulUploads: {
+    fileName: string;
+    fileId: string;
+    downloadUrl: string | null;
+  }[],
   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
@@ -545,7 +572,8 @@ export const confirmMultipleUploadsToBackend = async (
     // Mettre à jour le statut des fichiers
     setUploadingFiles((prev) =>
       prev.map((f) => {
-        const matchingFile = f.file && successfulUploads.some(u => u.fileName === f.fileName);
+        const matchingFile =
+          f.file && successfulUploads.some((u) => u.fileName === f.fileName);
         if (matchingFile) {
           return {
             ...f,
@@ -646,7 +674,7 @@ export const confirmMultipleUploadsToBackend = async (
 
     // Confirmer les uploads à l'API
 
-    console.log('body:', body);
+    console.log("body:", body);
 
     await fetch("/api/documents/confirm-multiple-uploads", {
       method: "POST",
@@ -676,7 +704,7 @@ export const uploadAllFilesUtils = async (
   ) => Promise<{ url: string; expiresIn: number; key: string } | null>,
   getDownloadUrl: (
     projectId?: string,
-    fileName? : string,
+    fileName?: string,
   ) => Promise<{ url: string } | null>,
   setSelectedFiles: React.Dispatch<React.SetStateAction<File[]>>,
 ) => {
@@ -728,7 +756,7 @@ export const uploadAllFilesUtils = async (
           throw new Error("Impossible d'obtenir l'URL présignée");
         }
 
-        console.log('uploadUrl:', uploadUrl);
+        console.log("uploadUrl:", uploadUrl);
 
         setUploadingFiles((prev) =>
           prev.map((f) =>
@@ -755,19 +783,22 @@ export const uploadAllFilesUtils = async (
           throw new Error("Échec de l'upload");
         }
 
-        console.log('uploadingFile:', uploadingFile)
+        console.log("uploadingFile:", uploadingFile);
 
-        console.log('On va tenter de récupérer l\'url de download !!!!')
-        console.log('projectId:', projectId)
-        console.log('uploadingFile.file.name:', uploadingFile.file.name)
+        console.log("On va tenter de récupérer l'url de download !!!!");
+        console.log("projectId:", projectId);
+        console.log("uploadingFile.file.name:", uploadingFile.file.name);
 
         if (!projectId) {
           throw new Error("ID du projet manquant");
         }
 
-        const downloadUrl = await getDownloadUrl(projectId, uploadingFile.file.name);
+        const downloadUrl = await getDownloadUrl(
+          projectId,
+          uploadingFile.file.name,
+        );
 
-        console.log('downloadUrl:', downloadUrl)
+        console.log("downloadUrl:", downloadUrl);
 
         return {
           fileName: uploadingFile.file.name,
@@ -806,7 +837,7 @@ export const uploadAllFilesUtils = async (
       downloadUrl: string | null;
     }[];
 
-    console.log('successfulUploads:', successfulUploads);
+    console.log("successfulUploads:", successfulUploads);
 
     if (successfulUploads.length > 0) {
       await confirmMultipleUploadsToBackend(

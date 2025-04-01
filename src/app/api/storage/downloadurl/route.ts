@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('On va tenter de récupérer l\'url de download !!!!')
-    console.log('POPOPOPPPPPPPPPOOPOPOPOPO')
+    console.log("On va tenter de récupérer l'url de download !!!!");
+    console.log("POPOPOPPPPPPPPPOOPOPOPOPO");
     const body = await request.json();
     const { fileName, projectId } = body;
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    console.log('response:', response);
+    console.log("response:", response);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('data:', data)
+    console.log("data:", data);
 
     return NextResponse.json(data);
   } catch (error) {

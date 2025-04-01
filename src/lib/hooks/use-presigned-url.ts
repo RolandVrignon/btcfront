@@ -15,10 +15,7 @@ interface UseBucketUrlProps {
   onError?: (error: Error) => void;
 }
 
-export function useBucketUrl({
-  onSuccess,
-  onError,
-}: UseBucketUrlProps = {}) {
+export function useBucketUrl({ onSuccess, onError }: UseBucketUrlProps = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -90,9 +87,11 @@ export function useBucketUrl({
     }
   };
 
-  const getDownloadUrl = async (projectId?: string, fileName?: string) : Promise<downloadUrlResponse | null> => {
+  const getDownloadUrl = async (
+    projectId?: string,
+    fileName?: string,
+  ): Promise<downloadUrlResponse | null> => {
     try {
-
       if (!projectId || !fileName) {
         throw new Error("Project ID et fileName sont requis");
       }
