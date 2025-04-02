@@ -100,8 +100,12 @@ export function ProjectStudy({
     isMonitoringRef.current = true;
 
     // Pour chaque fichier en cours de traitement, surveiller son statut
+    console.log("useEffect uploadingFiles", uploadingFiles);
+    console.log("useEffect project", project);
+    console.log("useEffect projectRef", projectRef);
+
     uploadingFiles.forEach((file) => {
-      if (file.status !== "COMPLETED" && file.status !== "ERROR" && file.id) {
+      if (file.status !== "COMPLETED" && file.status !== "ERROR" && file.status !== "UPLOAD" && file.id) {
         monitorDocumentProcessing(
           projectRef,
           file.id,
