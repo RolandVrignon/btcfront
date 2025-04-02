@@ -19,6 +19,8 @@ import {
 } from "@/src/components/ui/animated-tabs";
 import { DataTable } from "@/src/components/ui/data-table";
 import type { Row } from "@tanstack/react-table";
+import { logger } from "@/src/utils/logger";
+import { toast } from "sonner";
 
 interface DocumentMetadataDialogProps {
   isOpen: boolean;
@@ -78,7 +80,7 @@ export function DocumentMetadataDialog({
       const data = await response.json();
       setMetadata(data);
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error("Erreur:", error);
       setError("Impossible de récupérer les métadonnées du document");
     } finally {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -92,7 +94,7 @@ export function DocumentMetadataDialog({
     if (!projectId) return;
     if (!fetchMetadata) return;
 
-    console.log("Fetching ai_metadatas for file:", fileName);
+    logger.debug("Fetching ai_metadatas for file:", fileName);
 
     if (isOpen) {
       if (isFileReady) {
@@ -385,6 +387,53 @@ export function DocumentMetadataDialog({
   // Fonction intermédiaire pour gérer le clic sur un numéro de page
   const handlePageClick = (pageNumber: number) => {
     onOpenDocument(pageNumber);
+  };
+
+  const handleOpenDocument = async (page: number = 0) => {
+    if (!projectId) {
+      logger.warn("Tentative d'ouverture d'un document sans ID de projet");
+      return;
+    }
+
+    try {
+      logger.debug("Ouverture du document:", fileName, "page:", page);
+      onOpenDocument(page);
+    } catch (error) {
+      logger.error("Erreur lors de l'ouverture du document:", error);
+      toast.error("Impossible d'ouvrir le document. Veuillez réessayer plus tard.");
+    }
+  };
+
+  const handleDeleteDocument = async () => {
+    if (!projectId) {
+      logger.warn("Tentative de suppression d'un document sans ID de projet");
+      return;
+    }
+
+    try {
+      logger.debug("Suppression du document:", fileName);
+      const response = await fetch("/api/documents/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName: fileName,
+          projectId: projectId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression du document");
+      }
+
+      logger.debug("Document supprimé avec succès");
+      toast.success("Document supprimé avec succès");
+      onClose();
+    } catch (error) {
+      logger.error("Erreur lors de la suppression du document:", error);
+      toast.error("Impossible de supprimer le document. Veuillez réessayer plus tard.");
+    }
   };
 
   // Composant pour afficher un skeleton de chargement

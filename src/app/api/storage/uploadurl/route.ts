@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,13 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("fileName:", fileName);
-    console.log("fileType:", fileType);
-    console.log("projectId:", projectId);
+    logger.debug("fileName:", fileName);
+    logger.debug("fileType:", fileType);
+    logger.debug("projectId:", projectId);
 
     // Récupérer l'URL de l'API depuis les variables d'environnement
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    console.log("apiUrl:", apiUrl);
+    logger.debug("apiUrl:", apiUrl);
 
     if (!apiUrl) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       projectId: projectId || null,
     };
 
-    console.log("object:", object);
+    logger.debug("object:", object);
 
     // Faire la requête à l'API externe
     const response = await fetch(`${apiUrl}/storage/upload-url`, {
@@ -60,11 +61,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.log("ERROOOOOOOOOOOOOOOOR:", JSON.stringify(error, null, 2));
-    console.error(
-      "Erreur lors de la génération de l'URL présignée:",
-      JSON.stringify(error, null, 2),
-    );
+    logger.error("ERROOOOOOOOOOOOOOOOR:", JSON.stringify(error, null, 2));
+    logger.error("Error getting upload URL:", error);
     return NextResponse.json(
       { error: "Erreur serveur lors de la génération de l'URL présignée" },
       { status: 500 },

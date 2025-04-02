@@ -7,6 +7,7 @@ import type { User } from "next-auth";
 import { Account, Profile } from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import { NextAuthOptions } from "next-auth";
+import { logger } from "@/src/utils/logger";
 
 const prisma = new PrismaClient();
 
@@ -62,10 +63,10 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!existingUser) {
-            console.log("Nouvel utilisateur créé via Google:", profile.email);
+            logger.info("Nouvel utilisateur créé via Google:", profile.email);
           }
         } catch (error) {
-          console.error(
+          logger.error(
             "Erreur lors de la vérification/création de l'utilisateur:",
             error,
           );

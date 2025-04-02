@@ -13,6 +13,7 @@ import { UploadingFile } from "@/src/types/type";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import { LoadingSpinner } from "@/src/components/ui/loading-spinner";
 import { StatusPastille } from "../../ui/status-pastille";
+import { logger } from "@/src/utils/logger";
 
 interface FileUploadListProps {
   files: UploadingFile[];
@@ -57,8 +58,12 @@ export function FileUploadList({
   // Fonction pour ouvrir la popup de métadonnées
   const handleFileClick = (documentId: string) => {
     const uploadingFile = files.find((f) => f.id === documentId);
-    if (!uploadingFile || !projectId) return;
+    if (!uploadingFile || !projectId) {
+      logger.warn("Tentative d'ouverture d'un fichier sans ID de projet");
+      return;
+    }
 
+    logger.debug("Ouverture des métadonnées du fichier:", uploadingFile.fileName);
     setSelectedFile({
       id: documentId,
       name: uploadingFile.fileName ?? "",
@@ -68,9 +73,13 @@ export function FileUploadList({
 
   // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
   const openFileInNewTab = async (page: number = 0) => {
-    if (!selectedFile || !projectId) return;
+    if (!selectedFile || !projectId) {
+      logger.warn("Tentative d'ouverture d'un fichier sans sélection ou ID de projet");
+      return;
+    }
 
     try {
+      logger.debug("Récupération de l'URL de visualisation pour:", selectedFile.name);
       // Appel à notre API interne pour obtenir l'URL de visualisation
       const response = await fetch("/api/documents/view", {
         method: "POST",
@@ -92,6 +101,7 @@ export function FileUploadList({
       const data = await response.json();
 
       if (data.url) {
+        logger.debug("URL de visualisation obtenue avec succès");
         // Ajouter le numéro de page à l'URL si une page est spécifiée
         const urlWithPage = page > 0 ? `${data.url}#page=${page}` : data.url;
         window.open(urlWithPage, "_blank");
@@ -99,7 +109,7 @@ export function FileUploadList({
         throw new Error("URL de visualisation non disponible");
       }
     } catch (error) {
-      console.error("Erreur lors de l'ouverture du fichier:", error);
+      logger.error("Erreur lors de l'ouverture du fichier:", error);
       alert("Impossible d'ouvrir le fichier. Veuillez réessayer plus tard.");
     }
   };

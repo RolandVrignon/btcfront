@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PlaceholdersAndVanishInput } from "../../ui/placeholder-vanish-input";
 import { ChatbotDialog } from "@/src/components/project-study/dialogs/chatbot-dialog";
 import { LoadingSpinner } from "../../ui/loading-spinner";
+import { logger } from "@/src/utils/logger";
 
 interface ProjectChatbotProps {
   isIndexationCompleted?: boolean;
@@ -31,7 +32,7 @@ export function ProjectChatbot({
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Question soumise:", inputValue);
+    logger.debug("Question soumise:", inputValue);
     // Ouvrir la modale lors du submit
     setIsOpen(true);
   };

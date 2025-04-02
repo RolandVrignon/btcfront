@@ -6,9 +6,10 @@
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const { logger } = require("@/src/utils/logger");
 
 async function clearDatabase() {
-  console.log("🗑️  Nettoyage de la base de données en cours...");
+  logger.info("🗑️  Nettoyage de la base de données en cours...");
 
   try {
     // Liste des modèles à nettoyer
@@ -19,24 +20,24 @@ async function clearDatabase() {
       Object.prototype.hasOwnProperty.call(prisma, model),
     );
 
-    console.log("Modèles disponibles:", availableModels);
+    logger.debug("Modèles disponibles:", availableModels);
 
     // Effacer chaque modèle disponible
     for (const modelName of availableModels) {
-      console.log(`Effacement de la table ${modelName}...`);
+      logger.info(`Effacement de la table ${modelName}...`);
       try {
         await prisma[modelName].deleteMany({});
-        console.log(`Table ${modelName} effacée avec succès`);
+        logger.info(`Table ${modelName} effacée avec succès`);
       } catch (error) {
-        console.error(`Erreur lors de l'effacement de ${modelName}:`, error);
+        logger.error(`Erreur lors de l'effacement de ${modelName}:`, error);
       }
     }
 
-    console.log(
+    logger.info(
       "✅ Base de données nettoyée avec succès (sauf tables account et users)",
     );
   } catch (error) {
-    console.error("❌ Erreur lors du nettoyage de la base de données:", error);
+    logger.error("❌ Erreur lors du nettoyage de la base de données:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

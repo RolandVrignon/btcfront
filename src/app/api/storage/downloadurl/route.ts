@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("On va tenter de récupérer l'url de download !!!!");
-    console.log("POPOPOPPPPPPPPPOOPOPOPOPO");
+    logger.debug("On va tenter de récupérer l'url de download !!!!");
+    logger.debug("POPOPOPPPPPPPPPOOPOPOPOPO");
     const body = await request.json();
     const { fileName, projectId } = body;
 
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    console.log("response:", response);
+    logger.debug("response:", response);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -51,11 +52,11 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log("data:", data);
+    logger.debug("data:", data);
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Erreur lors de la génération de l'URL présignée:", error);
+    logger.error("Erreur lors de la génération de l'URL présignée:", error);
     return NextResponse.json(
       { error: "Erreur serveur lors de la génération de l'URL présignée" },
       { status: 500 },

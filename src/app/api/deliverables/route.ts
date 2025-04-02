@@ -40,8 +40,6 @@ export async function POST(request: NextRequest) {
 
       const deliverables = await response.json();
 
-      console.log("deliverables:", deliverables);
-
       const existingDeliverables = deliverables.filter(
         (deliverable: Deliverable) => deliverable.type === type,
       );
@@ -63,8 +61,6 @@ export async function POST(request: NextRequest) {
     if (!process.env.NEXT_PUBLIC_CTIA_API_KEY) {
       throw new Error("NEXT_PUBLIC_CTIA_API_KEY is not set");
     }
-
-    console.log("createDeliverableApiUrl:", createDeliverableApiUrl);
 
     const createResponse = await fetch(createDeliverableApiUrl, {
       method: "POST",

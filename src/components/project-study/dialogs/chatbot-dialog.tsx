@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/src/components/ui/dialog";
+import { logger } from "@/src/utils/logger";
 
 interface ChatbotDialogProps {
   isOpen: boolean;
@@ -53,10 +54,7 @@ export function ChatbotDialog({
         apiKey: data.NEXT_PUBLIC_CTIA_API_KEY,
       };
     } catch (error) {
-      console.error(
-        "Échec de la récupération des variables d'environnement:",
-        error,
-      );
+      logger.error("Échec de la récupération des variables d'environnement:", error);
       throw error;
     }
   };
@@ -75,10 +73,7 @@ export function ChatbotDialog({
           apiKey: data.apiKey,
         });
       } catch (error) {
-        console.error(
-          "Erreur lors du chargement des variables d'environnement:",
-          error,
-        );
+        logger.error("Erreur lors du chargement des variables d'environnement:", error);
       } finally {
         setIsLoading(false);
       }

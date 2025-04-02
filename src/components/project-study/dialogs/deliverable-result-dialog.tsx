@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
+import { logger } from "@/src/utils/logger";
 
 interface Document {
   id: string;
@@ -150,9 +151,7 @@ export function DeliverableResultDialog({
     if (deliverableIds && deliverableIds.length > 0) {
       // Définir l'index sur la dernière version
       setCurrentVersionIndex(deliverableIds.length - 1);
-      console.log(
-        `Mise à jour de la version courante: ${deliverableIds.length - 1 + 1}`,
-      );
+      logger.debug(`Mise à jour de la version courante: ${deliverableIds.length - 1 + 1}`);
     }
   }, [deliverableIds]);
 
@@ -185,12 +184,12 @@ export function DeliverableResultDialog({
     if (isLoading && deliverable) {
       // Si on n'a pas déjà un intervalle de polling actif
       if (!pollingInterval) {
-        console.log("Starting polling for deliverable:", deliverable.id);
+        logger.debug("Starting polling for deliverable:", deliverable.id);
 
         const interval = setInterval(() => {
           if (deliverableIds && deliverableIds.length > 0) {
             const latestId = deliverableIds[deliverableIds.length - 1];
-            console.log("Polling deliverable:", latestId);
+            logger.debug("Polling deliverable:", latestId);
             fetchDeliverable(latestId, false); // Don't reset loading state between polls
           }
         }, 5000); // Poll every 5 seconds
@@ -204,7 +203,7 @@ export function DeliverableResultDialog({
       deliverable &&
       (deliverable.status === "COMPLETED" || deliverable.status === "ERROR")
     ) {
-      console.log(
+      logger.debug(
         "Stopping polling for deliverable:",
         deliverable.id,
         "with status:",
@@ -221,7 +220,7 @@ export function DeliverableResultDialog({
 
     return () => {
       if (pollingInterval) {
-        console.log("Cleaning up polling interval");
+        logger.debug("Cleaning up polling interval");
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
@@ -234,11 +233,11 @@ export function DeliverableResultDialog({
       return;
     }
 
-    console.log("Deliverable status changed to:", deliverable.status);
+    logger.debug("Deliverable status changed to:", deliverable.status);
 
     // Seulement mettre à jour les tabs et contents si le deliverable est complété
     if (deliverable.status === "COMPLETED") {
-      console.log("Deliverable is COMPLETED, updating tabs and contents");
+      logger.debug("Deliverable is COMPLETED, updating tabs and contents");
       const { tabs, contents } = getTabsData(deliverable);
       setTabs(tabs);
       setContents(contents);
@@ -258,8 +257,8 @@ export function DeliverableResultDialog({
   }, [deliverable]);
 
   useEffect(() => {
-    console.log("tabs:", tabs);
-    console.log("contents:", contents);
+    logger.debug("tabs:", tabs);
+    logger.debug("contents:", contents);
 
     if (tabs.length > 0 && contents.length > 0) {
       setIsLoading(false);
@@ -283,7 +282,7 @@ export function DeliverableResultDialog({
       }
 
       const data = await response.json();
-      console.log("Deliverable data:", data);
+      logger.debug("Deliverable data:", data);
       setDeliverable(data);
 
       // If status is completed, we can stop loading
@@ -292,7 +291,7 @@ export function DeliverableResultDialog({
       }
       // Keep loading for PENDING or PROCESSING statuses
     } catch (error) {
-      console.error("Error fetching deliverable:", error);
+      logger.error("Error fetching deliverable:", error);
       setError("Une erreur est survenue lors de la récupération des résultats");
       setIsLoading(false);
     }
@@ -317,7 +316,7 @@ export function DeliverableResultDialog({
 
   // Fonction pour rendre un tableau à partir d'un array
   const renderTable = (array: unknown[]) => {
-    console.log("renderTable:", array);
+    logger.debug("renderTable:", array);
 
     if (array.length === 0) return <p>Aucune donnée</p>;
 
@@ -444,8 +443,8 @@ export function DeliverableResultDialog({
       };
     }
 
-    console.log("long_result:", deliverable.long_result);
-    console.log("short_result:", deliverable.short_result);
+    logger.debug("long_result:", deliverable.long_result);
+    logger.debug("short_result:", deliverable.short_result);
 
     return {
       tabs: ["Résumé", "Analyse complète"],
@@ -504,10 +503,10 @@ export function DeliverableResultDialog({
 
       // Ajouter le nouvel ID au tableau de deliverableIds
       if (setDeliverableIds && newDeliverable.id) {
-        console.log(`Ajout d'un nouveau deliverable: ${newDeliverable.id}`);
+        logger.debug(`Ajout d'un nouveau deliverable: ${newDeliverable.id}`);
         setDeliverableIds((prevIds) => {
           const newIds = [...prevIds, newDeliverable.id];
-          console.log(
+          logger.debug(
             `Nouveau tableau d'IDs: ${JSON.stringify(newIds)}, nouvelle longueur: ${newIds.length}`,
           );
           return newIds;
@@ -517,7 +516,7 @@ export function DeliverableResultDialog({
         // Le useEffect se chargera de faire le fetch du nouveau deliverable
         setTimeout(() => {
           const newIndex = deliverableIds.length; // +1 car on vient d'ajouter un élément
-          console.log(
+          logger.debug(
             `Forçage de la sélection de la nouvelle version: ${newIndex + 1}`,
           );
           setCurrentVersionIndex(newIndex);
@@ -527,7 +526,7 @@ export function DeliverableResultDialog({
       // Mettre immédiatement le composant en état de chargement
       setIsLoading(true);
     } catch (error) {
-      console.error("Error regenerating deliverable:", error);
+      logger.error("Error regenerating deliverable:", error);
       setIsRegenerating(false);
       alert("Une erreur est survenue lors de la régénération du livrable");
     }

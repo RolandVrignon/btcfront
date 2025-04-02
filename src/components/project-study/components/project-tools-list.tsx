@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
 import { LoadingSpinner } from "../../ui/loading-spinner";
 import { UploadingFile } from "@/src/types/type";
+import { logger } from "@/src/utils/logger";
 
 interface Deliverable {
   id: string;
@@ -178,7 +179,7 @@ export function ProjectToolsList({
         );
       }
     } catch (error) {
-      console.error("Error monitoring deliverable:", error);
+      logger.error("Error monitoring deliverable:", error);
 
       setTools((prevTools) =>
         prevTools.map((tool) =>
@@ -192,7 +193,7 @@ export function ProjectToolsList({
 
   const handleToolClick = async (tool: Tool) => {
     if (!tool.endpoint) {
-      console.log(`Outil ${tool.id} bientôt disponible`);
+      logger.debug(`Outil ${tool.id} bientôt disponible`);
       return; // Do nothing if the tool has no endpoint
     }
 
@@ -206,7 +207,7 @@ export function ProjectToolsList({
       return;
     }
 
-    console.log("projectId:", projectId);
+    logger.debug("projectId:", projectId);
 
     try {
       // Set the tool to loading state
@@ -237,7 +238,7 @@ export function ProjectToolsList({
 
       const deliverables: Deliverable[] = await response.json();
 
-      console.log("deliverables length:", deliverables.length);
+      logger.debug("deliverables length:", deliverables.length);
 
       if (deliverables[0].status === "COMPLETED") {
         setSelectedDeliverable({
@@ -257,7 +258,7 @@ export function ProjectToolsList({
 
       monitorDeliverable(deliverables[0].id, tool.id, tool.name);
     } catch (error) {
-      console.error("Error handling tool click:", error);
+      logger.error("Error handling tool click:", error);
 
       // Reset loading state
       setTools((prevTools) =>

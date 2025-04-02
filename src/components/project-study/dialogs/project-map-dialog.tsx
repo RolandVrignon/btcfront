@@ -14,6 +14,7 @@ import { Button } from "@/src/components/ui/button";
 import { Project } from "@/src/types/type";
 import { Skeleton } from "../../ui/skeleton";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
+import { logger } from "@/src/utils/logger";
 
 interface ProjectMapDialogProps {
   project: Project;
@@ -56,14 +57,11 @@ export function ProjectMapDialog({ project }: ProjectMapDialogProps) {
       }
 
       const data = await response.json();
-      console.log(
-        "Clé API récupérée depuis le serveur:",
-        !!data.googleMapsApiKey,
-      );
+      logger.debug("Clé API récupérée depuis le serveur:", !!data.googleMapsApiKey);
 
       return data.googleMapsApiKey;
     } catch (error) {
-      console.error("Erreur lors de la récupération de la clé API:", error);
+      logger.error("Erreur lors de la récupération de la clé API:", error);
       return null;
     } finally {
       setIsApiKeyLoading(false);
@@ -109,13 +107,13 @@ export function ProjectMapDialog({ project }: ProjectMapDialogProps) {
 
   // Gérer le chargement de l'iframe
   const handleIframeLoad = () => {
-    console.log("Iframe chargée avec succès");
+    logger.debug("Iframe chargée avec succès");
     setIsLoading(false);
   };
 
   // Gérer les erreurs de l'iframe
   const handleIframeError = () => {
-    console.error("Erreur de chargement de l'iframe");
+    logger.error("Erreur de chargement de l'iframe");
     setIsLoading(false);
     setHasError(true);
 

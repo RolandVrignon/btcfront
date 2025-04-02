@@ -6,6 +6,7 @@ import {
   DeliverableType,
   PublicData,
 } from "@/src/types/type";
+import { logger } from "@/src/utils/logger";
 
 export const createProject = async (
   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
@@ -42,7 +43,7 @@ export const createProject = async (
 
     return obj;
   } catch (error) {
-    console.error("Erreur lors de la création du projet:", error);
+    logger.error("Erreur lors de la création du projet:", error);
     return null;
   }
 };
@@ -52,7 +53,7 @@ export const searchPublicDocuments = async (
 ): Promise<PublicDocumentList> => {
   try {
     if (!projectId) {
-      console.error("ID du projet manquant");
+      logger.error("ID du projet manquant");
       return [];
     }
 
@@ -82,7 +83,7 @@ export const searchPublicDocuments = async (
     }
 
     if (selectedDeliverable.status === "ERROR") {
-      console.error("Erreur lors de la génération du livrable");
+      logger.error("Erreur lors de la génération du livrable");
       return [];
     }
 
@@ -109,15 +110,15 @@ export const searchPublicDocuments = async (
       }
 
       if (updatedDeliverable.status === "ERROR") {
-        console.error("Erreur lors de la génération du livrable");
+        logger.error("Erreur lors de la génération du livrable");
         return [];
       }
     }
 
-    console.error("Délai d'attente dépassé pour la génération du livrable");
+    logger.error("Délai d'attente dépassé pour la génération du livrable");
     return [];
   } catch (error) {
-    console.error("Erreur lors de la recherche de documents publics:", error);
+    logger.error("Erreur lors de la recherche de documents publics:", error);
     return [];
   }
 };
@@ -127,7 +128,7 @@ export const searchPublicData = async (
 ): Promise<PublicData | undefined> => {
   try {
     if (!projectId) {
-      console.error("ID du projet manquant");
+      logger.error("ID du projet manquant");
       return undefined;
     }
 
@@ -158,7 +159,7 @@ export const searchPublicData = async (
     }
 
     if (selectedDeliverable.status === "ERROR") {
-      console.error("Erreur lors de la génération des données géorisques");
+      logger.error("Erreur lors de la génération des données géorisques");
       return undefined;
     }
 
@@ -187,18 +188,18 @@ export const searchPublicData = async (
       }
 
       if (updatedDeliverable.status === "ERROR") {
-        console.error("Erreur lors de la génération des données géorisques");
+        logger.error("Erreur lors de la génération des données géorisques");
         return undefined;
       }
     }
 
-    console.error(
+    logger.error(
       "Délai d'attente dépassé pour la génération des données géorisques",
     );
 
     return undefined;
   } catch (error) {
-    console.error("Erreur lors de la recherche des données géorisques:", error);
+    logger.error("Erreur lors de la recherche des données géorisques:", error);
     return undefined;
   }
 };
@@ -220,7 +221,7 @@ export const monitorDocumentProcessing = async (
     ) {
       // Vérifier si le timeout est atteint
       if (Date.now() - startTime > timeoutDuration) {
-        console.warn(
+        logger.warn(
           `Timeout atteint pour le document ${documentId} après 10 minutes`,
         );
         setUploadingFiles((prev) =>
@@ -283,7 +284,7 @@ export const monitorDocumentProcessing = async (
       }
     }
   } catch (error) {
-    console.error("Erreur lors du monitoring du document:", error);
+    logger.error("Erreur lors du monitoring du document:", error);
     setUploadingFiles((prev) =>
       prev.map((f) =>
         f.id === documentId
@@ -314,7 +315,7 @@ export const monitorProjectStatus = async (
       ) {
         // Vérifier si le timeout est atteint
         if (Date.now() - startTime > timeoutDuration) {
-          console.warn(
+          logger.warn(
             `Timeout atteint pour le projet ${projectId} après 10 minutes`,
           );
           reject(
@@ -335,7 +336,7 @@ export const monitorProjectStatus = async (
         });
 
         if (!response.ok) {
-          console.error("Erreur lors de la récupération du statut du projet");
+          logger.error("Erreur lors de la récupération du statut du projet");
           continue;
         }
 
@@ -362,7 +363,7 @@ export const monitorProjectStatus = async (
         }
       }
     } catch (error) {
-      console.error("Erreur lors du monitoring du projet:", error);
+      logger.error("Erreur lors du monitoring du projet:", error);
       reject(error);
     }
   });
@@ -391,7 +392,7 @@ export const getDocumentIdByFileName = async (
     const data = await response.json();
     return data.id || null;
   } catch (error) {
-    console.error(
+    logger.error(
       `Erreur lors de la recherche du document ${fileName}:`,
       error,
     );
@@ -460,17 +461,17 @@ export const uploadFileToS3 = async (
 
             resolve(true);
           } catch (error) {
-            console.error("Erreur lors du parsing de la réponse:", error);
+            logger.error("Erreur lors du parsing de la réponse:", error);
             reject(new Error("Erreur lors du parsing de la réponse"));
           }
         } else {
-          console.error("Erreur lors de l'upload:", xhr.statusText);
+          logger.error("Erreur lors de l'upload:", xhr.statusText);
 
           try {
             const errorData = JSON.parse(xhr.responseText);
-            console.error("Détails de l'erreur:", errorData);
+            logger.error("Détails de l'erreur:", errorData);
           } catch (e) {
-            console.error("Erreur lors du parsing de la réponse:", e);
+            logger.error("Erreur lors du parsing de la réponse:", e);
           }
 
           // Mettre à jour le statut en cas d'erreur
@@ -492,7 +493,7 @@ export const uploadFileToS3 = async (
       };
 
       xhr.onerror = () => {
-        console.error("Erreur réseau lors de l'upload");
+        logger.error("Erreur réseau lors de l'upload");
 
         // Mettre à jour le statut en cas d'erreur réseau
         setUploadingFiles((prev) =>
@@ -514,7 +515,7 @@ export const uploadFileToS3 = async (
       xhr.send(formData);
     });
   } catch (error) {
-    console.error("Erreur lors de l'upload du fichier vers S3:", error);
+    logger.error("Erreur lors de l'upload du fichier vers S3:", error);
     return false;
   }
 };
@@ -532,7 +533,7 @@ export const handleProjectUpdate = async (
     });
 
     if (!res.ok) {
-      console.error("Erreur lors de la récupération du projet");
+      logger.error("Erreur lors de la récupération du projet");
       return null;
     }
 
@@ -541,7 +542,7 @@ export const handleProjectUpdate = async (
     setProject(data);
     return data;
   } catch (error) {
-    console.error("Erreur lors de la récupération du projet:", error);
+    logger.error("Erreur lors de la récupération du projet:", error);
     return null;
   }
 };
@@ -559,7 +560,7 @@ export const confirmMultipleUploadsToBackend = async (
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
   if (!projectId) {
-    console.error("ID du projet manquant");
+    logger.error("ID du projet manquant");
     return null;
   }
 
@@ -630,7 +631,7 @@ export const confirmMultipleUploadsToBackend = async (
         });
 
         if (!projectResponse) {
-          console.error("Erreur lors de la récupération du projet");
+          logger.error("Erreur lors de la récupération du projet");
           return null;
         }
 
@@ -649,7 +650,7 @@ export const confirmMultipleUploadsToBackend = async (
             );
             return finalProject;
           } catch (error) {
-            console.error("Erreur lors du monitoring du projet:", error);
+            logger.error("Erreur lors du monitoring du projet:", error);
             // En cas d'erreur, essayer de récupérer l'état actuel du projet
             return await handleProjectUpdate(projectId, setProject);
           }
@@ -663,7 +664,7 @@ export const confirmMultipleUploadsToBackend = async (
           return updatedProject;
         }
       } catch (error) {
-        console.error("Erreur dans le processus de projet:", error);
+        logger.error("Erreur dans le processus de projet:", error);
         setIsUploading(false);
         return null;
       }
@@ -674,7 +675,7 @@ export const confirmMultipleUploadsToBackend = async (
 
     // Confirmer les uploads à l'API
 
-    console.log("body:", body);
+    logger.debug("body:", body);
 
     await fetch("/api/documents/confirm-multiple-uploads", {
       method: "POST",
@@ -684,7 +685,7 @@ export const confirmMultipleUploadsToBackend = async (
       body: JSON.stringify(body),
     });
   } catch (error) {
-    console.error("Erreur lors de la confirmation des uploads:", error);
+    logger.error("Erreur lors de la confirmation des uploads:", error);
     setIsUploading(false);
     return null;
   }
@@ -711,7 +712,7 @@ export const uploadAllFilesUtils = async (
   setIsUploading(true);
 
   if (selectedFiles.length === 0) {
-    console.error("Aucun fichier sélectionné");
+    logger.error("Aucun fichier sélectionné");
     setIsUploading(false);
     return;
   }
@@ -723,7 +724,7 @@ export const uploadAllFilesUtils = async (
     projectId = newProject?.externalId;
 
     if (!newProject) {
-      console.error("Erreur lors de la création du projet");
+      logger.error("Erreur lors de la création du projet");
       setIsUploading(false);
       return;
     }
@@ -756,7 +757,7 @@ export const uploadAllFilesUtils = async (
           throw new Error("Impossible d'obtenir l'URL présignée");
         }
 
-        console.log("uploadUrl:", uploadUrl);
+        logger.debug("uploadUrl:", uploadUrl);
 
         setUploadingFiles((prev) =>
           prev.map((f) =>
@@ -783,11 +784,11 @@ export const uploadAllFilesUtils = async (
           throw new Error("Échec de l'upload");
         }
 
-        console.log("uploadingFile:", uploadingFile);
+        logger.debug("uploadingFile:", uploadingFile);
 
-        console.log("On va tenter de récupérer l'url de download !!!!");
-        console.log("projectId:", projectId);
-        console.log("uploadingFile.file.name:", uploadingFile.file.name);
+        logger.debug("On va tenter de récupérer l'url de download !!!!");
+        logger.debug("projectId:", projectId);
+        logger.debug("uploadingFile.file.name:", uploadingFile.file.name);
 
         if (!projectId) {
           throw new Error("ID du projet manquant");
@@ -798,7 +799,7 @@ export const uploadAllFilesUtils = async (
           uploadingFile.file.name,
         );
 
-        console.log("downloadUrl:", downloadUrl);
+        logger.debug("downloadUrl:", downloadUrl);
 
         return {
           fileName: uploadingFile.file.name,
@@ -806,7 +807,7 @@ export const uploadAllFilesUtils = async (
           downloadUrl: downloadUrl,
         };
       } catch (error) {
-        console.error(
+        logger.error(
           `Erreur lors de l'upload du fichier ${uploadingFile}:`,
           error,
         );
@@ -837,7 +838,7 @@ export const uploadAllFilesUtils = async (
       downloadUrl: string | null;
     }[];
 
-    console.log("successfulUploads:", successfulUploads);
+    logger.debug("successfulUploads:", successfulUploads);
 
     if (successfulUploads.length > 0) {
       await confirmMultipleUploadsToBackend(
@@ -850,6 +851,6 @@ export const uploadAllFilesUtils = async (
       );
     }
   } catch (error) {
-    console.error("Erreur lors de l'upload des fichiers:", error);
+    logger.error("Erreur lors de l'upload des fichiers:", error);
   }
 };

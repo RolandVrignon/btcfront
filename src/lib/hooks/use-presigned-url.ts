@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from "@/src/utils/logger";
 
 interface uploadUrlResponse {
   url: string;
@@ -33,7 +34,7 @@ export function useBucketUrl({ onSuccess, onError }: UseBucketUrlProps = {}) {
         projectId: projectId || null,
       };
 
-      console.log("body:", body);
+      logger.debug("body:", body);
 
       const response = await fetch("/api/storage/uploadurl", {
         method: "POST",
@@ -63,7 +64,7 @@ export function useBucketUrl({ onSuccess, onError }: UseBucketUrlProps = {}) {
         key: data.key || "",
       };
 
-      console.log("uploadUrlResponse:", uploadUrlResponse);
+      logger.info("uploadUrlResponse:", uploadUrlResponse);
 
       if (onSuccess) {
         onSuccess(uploadUrlResponse, file);
@@ -104,7 +105,7 @@ export function useBucketUrl({ onSuccess, onError }: UseBucketUrlProps = {}) {
         body: JSON.stringify({ projectId, fileName }),
       });
 
-      console.log("response:", response);
+      logger.info("response:", response);
 
       if (!response.ok) {
         const errorData = await response.json();

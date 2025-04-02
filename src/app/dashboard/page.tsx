@@ -5,6 +5,7 @@ import { Sidebar } from "@/src/components/sidebar";
 import { ProjectStudy } from "@/src/components/project-study";
 import { Project, UploadingFile } from "@/src/types/type";
 import { useSession } from "next-auth/react";
+import { logger } from "@/src/utils/logger";
 
 export default function DashboardPage() {
   const projectRef = useRef<Project | null>(null);
@@ -44,10 +45,7 @@ export default function DashboardPage() {
                   return await projectResponse.json();
                 }
               } catch (error) {
-                console.error(
-                  `Error updating project status for ${project.id}:`,
-                  error,
-                );
+                logger.error(`Error updating project status for ${project.id}:`, error);
               }
             }
             return project;
@@ -57,7 +55,7 @@ export default function DashboardPage() {
         setProjects(updatedProjects);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching projects:", error);
+        logger.error("Error fetching projects:", error);
         setIsLoading(false);
       }
     };

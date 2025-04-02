@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
+import { logger } from "@/src/utils/logger";
 
 export async function POST() {
   try {
@@ -36,7 +37,7 @@ export async function POST() {
     }
 
     const data = await response.json();
-    console.log("data:", data);
+    logger.info("data:", data);
 
     return NextResponse.json(data);
   } catch (error) {
