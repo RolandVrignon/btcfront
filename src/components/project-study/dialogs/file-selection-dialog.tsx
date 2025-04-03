@@ -152,7 +152,7 @@ export function FileSelectionDialog({
             </Label>
             <textarea
               id="remarks"
-              placeholder="Ajoutez vos remarques ou précisions pour la régénération..."
+              placeholder="Ajoutez vos remarques ou précisions pour la génération..."
               className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[100px]"
               value={remarks}
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>

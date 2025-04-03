@@ -409,6 +409,7 @@ export function ProjectToolsList({
           isOpen={dialogOpen}
           onOpenChange={setDialogOpen}
           uploadFiles={uploadFiles}
+          setDeliverableIds={setSelectedDeliverable}
         />
       )}
 

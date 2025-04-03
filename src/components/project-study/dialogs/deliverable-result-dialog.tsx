@@ -53,6 +53,11 @@ interface Deliverable {
   process_duration_in_seconds: number;
 }
 
+interface DeliverableIds {
+  id: string[];
+  toolName: string;
+}
+
 interface DeliverableResultDialogProps {
   deliverableIds: string[];
   toolName: string;
@@ -60,7 +65,9 @@ interface DeliverableResultDialogProps {
   onOpenChange: (open: boolean) => void;
   uploadFiles?: UploadingFile[];
   projectId: string | null;
-  setDeliverableIds?: React.Dispatch<React.SetStateAction<string[]>>;
+  setDeliverableIds?: React.Dispatch<
+    React.SetStateAction<DeliverableIds | null>
+  >;
 }
 
 // Ajout d'une interface pour l'élément DocumentItem
@@ -151,10 +158,12 @@ export function DeliverableResultDialog({
 
   // Effect to set the current version index to the latest version when deliverableIds changes
   useEffect(() => {
+    logger.info("deliverableIds changed:", deliverableIds);
+
     if (deliverableIds && deliverableIds.length > 0) {
-      // Définir l'index sur la dernière version
+      logger.info("deliverableIds:", deliverableIds);
       setCurrentVersionIndex(deliverableIds.length - 1);
-      logger.debug(
+      logger.info(
         `Mise à jour de la version courante: ${deliverableIds.length - 1 + 1}`,
       );
     }
@@ -492,40 +501,30 @@ export function DeliverableResultDialog({
       }
 
       // L'API retourne maintenant un tableau de livrables
-      const newDeliverables = await response.json();
+      const newDeliverable = await response.json();
 
-      // On prend le dernier livrable généré (le plus récent)
-      const newDeliverable =
-        Array.isArray(newDeliverables) && newDeliverables.length > 0
-          ? newDeliverables[newDeliverables.length - 1]
-          : newDeliverables; // Si l'API retourne un seul objet, on le prend tel quel
+      logger.info("Our new deliverable:", newDeliverable);
 
-      // Fermer le dialogue de sélection de documents
       setIsRegenerateDialogOpen(false);
-      // Réinitialiser les remarques
       setRemarks("");
       setIsRegenerating(false);
 
       // Ajouter le nouvel ID au tableau de deliverableIds
       if (setDeliverableIds && newDeliverable.id) {
-        logger.debug(`Ajout d'un nouveau deliverable: ${newDeliverable.id}`);
-        setDeliverableIds((prevIds) => {
-          const newIds = [...prevIds, newDeliverable.id];
-          logger.debug(
-            `Nouveau tableau d'IDs: ${JSON.stringify(newIds)}, nouvelle longueur: ${newIds.length}`,
-          );
-          return newIds;
+        logger.info(`Ajout d'un nouveau deliverable: ${newDeliverable.id}`);
+        setDeliverableIds((prev) => {
+          if (!prev) {
+            return {
+              id: [newDeliverable.id],
+              toolName: toolName,
+            };
+          }
+          const newIds = [...prev.id, newDeliverable.id];
+          return {
+            id: newIds,
+            toolName: prev.toolName,
+          };
         });
-
-        // Force la mise à jour de l'index pour sélectionner la nouvelle version
-        // Le useEffect se chargera de faire le fetch du nouveau deliverable
-        setTimeout(() => {
-          const newIndex = deliverableIds.length; // +1 car on vient d'ajouter un élément
-          logger.debug(
-            `Forçage de la sélection de la nouvelle version: ${newIndex + 1}`,
-          );
-          setCurrentVersionIndex(newIndex);
-        }, 0);
       }
 
       // Mettre immédiatement le composant en état de chargement

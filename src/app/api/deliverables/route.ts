@@ -86,6 +86,8 @@ export async function POST(request: NextRequest) {
 
     const newDeliverable = await createResponse.json();
 
+    logger.info("Our new deliverable in backend route:", newDeliverable);
+
     return NextResponse.json(newDeliverable);
   } catch (error) {
     logger.error("Error handling deliverable:", error);
