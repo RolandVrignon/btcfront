@@ -87,21 +87,25 @@ export function FileSelectionDialog({
         <div className="py-4 space-y-6">
           {/* Section de sélection de fichiers */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Documents</h3>
-            {uploadFiles.length > 0 && (
-              <div className="flex justify-end mb-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleSelectAll}
-                  className="text-xs"
-                >
-                  {selectedFiles.length === uploadFiles.length
-                    ? "Désélectionner tout"
-                    : "Sélectionner tout"}
-                </Button>
-              </div>
-            )}
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-medium">
+                Documents sélectionnés ({selectedFiles.length})
+              </h3>
+              {uploadFiles.length > 0 && (
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleSelectAll}
+                    className="text-xs"
+                  >
+                    {selectedFiles.length === uploadFiles.length
+                      ? "Désélectionner tout"
+                      : "Sélectionner tout"}
+                  </Button>
+                </div>
+              )}
+            </div>
             <ScrollArea className="h-[200px] pr-4 border rounded-md">
               {uploadFiles.length > 0 ? (
                 <div className="p-2">
@@ -144,7 +148,7 @@ export function FileSelectionDialog({
           {/* Section des remarques */}
           <div>
             <Label htmlFor="remarks" className="text-sm font-medium">
-              Remarques
+              Remarques additionnelles
             </Label>
             <textarea
               id="remarks"
@@ -172,7 +176,7 @@ export function FileSelectionDialog({
                 Régénération...
               </>
             ) : (
-              "Régénérer"
+              "Générer"
             )}
           </Button>
         </DialogFooter>

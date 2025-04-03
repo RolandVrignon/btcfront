@@ -15,11 +15,6 @@ export async function POST(request: NextRequest) {
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
 
-    logger.info(
-      `[Monitor] Calling external API for document ${documentId} in project ${projectId}`,
-    );
-    logger.debug(`[Monitor] API URL: ${apiUrl}/documents/monitor`);
-
     // Appel à l'API externe
     const response = await fetch(`${apiUrl}/documents/monitor`, {
       method: "POST",
@@ -29,8 +24,6 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({ documentId, projectId }),
     });
-
-    logger.debug(`[Monitor] External API response status: ${response.status}`);
 
     if (response.status === 404) {
       logger.info(
@@ -57,10 +50,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    logger.debug(
-      `[Monitor] Success response for document ${documentId}:`,
-      data,
-    );
     return NextResponse.json(data);
   } catch (error) {
     logger.error("[Monitor] Internal error:", error);

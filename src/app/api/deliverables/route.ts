@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Deliverable } from "@/src/types/type";
+import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
         return dateA - dateB;
       });
 
-      if (existingDeliverables && existingDeliverables.length > 0) {
+      if (existingDeliverables) {
         return NextResponse.json(existingDeliverables);
       }
     }
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!createResponse.ok) {
-      console.error(
+      logger.error(
         `Failed to create deliverable: ${JSON.stringify(createResponse, null, 2)}`,
       );
     }
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newDeliverable);
   } catch (error) {
-    console.error("Error handling deliverable:", error);
+    logger.error("Error handling deliverable:", error);
     return NextResponse.json(
       { error: "Failed to process deliverable request" },
       { status: 500 },

@@ -16,6 +16,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
+import { FileSelectionDialog } from "@/src/components/project-study/dialogs/file-selection-dialog";
 import { LoadingSpinner } from "../../ui/loading-spinner";
 import { UploadingFile } from "@/src/types/type";
 import { logger } from "@/src/utils/logger";
@@ -108,10 +109,16 @@ export function ProjectToolsList({
   ]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [fileSelectionDialogOpen, setFileSelectionDialogOpen] = useState(false);
   const [selectedDeliverable, setSelectedDeliverable] = useState<{
     id: string[];
     toolName: string;
   } | null>(null);
+  const [currentTool, setCurrentTool] = useState<Tool | null>(null);
+  const [selectedDocuments, setSelectedDocuments] = useState<UploadingFile[]>(
+    [],
+  );
+  const [remarks, setRemarks] = useState<string>("");
 
   const monitorDeliverable = async (
     deliverableId: string,
@@ -140,12 +147,6 @@ export function ProjectToolsList({
           deliverable.status === "ERROR"
         ) {
           isComplete = true;
-
-          setTools((prevTools) =>
-            prevTools.map((tool) =>
-              tool.id === toolId ? { ...tool, isLoading: false } : tool,
-            ),
-          );
 
           if (deliverable.status === "COMPLETED") {
             setSelectedDeliverable({
@@ -210,14 +211,6 @@ export function ProjectToolsList({
     logger.debug("projectId:", projectId);
 
     try {
-      // Set the tool to loading state
-      setTools((prevTools) =>
-        prevTools.map((t) =>
-          t.id === tool.id ? { ...t, isLoading: true } : t,
-        ),
-      );
-
-      // Call our API to get or create a deliverable
       const response = await fetch(`/api/deliverables`, {
         method: "POST",
         headers: {
@@ -238,7 +231,15 @@ export function ProjectToolsList({
 
       const deliverables: Deliverable[] = await response.json();
 
-      logger.debug("deliverables length:", deliverables.length);
+      logger.debug("deliverables info:", deliverables.length);
+
+      if (deliverables.length === 0) {
+        logger.info("deliverables length is 0");
+        logger.info("tool:", tool);
+        setCurrentTool(tool);
+        setFileSelectionDialogOpen(true);
+        return;
+      }
 
       if (deliverables[0].status === "COMPLETED") {
         setSelectedDeliverable({
@@ -255,8 +256,6 @@ export function ProjectToolsList({
         );
         return;
       }
-
-      monitorDeliverable(deliverables[0].id, tool.id, tool.name);
     } catch (error) {
       logger.error("Error handling tool click:", error);
 
@@ -268,6 +267,65 @@ export function ProjectToolsList({
       );
 
       toast.error("Une erreur est survenue lors de la préparation de l'outil.");
+    }
+  };
+
+  const handleGenerateFirstDeliverable = async () => {
+    try {
+      const selectedIds = selectedDocuments.map((doc) => doc.id);
+
+      logger.info("selectedIds:", selectedIds);
+
+      if (selectedIds.length === 0) {
+        alert("Veuillez sélectionner au moins un document");
+        return;
+      }
+
+      const obj = {
+        projectId: projectId,
+        type: currentTool?.type,
+        documentIds: selectedIds,
+        user_prompt: remarks.trim() || "",
+        new: true,
+      };
+
+      logger.info("obj:", obj);
+
+      // Appeler l'API pour régénérer le livrable
+      const response = await fetch(`/api/deliverables/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(obj),
+      });
+
+      if (!response.ok) {
+        throw new Error("Impossible de régénérer le livrable");
+      }
+
+      const deliverable: Deliverable = await response.json();
+
+      setSelectedDeliverable({
+        id: [deliverable.id],
+        toolName: currentTool?.name || "",
+      });
+
+      logger.info("deliverable:", deliverable);
+
+      setDialogOpen(true);
+
+      await monitorDeliverable(
+        deliverable.id,
+        currentTool?.id || "",
+        currentTool?.name || "",
+      );
+
+      setFileSelectionDialogOpen(false);
+      setRemarks("");
+      setSelectedDocuments([]);
+    } catch (error) {
+      logger.error("Error regenerating deliverable:", error);
     }
   };
 
@@ -351,6 +409,22 @@ export function ProjectToolsList({
           isOpen={dialogOpen}
           onOpenChange={setDialogOpen}
           uploadFiles={uploadFiles}
+        />
+      )}
+
+      {currentTool && fileSelectionDialogOpen && (
+        <FileSelectionDialog
+          isOpen={fileSelectionDialogOpen}
+          onOpenChange={setFileSelectionDialogOpen}
+          uploadFiles={uploadFiles || []}
+          selectedFiles={selectedDocuments}
+          setSelectedFiles={setSelectedDocuments}
+          onRegenerateClick={handleGenerateFirstDeliverable}
+          isRegenerating={false}
+          title={`Sélection de fichiers pour ${currentTool.name}`}
+          description="Veuillez sélectionner les fichiers à analyser pour cet outil."
+          remarks={remarks}
+          setRemarks={setRemarks}
         />
       )}
     </div>

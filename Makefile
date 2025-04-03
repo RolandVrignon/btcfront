@@ -149,7 +149,7 @@ prettier-check:
 # Effacer les données de la base de données (sauf users et accounts)
 clear-db:
 	@echo "Effacement des données de la base de données (sauf users et accounts)..."
-	@npx ts-node --esm scripts/clear-db.ts
+	@npx tsx scripts/clear-db.ts
 
 .PHONY: push-image
 push-image:

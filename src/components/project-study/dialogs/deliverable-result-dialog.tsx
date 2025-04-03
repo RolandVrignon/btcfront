@@ -11,7 +11,7 @@ import {
 } from "@/src/components/ui/dialog";
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
-import { Loader2, RefreshCw, ChevronDown } from "lucide-react";
+import { RefreshCw, ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import {
   AnimatedTabs,
@@ -50,6 +50,7 @@ interface Deliverable {
   };
   createdAt: string;
   [key: string]: unknown;
+  process_duration_in_seconds: number;
 }
 
 interface DeliverableResultDialogProps {
@@ -566,11 +567,13 @@ export function DeliverableResultDialog({
             <div className="flex items-center gap-2 mr-8">
               {deliverable && (
                 <span className="text-sm font-medium text-yellow-500 mr-2">
-                  Créé le{" "}
+                  Généré le{" "}
                   {format(
                     new Date(deliverable.createdAt),
                     "dd/MM/yyyy à HH:mm",
-                  )}
+                  )}{" "}
+                  en {Math.round(deliverable.process_duration_in_seconds)}{" "}
+                  secondes
                 </span>
               )}
               {deliverableIds && deliverableIds.length > 1 && (
@@ -621,17 +624,7 @@ export function DeliverableResultDialog({
 
           {isLoading ? (
             <div className="flex flex-col space-y-4 py-4 flex-grow">
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-                <span className="ml-2 text-gray-500">
-                  {deliverable?.status === "PENDING"
-                    ? "Livrable en attente de traitement..."
-                    : deliverable?.status === "PROCESSING"
-                      ? "Génération du livrable en cours..."
-                      : "Chargement des résultats..."}
-                </span>
-              </div>
-              <Skeleton className="h-[200px] w-full" />
+              <Skeleton className="h-full w-full" />
             </div>
           ) : error ? (
             <div className="py-6 text-center text-red-500 flex-grow">
