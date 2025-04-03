@@ -21,7 +21,7 @@ import { DataTable } from "@/src/components/ui/data-table";
 import type { Row } from "@tanstack/react-table";
 import { RenderMarkdown } from "@/src/components/ui/render-markdown";
 import { UploadingFile } from "@/src/types/type";
-import { FileSelectionDialog } from "./file-selection-dialog";
+import { FileSelectionDialog } from "./select-infos-deliverable-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,

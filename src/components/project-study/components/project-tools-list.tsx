@@ -16,7 +16,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
-import { FileSelectionDialog } from "@/src/components/project-study/dialogs/file-selection-dialog";
+import { FileSelectionDialog } from "@/src/components/project-study/dialogs/select-infos-deliverable-dialog";
 import { LoadingSpinner } from "../../ui/loading-spinner";
 import { UploadingFile } from "@/src/types/type";
 import { logger } from "@/src/utils/logger";
