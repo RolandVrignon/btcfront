@@ -212,7 +212,7 @@ export function DeliverableResultDialog({
             logger.debug("Polling deliverable:", latestId);
             fetchDeliverable(latestId, false); // Don't reset loading state between polls
           }
-        }, 5000); // Poll every 5 seconds
+        }, 3000); // Poll every 5 seconds
 
         setPollingInterval(interval);
       }
