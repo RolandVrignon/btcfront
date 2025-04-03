@@ -63,7 +63,10 @@ export function FileUploadList({
       return;
     }
 
-    logger.debug("Ouverture des métadonnées du fichier:", uploadingFile.fileName);
+    logger.debug(
+      "Ouverture des métadonnées du fichier:",
+      uploadingFile.fileName,
+    );
     setSelectedFile({
       id: documentId,
       name: uploadingFile.fileName ?? "",
@@ -74,12 +77,17 @@ export function FileUploadList({
   // Fonction pour obtenir l'URL de visualisation et ouvrir le fichier
   const openFileInNewTab = async (page: number = 0) => {
     if (!selectedFile || !projectId) {
-      logger.warn("Tentative d'ouverture d'un fichier sans sélection ou ID de projet");
+      logger.warn(
+        "Tentative d'ouverture d'un fichier sans sélection ou ID de projet",
+      );
       return;
     }
 
     try {
-      logger.debug("Récupération de l'URL de visualisation pour:", selectedFile.name);
+      logger.debug(
+        "Récupération de l'URL de visualisation pour:",
+        selectedFile.name,
+      );
       // Appel à notre API interne pour obtenir l'URL de visualisation
       const response = await fetch("/api/documents/view", {
         method: "POST",

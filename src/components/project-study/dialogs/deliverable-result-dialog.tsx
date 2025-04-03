@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 import { logger } from "@/src/utils/logger";
+import { format } from "date-fns";
 
 interface Document {
   id: string;
@@ -47,6 +48,7 @@ interface Deliverable {
   long_result?: {
     result: string | Record<string, unknown>;
   };
+  createdAt: string;
   [key: string]: unknown;
 }
 
@@ -151,7 +153,9 @@ export function DeliverableResultDialog({
     if (deliverableIds && deliverableIds.length > 0) {
       // Définir l'index sur la dernière version
       setCurrentVersionIndex(deliverableIds.length - 1);
-      logger.debug(`Mise à jour de la version courante: ${deliverableIds.length - 1 + 1}`);
+      logger.debug(
+        `Mise à jour de la version courante: ${deliverableIds.length - 1 + 1}`,
+      );
     }
   }, [deliverableIds]);
 
@@ -282,7 +286,7 @@ export function DeliverableResultDialog({
       }
 
       const data = await response.json();
-      logger.debug("Deliverable data:", data);
+      logger.info("Deliverable data:", data);
       setDeliverable(data);
 
       // If status is completed, we can stop loading
@@ -541,6 +545,13 @@ export function DeliverableResultDialog({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogHeader>
+          <DialogTitle>{toolName}</DialogTitle>
+          <DialogDescription>
+            {deliverable &&
+              `Créé le ${format(new Date(deliverable.createdAt), "dd/MM/yyyy à HH:mm")}`}
+          </DialogDescription>
+        </DialogHeader>
         <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] p-6 overflow-hidden flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <DialogHeader className="pb-0 flex-shrink-0 m-0 p-0">
@@ -553,6 +564,15 @@ export function DeliverableResultDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2 mr-8">
+              {deliverable && (
+                <span className="text-sm font-medium text-yellow-500 mr-2">
+                  Créé le{" "}
+                  {format(
+                    new Date(deliverable.createdAt),
+                    "dd/MM/yyyy à HH:mm",
+                  )}
+                </span>
+              )}
               {deliverableIds && deliverableIds.length > 1 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

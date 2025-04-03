@@ -400,7 +400,9 @@ export function DocumentMetadataDialog({
       onOpenDocument(page);
     } catch (error) {
       logger.error("Erreur lors de l'ouverture du document:", error);
-      toast.error("Impossible d'ouvrir le document. Veuillez réessayer plus tard.");
+      toast.error(
+        "Impossible d'ouvrir le document. Veuillez réessayer plus tard.",
+      );
     }
   };
 
@@ -432,7 +434,9 @@ export function DocumentMetadataDialog({
       onClose();
     } catch (error) {
       logger.error("Erreur lors de la suppression du document:", error);
-      toast.error("Impossible de supprimer le document. Veuillez réessayer plus tard.");
+      toast.error(
+        "Impossible de supprimer le document. Veuillez réessayer plus tard.",
+      );
     }
   };
 

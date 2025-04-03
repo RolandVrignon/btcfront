@@ -54,7 +54,10 @@ export function ChatbotDialog({
         apiKey: data.NEXT_PUBLIC_CTIA_API_KEY,
       };
     } catch (error) {
-      logger.error("Échec de la récupération des variables d'environnement:", error);
+      logger.error(
+        "Échec de la récupération des variables d'environnement:",
+        error,
+      );
       throw error;
     }
   };
@@ -73,7 +76,10 @@ export function ChatbotDialog({
           apiKey: data.apiKey,
         });
       } catch (error) {
-        logger.error("Erreur lors du chargement des variables d'environnement:", error);
+        logger.error(
+          "Erreur lors du chargement des variables d'environnement:",
+          error,
+        );
       } finally {
         setIsLoading(false);
       }

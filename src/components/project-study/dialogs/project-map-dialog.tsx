@@ -57,7 +57,10 @@ export function ProjectMapDialog({ project }: ProjectMapDialogProps) {
       }
 
       const data = await response.json();
-      logger.debug("Clé API récupérée depuis le serveur:", !!data.googleMapsApiKey);
+      logger.debug(
+        "Clé API récupérée depuis le serveur:",
+        !!data.googleMapsApiKey,
+      );
 
       return data.googleMapsApiKey;
     } catch (error) {

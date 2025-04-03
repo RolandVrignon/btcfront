@@ -100,7 +100,12 @@ export function ProjectStudy({
     isMonitoringRef.current = true;
 
     uploadingFiles.forEach((file) => {
-      if (file.status !== "COMPLETED" && file.status !== "ERROR" && file.status !== "UPLOAD" && file.id) {
+      if (
+        file.status !== "COMPLETED" &&
+        file.status !== "ERROR" &&
+        file.status !== "UPLOAD" &&
+        file.id
+      ) {
         monitorDocumentProcessing(
           projectRef,
           file.id,

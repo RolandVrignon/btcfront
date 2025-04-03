@@ -392,10 +392,7 @@ export const getDocumentIdByFileName = async (
     const data = await response.json();
     return data.id || null;
   } catch (error) {
-    logger.error(
-      `Erreur lors de la recherche du document ${fileName}:`,
-      error,
-    );
+    logger.error(`Erreur lors de la recherche du document ${fileName}:`, error);
     return null;
   }
 };

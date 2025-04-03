@@ -14,8 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-    
-    logger.info(`[Monitor] Calling external API for document ${documentId} in project ${projectId}`);
+
+    logger.info(
+      `[Monitor] Calling external API for document ${documentId} in project ${projectId}`,
+    );
     logger.debug(`[Monitor] API URL: ${apiUrl}/documents/monitor`);
 
     // Appel à l'API externe
@@ -29,9 +31,12 @@ export async function POST(request: NextRequest) {
     });
 
     logger.debug(`[Monitor] External API response status: ${response.status}`);
-    
+
     if (response.status === 404) {
-      logger.info(`[Monitor] Document not found in external API. Response:`, await response.text());
+      logger.info(
+        `[Monitor] Document not found in external API. Response:`,
+        await response.text(),
+      );
       return NextResponse.json({
         status: "PENDING",
         indexation_status: "PENDING",
@@ -52,7 +57,10 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    logger.debug(`[Monitor] Success response for document ${documentId}:`, data);
+    logger.debug(
+      `[Monitor] Success response for document ${documentId}:`,
+      data,
+    );
     return NextResponse.json(data);
   } catch (error) {
     logger.error("[Monitor] Internal error:", error);

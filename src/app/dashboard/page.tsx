@@ -45,7 +45,10 @@ export default function DashboardPage() {
                   return await projectResponse.json();
                 }
               } catch (error) {
-                logger.error(`Error updating project status for ${project.id}:`, error);
+                logger.error(
+                  `Error updating project status for ${project.id}:`,
+                  error,
+                );
               }
             }
             return project;

@@ -9,7 +9,7 @@ export async function GET() {
     console.error(
       "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY n'est pas définie dans les variables d'environnement",
     );
-  } 
+  }
   // Retourner la clé API dans la réponse
   return NextResponse.json({
     googleMapsApiKey,
