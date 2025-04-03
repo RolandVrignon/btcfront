@@ -146,6 +146,10 @@ export function DeliverableResultDialog({
 
   // Reset tab index when dialog closes
   useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true);
+    }
+
     if (!isOpen) {
       setTabIndex(0);
       // Clear polling interval when dialog closes
@@ -179,7 +183,9 @@ export function DeliverableResultDialog({
     ) {
       // Fetch the selected version
       const selectedDeliverableId = deliverableIds[currentVersionIndex];
-      fetchDeliverable(selectedDeliverableId);
+      if (selectedDeliverableId) {
+        fetchDeliverable(selectedDeliverableId, false);
+      }
     }
     // eslint-disable-next-line
   }, [isOpen, deliverableIds, currentVersionIndex]);
@@ -289,8 +295,11 @@ export function DeliverableResultDialog({
       }
       setError(null);
 
+      logger.info("Fetching deliverable:", deliverableId);
+
       const response = await fetch(`/api/deliverables/${deliverableId}`);
 
+      logger.info("Response:", response);
       if (!response.ok) {
         throw new Error("Impossible de récupérer les résultats du livrable");
       }
@@ -634,7 +643,10 @@ export function DeliverableResultDialog({
                 onClick={() =>
                   deliverableIds &&
                   deliverableIds.length > 0 &&
-                  fetchDeliverable(deliverableIds[deliverableIds.length - 1])
+                  fetchDeliverable(
+                    deliverableIds[deliverableIds.length - 1],
+                    false,
+                  )
                 }
               >
                 Réessayer

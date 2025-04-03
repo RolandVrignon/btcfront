@@ -200,9 +200,14 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                       </Table>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground italic">
-                      Aucun document public disponible pour ce projet.
-                    </p>
+                    <div className="flex flex-col items-center justify-center h-full py-12">
+                      <div className="bg-muted rounded-full p-3 mb-4">
+                        <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-muted-foreground text-center max-w-md">
+                        Aucune document publique disponible pour ce projet.
+                      </p>
+                    </div>
                   )}
                 </div>
               </ScrollArea>
