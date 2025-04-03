@@ -546,8 +546,8 @@ export function DeliverableResultDialog({
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogHeader>
-          <DialogTitle>{toolName}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="sr-only">{toolName}</DialogTitle>
+          <DialogDescription className="sr-only">
             {deliverable &&
               `Créé le ${format(new Date(deliverable.createdAt), "dd/MM/yyyy à HH:mm")}`}
           </DialogDescription>
