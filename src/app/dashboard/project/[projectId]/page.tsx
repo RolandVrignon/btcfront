@@ -15,7 +15,7 @@ import {
   searchPublicDocuments,
   searchPublicData,
 } from "@/src/components/project-study/utils/utils";
-
+import { logger } from "@/src/utils/logger";
 export default function DashboardPage() {
   const projectRef = useRef<Project | null>(null);
 
@@ -91,6 +91,9 @@ export default function DashboardPage() {
           throw new Error("Failed to fetch project");
         }
         const data = await response.json();
+
+        logger.info("project", data);
+
         setProject(data);
         setIsProjectLoading(false);
       } catch (error) {

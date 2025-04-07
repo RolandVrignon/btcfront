@@ -78,6 +78,8 @@ export async function POST(request: NextRequest) {
       }),
     });
 
+    logger.info("createResponse", createResponse);
+
     if (!createResponse.ok) {
       logger.error(
         `Failed to create deliverable: ${JSON.stringify(createResponse, null, 2)}`,

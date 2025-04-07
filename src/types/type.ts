@@ -81,6 +81,7 @@ export interface Project {
   documents?: PublicDocumentList;
   publicData?: PublicData;
   deliverables?: Deliverable[];
+  closest_formatted_address?: string;
 }
 
 export interface UploadingFile {

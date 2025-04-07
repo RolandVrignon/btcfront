@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/src/utils/logger";
 
 export async function GET(
   request: NextRequest,
@@ -30,6 +31,9 @@ export async function GET(
     }
 
     const deliverable = await response.json();
+
+    logger.info("deliverable", deliverable);
+
     return NextResponse.json(deliverable);
   } catch (error) {
     console.error("Error monitoring deliverable:", error);

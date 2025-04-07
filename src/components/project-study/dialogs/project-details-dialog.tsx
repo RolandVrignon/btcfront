@@ -39,7 +39,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
-
+import { logger } from "@/src/utils/logger";
 interface ProjectDetailsDialogProps {
   project: Project | null;
 }
@@ -52,6 +52,9 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   useEffect(() => {
     if (!open) {
       setTabIndex(0);
+    }
+    if (project) {
+      logger.info("project", project);
     }
   }, [open]);
 

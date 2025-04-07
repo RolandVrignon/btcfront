@@ -66,8 +66,13 @@ export const searchPublicDocuments = async (
       body: JSON.stringify({
         projectId,
         type: DeliverableType.DOCUMENTS_PUBLIQUES,
+        user_prompt: "",
+        new: true,
+        documentIds: [],
       }),
     });
+
+    console.log("searchPublicDocuments initialResponse", initialResponse);
 
     if (!initialResponse.ok) {
       throw new Error("Échec de la création du livrable");
@@ -75,14 +80,12 @@ export const searchPublicDocuments = async (
 
     const deliverable = await initialResponse.json();
 
-    const selectedDeliverable = deliverable[0];
-
     // Si le livrable est déjà prêt, retournez les résultats
-    if (selectedDeliverable.status === "COMPLETED") {
-      return selectedDeliverable.short_result as PublicDocumentList;
+    if (deliverable.status === "COMPLETED") {
+      return deliverable.short_result as PublicDocumentList;
     }
 
-    if (selectedDeliverable.status === "ERROR") {
+    if (deliverable.status === "ERROR") {
       logger.error("Erreur lors de la génération du livrable");
       return [];
     }
@@ -96,7 +99,7 @@ export const searchPublicDocuments = async (
       attempts++;
 
       const pollResponse = await fetch(
-        `/api/deliverables/${selectedDeliverable.id}`,
+        `/api/deliverables/${deliverable.id}`,
       );
 
       if (!pollResponse.ok) {
@@ -106,6 +109,7 @@ export const searchPublicDocuments = async (
       const updatedDeliverable = await pollResponse.json();
 
       if (updatedDeliverable.status === "COMPLETED") {
+        logger.info("searchPublicDocuments updatedDeliverable", updatedDeliverable);
         return updatedDeliverable.short_result as PublicDocumentList;
       }
 
@@ -113,6 +117,8 @@ export const searchPublicDocuments = async (
         logger.error("Erreur lors de la génération du livrable");
         return [];
       }
+
+      logger.info("searchPublicDocuments updatedDeliverable", updatedDeliverable);
     }
 
     logger.error("Délai d'attente dépassé pour la génération du livrable");
@@ -141,9 +147,13 @@ export const searchPublicData = async (
       body: JSON.stringify({
         projectId,
         type: DeliverableType.GEORISQUES,
-        name: "Données géorisques",
+        user_prompt: "",
+        new: true,
+        documentIds: [],
       }),
     });
+
+    console.log("searchPublicData initialResponse", initialResponse);
 
     if (!initialResponse.ok) {
       throw new Error("Échec de la création du livrable géorisques");
@@ -151,14 +161,12 @@ export const searchPublicData = async (
 
     const deliverable = await initialResponse.json();
 
-    const selectedDeliverable = deliverable[0];
-
     // Si le livrable est déjà prêt, retournez les résultats
-    if (selectedDeliverable.status === "COMPLETED") {
-      return selectedDeliverable.short_result as PublicData;
+    if (deliverable.status === "COMPLETED") {
+      return deliverable.short_result as PublicData;
     }
 
-    if (selectedDeliverable.status === "ERROR") {
+    if (deliverable.status === "ERROR") {
       logger.error("Erreur lors de la génération des données géorisques");
       return undefined;
     }
@@ -172,7 +180,7 @@ export const searchPublicData = async (
       attempts++;
 
       const pollResponse = await fetch(
-        `/api/deliverables/${selectedDeliverable.id}`,
+        `/api/deliverables/${deliverable.id}`,
       );
 
       if (!pollResponse.ok) {
@@ -349,12 +357,20 @@ export const monitorProjectStatus = async (
         ) {
           isProcessingComplete = true;
           setProject(projectData);
-          if (projectData.ai_city) {
-            const publicDocuments = await searchPublicDocuments(projectId);
+          if (projectData.closest_formatted_address) {
+            logger.info("Recherche de documents publics et données géorisques");
+            logger.info(
+              "Adresse proche:",
+              projectData.closest_formatted_address,
+            );
+            
+            // Run both searches in parallel
+            const [publicDocuments, publicData] = await Promise.all([
+              searchPublicDocuments(projectId),
+              searchPublicData(projectId)
+            ]);
+            
             projectData.documents = publicDocuments as PublicDocumentList;
-          }
-          if (projectData.ai_city && projectData.ai_address) {
-            const publicData = await searchPublicData(projectId);
             projectData.publicData = publicData;
           }
           resolve(projectData);

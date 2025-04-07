@@ -64,7 +64,10 @@ export async function GET(
       ai_country: externalProjectData?.ai_country || "",
       status: externalProjectData?.status || "",
       externalId: externalProjectData?.id || "",
+      closest_formatted_address: externalProjectData?.closest_formatted_address || "",
     };
+
+    console.log("filteredProjectData", filteredProjectData);
 
     try {
       // Utiliser upsert pour créer ou mettre à jour le projet
