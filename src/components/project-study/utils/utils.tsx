@@ -98,9 +98,7 @@ export const searchPublicDocuments = async (
       await new Promise((resolve) => setTimeout(resolve, 1000));
       attempts++;
 
-      const pollResponse = await fetch(
-        `/api/deliverables/${deliverable.id}`,
-      );
+      const pollResponse = await fetch(`/api/deliverables/${deliverable.id}`);
 
       if (!pollResponse.ok) {
         throw new Error("Échec de la récupération du statut du livrable");
@@ -109,7 +107,10 @@ export const searchPublicDocuments = async (
       const updatedDeliverable = await pollResponse.json();
 
       if (updatedDeliverable.status === "COMPLETED") {
-        logger.info("searchPublicDocuments updatedDeliverable", updatedDeliverable);
+        logger.info(
+          "searchPublicDocuments updatedDeliverable",
+          updatedDeliverable,
+        );
         return updatedDeliverable.short_result as PublicDocumentList;
       }
 
@@ -118,7 +119,10 @@ export const searchPublicDocuments = async (
         return [];
       }
 
-      logger.info("searchPublicDocuments updatedDeliverable", updatedDeliverable);
+      logger.info(
+        "searchPublicDocuments updatedDeliverable",
+        updatedDeliverable,
+      );
     }
 
     logger.error("Délai d'attente dépassé pour la génération du livrable");
@@ -179,9 +183,7 @@ export const searchPublicData = async (
       await new Promise((resolve) => setTimeout(resolve, 1000));
       attempts++;
 
-      const pollResponse = await fetch(
-        `/api/deliverables/${deliverable.id}`,
-      );
+      const pollResponse = await fetch(`/api/deliverables/${deliverable.id}`);
 
       if (!pollResponse.ok) {
         throw new Error(
@@ -363,13 +365,13 @@ export const monitorProjectStatus = async (
               "Adresse proche:",
               projectData.closest_formatted_address,
             );
-            
+
             // Run both searches in parallel
             const [publicDocuments, publicData] = await Promise.all([
               searchPublicDocuments(projectId),
-              searchPublicData(projectId)
+              searchPublicData(projectId),
             ]);
-            
+
             projectData.documents = publicDocuments as PublicDocumentList;
             projectData.publicData = publicData;
           }
