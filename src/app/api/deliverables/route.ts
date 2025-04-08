@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   } = body;
 
   if (!projectId || !type) {
-    console.error("Missing projectId or type parameter");
+    logger.error("Missing projectId or type parameter");
     return NextResponse.json(
       { error: "Missing projectId or type parameter" },
       { status: 400 },
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     logger.info("Our new deliverable in backend route:", newDeliverable);
 
-    return NextResponse.json(newDeliverable);
+    return NextResponse.json([newDeliverable]);
   } catch (error) {
     logger.error("Error handling deliverable:", error);
     return NextResponse.json(

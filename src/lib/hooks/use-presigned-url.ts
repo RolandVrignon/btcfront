@@ -119,7 +119,7 @@ export function useBucketUrl({ onSuccess, onError }: UseBucketUrlProps = {}) {
 
       return data.url;
     } catch (error) {
-      console.error(
+      logger.error(
         "Erreur lors de la récupération de l'URL de téléchargement:",
         error,
       );

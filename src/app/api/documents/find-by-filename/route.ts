@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,14 +30,14 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Texte d'erreur brut:", errorText);
+      logger.error("Texte d'erreur brut:", errorText);
 
       let errorData;
       try {
         errorData = JSON.parse(errorText);
-        console.error("Données d'erreur parsées:", errorData);
+        logger.error("Données d'erreur parsées:", errorData);
       } catch {
-        console.error("Impossible de parser la réponse d'erreur comme JSON");
+        logger.error("Impossible de parser la réponse d'erreur comme JSON");
         errorData = { message: errorText };
       }
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Erreur lors de la recherche du document:", error);
+    logger.error("Erreur lors de la recherche du document:", error);
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
       { status: 500 },

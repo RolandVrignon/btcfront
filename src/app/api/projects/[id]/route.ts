@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { Project } from "@/src/types/type";
 import prisma from "@/src/lib/prisma";
+import { logger } from "@/src/utils/logger";
 
 export async function GET(
   request: NextRequest,
@@ -70,7 +71,7 @@ export async function GET(
       longitude: externalProjectData?.longitude || "",
     };
 
-    console.log("filteredProjectData", filteredProjectData);
+    logger.log("filteredProjectData", filteredProjectData);
 
     try {
       // Utiliser upsert pour créer ou mettre à jour le projet
@@ -106,7 +107,7 @@ export async function GET(
 
       return NextResponse.json(filteredProjectData);
     } catch (error) {
-      console.error(
+      logger.error(
         "Erreur lors de la création ou mise à jour du projet:",
         error,
       );
@@ -114,7 +115,7 @@ export async function GET(
 
     return NextResponse.json(filteredProjectData);
   } catch (error) {
-    console.error("Erreur lors de la récupération du projet:", error);
+    logger.error("Erreur lors de la récupération du projet:", error);
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },

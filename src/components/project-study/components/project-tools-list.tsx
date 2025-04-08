@@ -119,6 +119,7 @@ export function ProjectToolsList({
     uploadFiles || [],
   );
   const [remarks, setRemarks] = useState<string>("");
+  const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
 
   const monitorDeliverable = async (
     deliverableId: string,
@@ -272,6 +273,8 @@ export function ProjectToolsList({
 
   const handleGenerateFirstDeliverable = async () => {
     try {
+      setIsRegenerating(true);
+
       const selectedIds = selectedDocuments.map((doc) => doc.id);
 
       logger.info("selectedIds:", selectedIds);
@@ -304,7 +307,9 @@ export function ProjectToolsList({
         throw new Error("Impossible de régénérer le livrable");
       }
 
-      const deliverable: Deliverable = await response.json();
+      const deliverables: Deliverable[] = await response.json();
+
+      const deliverable = deliverables[deliverables.length - 1];
 
       setSelectedDeliverable({
         id: [deliverable.id],
@@ -324,6 +329,7 @@ export function ProjectToolsList({
       setFileSelectionDialogOpen(false);
       setRemarks("");
       setSelectedDocuments([]);
+      setIsRegenerating(false);
     } catch (error) {
       logger.error("Error regenerating deliverable:", error);
     }
@@ -421,7 +427,7 @@ export function ProjectToolsList({
           selectedFiles={selectedDocuments}
           setSelectedFiles={setSelectedDocuments}
           onRegenerateClick={handleGenerateFirstDeliverable}
-          isRegenerating={false}
+          isRegenerating={isRegenerating}
           title={`Sélection de fichiers pour ${currentTool.name}`}
           description="Veuillez sélectionner les fichiers à analyser pour cet outil."
           remarks={remarks}

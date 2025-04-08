@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       message: "Fichier uploadé avec succès",
     });
   } catch (error) {
-    console.error("Erreur lors de l'upload du fichier:", error);
+    logger.error("Erreur lors de l'upload du fichier:", error);
     return NextResponse.json(
       { error: "Erreur serveur lors de l'upload du fichier" },
       { status: 500 },

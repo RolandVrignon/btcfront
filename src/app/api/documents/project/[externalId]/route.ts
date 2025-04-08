@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
-
+import { logger } from "@/src/utils/logger";
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ externalId: string }> },
@@ -47,7 +47,7 @@ export async function GET(
     const documents = await response.json();
     return NextResponse.json(documents);
   } catch (error) {
-    console.error("Erreur lors de la récupération des documents:", error);
+    logger.error("Erreur lors de la récupération des documents:", error);
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },

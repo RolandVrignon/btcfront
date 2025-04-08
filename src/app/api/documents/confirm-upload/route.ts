@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Erreur lors de la confirmation de l'upload:", error);
+    logger.error("Erreur lors de la confirmation de l'upload:", error);
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
       { status: 500 },

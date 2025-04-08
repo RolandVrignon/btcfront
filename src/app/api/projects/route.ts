@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
+import { logger } from "@/src/utils/logger";
 
 // Récupérer tous les projets (avec pagination)
 export async function GET(request: NextRequest) {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des projets:", error);
+    logger.error("Erreur lors de la récupération des projets:", error);
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
-    console.error("Erreur lors de la création du projet:", error);
+    logger.error("Erreur lors de la création du projet:", error);
     return NextResponse.json(
       { error: "Erreur serveur interne" },
       { status: 500 },

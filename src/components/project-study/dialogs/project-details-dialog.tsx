@@ -52,7 +52,7 @@ interface LocalisationProps {
 function Localisation({
   project,
   onOpenGeorisques,
-  showGeorisquesButton = true
+  showGeorisquesButton = true,
 }: LocalisationProps) {
   return (
     <Card>
@@ -62,22 +62,15 @@ function Localisation({
           Localisation
         </CardTitle>
         <CardDescription>
-          Il s&apos;agit de l&apos;adresse officielle trouvée à proximité du
-          projet et utilisée pour trouver ces informations.
+          Il s&apos;agit d&apos;une adresse trouvée à proximité du projet. Cette
+          adresse est utilisée pour trouver les informations ci-dessous.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
           <p>
             <span className="font-medium">Adresse : </span>
-            {project.publicData?.adresse?.libelle || "Non disponible"}
-          </p>
-          <p>
-            <span className="font-medium">Commune : </span>
-            {project.publicData?.commune?.libelle || "Non disponible"}
-            {project.publicData?.commune?.codePostal
-              ? ` (${project.publicData.commune.codePostal})`
-              : ""}
+            {project.closest_formatted_address || "Non disponible"}
           </p>
           <p>
             <span className="font-medium">Coordonnées GPS : </span>

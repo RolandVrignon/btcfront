@@ -41,7 +41,7 @@ export async function POST() {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Erreur lors de la création du projet:", error);
+    logger.error("Erreur lors de la création du projet:", error);
     return NextResponse.json(
       { error: "Erreur serveur lors de la création du projet" },
       { status: 500 },

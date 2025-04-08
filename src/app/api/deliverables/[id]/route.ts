@@ -36,7 +36,7 @@ export async function GET(
 
     return NextResponse.json(deliverable);
   } catch (error) {
-    console.error("Error monitoring deliverable:", error);
+    logger.error("Error monitoring deliverable:", error);
     return NextResponse.json(
       { error: "Failed to monitor deliverable" },
       { status: 500 },

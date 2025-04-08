@@ -50,6 +50,7 @@ export const createProject = async (
 
 export const searchPublicDocuments = async (
   projectId: string,
+  new_deliverable: boolean,
 ): Promise<PublicDocumentList> => {
   try {
     if (!projectId) {
@@ -67,18 +68,20 @@ export const searchPublicDocuments = async (
         projectId,
         type: DeliverableType.DOCUMENTS_PUBLIQUES,
         user_prompt: "",
-        new: true,
+        new: new_deliverable,
         documentIds: [],
       }),
     });
 
-    console.log("searchPublicDocuments initialResponse", initialResponse);
+    logger.log("searchPublicDocuments initialResponse", initialResponse);
 
     if (!initialResponse.ok) {
       throw new Error("Échec de la création du livrable");
     }
 
-    const deliverable = await initialResponse.json();
+    const deliverables = await initialResponse.json();
+
+    const deliverable = deliverables[deliverables.length - 1];
 
     // Si le livrable est déjà prêt, retournez les résultats
     if (deliverable.status === "COMPLETED") {
@@ -135,6 +138,7 @@ export const searchPublicDocuments = async (
 
 export const searchPublicData = async (
   projectId: string,
+  new_deliverable: boolean,
 ): Promise<PublicData | undefined> => {
   try {
     if (!projectId) {
@@ -152,18 +156,22 @@ export const searchPublicData = async (
         projectId,
         type: DeliverableType.GEORISQUES,
         user_prompt: "",
-        new: true,
+        new: new_deliverable,
         documentIds: [],
       }),
     });
 
-    console.log("searchPublicData initialResponse", initialResponse);
+    logger.log("searchPublicData initialResponse", initialResponse);
 
     if (!initialResponse.ok) {
       throw new Error("Échec de la création du livrable géorisques");
     }
 
-    const deliverable = await initialResponse.json();
+    const deliverables = await initialResponse.json();
+
+    const deliverable = deliverables[deliverables.length - 1];
+
+    logger.log("searchPublicData deliverable", deliverable);
 
     // Si le livrable est déjà prêt, retournez les résultats
     if (deliverable.status === "COMPLETED") {
@@ -379,8 +387,8 @@ export const monitorProjectStatus = async (
 
         // Run both searches in parallel
         const [publicDocuments, publicData] = await Promise.all([
-          searchPublicDocuments(projectId),
-          searchPublicData(projectId),
+          searchPublicDocuments(projectId, true),
+          searchPublicData(projectId, true),
         ]);
 
         logger.info("publicDocuments", publicDocuments);

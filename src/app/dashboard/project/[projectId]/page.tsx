@@ -16,6 +16,7 @@ import {
   searchPublicData,
 } from "@/src/components/project-study/utils/utils";
 import { logger } from "@/src/utils/logger";
+
 export default function DashboardPage() {
   const projectRef = useRef<Project | null>(null);
 
@@ -62,7 +63,7 @@ export default function DashboardPage() {
                   return await projectResponse.json();
                 }
               } catch (error) {
-                console.error(
+                logger.error(
                   `Error updating project status for ${project.id}:`,
                   error,
                 );
@@ -75,7 +76,7 @@ export default function DashboardPage() {
         setProjects(updatedProjects);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching projects:", error);
+        logger.error("Error fetching projects:", error);
         setIsLoading(false);
       }
     };
@@ -97,7 +98,7 @@ export default function DashboardPage() {
         setProject(data);
         setIsProjectLoading(false);
       } catch (error) {
-        console.error("Error fetching project:", error);
+        logger.error("Error fetching project:", error);
       }
     };
 
@@ -143,7 +144,7 @@ export default function DashboardPage() {
         );
 
         if (!documentsResponse.ok) {
-          console.error(
+          logger.error(
             "Erreur lors de la récupération des documents depuis l'API externe",
           );
           return;
@@ -174,8 +175,8 @@ export default function DashboardPage() {
           try {
             // Exécuter les deux requêtes en parallèle avec Promise.all
             const [publicDocuments, publicData] = await Promise.all([
-              searchPublicDocuments(project?.externalId || ""),
-              searchPublicData(project?.externalId || ""),
+              searchPublicDocuments(project?.externalId || "", false),
+              searchPublicData(project?.externalId || "", false),
             ]);
 
             setProject({
@@ -187,14 +188,14 @@ export default function DashboardPage() {
               publicData: publicData ? publicData : undefined,
             });
           } catch (error) {
-            console.error(
+            logger.error(
               "Erreur lors de la récupération des données publiques:",
               error,
             );
           }
         }
       } catch (error) {
-        console.error(
+        logger.error(
           "Erreur lors de la récupération des données du projet:",
           error,
         );

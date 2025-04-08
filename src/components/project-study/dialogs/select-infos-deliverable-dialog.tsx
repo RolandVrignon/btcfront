@@ -173,7 +173,7 @@ export function FileSelectionDialog({
             {isRegenerating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Régénération...
+                Chargement...
               </>
             ) : (
               "Générer"
