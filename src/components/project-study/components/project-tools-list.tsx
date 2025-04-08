@@ -116,7 +116,7 @@ export function ProjectToolsList({
   } | null>(null);
   const [currentTool, setCurrentTool] = useState<Tool | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<UploadingFile[]>(
-    [],
+    uploadFiles || [],
   );
   const [remarks, setRemarks] = useState<string>("");
 
