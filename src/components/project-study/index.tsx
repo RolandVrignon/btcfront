@@ -35,6 +35,7 @@ interface ProjectToolsProps {
   isUpperLoading: boolean;
   isUploading: boolean;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
+  isProjectSelected: boolean;
 }
 
 export function ProjectStudy({
@@ -49,6 +50,7 @@ export function ProjectStudy({
   isUploading,
   setIsUploading,
   isUpperLoading,
+  isProjectSelected,
 }: ProjectToolsProps) {
   const { getUploadUrl, getDownloadUrl } = useBucketUrl();
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +67,8 @@ export function ProjectStudy({
       projectRef.current = project;
     }
 
+    if (!isProjectSelected) return;
+
     if (!setProject) return;
 
     if (
@@ -77,7 +81,7 @@ export function ProjectStudy({
         setProject,
       );
     }
-  }, [project, projectRef, setProject]);
+  }, [project, projectRef, setProject, isProjectSelected]);
 
   useEffect(() => {
     if (isUpperLoading) {

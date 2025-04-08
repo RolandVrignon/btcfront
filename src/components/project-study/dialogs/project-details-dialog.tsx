@@ -36,10 +36,71 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
 import { logger } from "@/src/utils/logger";
+
+// Modify the Localisation component to accept a showGeorisquesButton prop
+interface LocalisationProps {
+  project: Project;
+  onOpenGeorisques: () => void;
+  showGeorisquesButton?: boolean;
+}
+
+function Localisation({
+  project,
+  onOpenGeorisques,
+  showGeorisquesButton = true
+}: LocalisationProps) {
+  return (
+    <Card>
+      <CardHeader className="pb-6">
+        <CardTitle className="text-lg flex items-center">
+          <MapPin className="h-5 w-5 mr-2" />
+          Localisation
+        </CardTitle>
+        <CardDescription>
+          Il s&apos;agit de l&apos;adresse officielle trouvée à proximité du
+          projet et utilisée pour trouver ces informations.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <p>
+            <span className="font-medium">Adresse : </span>
+            {project.publicData?.adresse?.libelle || "Non disponible"}
+          </p>
+          <p>
+            <span className="font-medium">Commune : </span>
+            {project.publicData?.commune?.libelle || "Non disponible"}
+            {project.publicData?.commune?.codePostal
+              ? ` (${project.publicData.commune.codePostal})`
+              : ""}
+          </p>
+          <p>
+            <span className="font-medium">Coordonnées GPS : </span>
+            {project.latitude}, {project.longitude}
+          </p>
+
+          {showGeorisquesButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenGeorisques}
+              className="mt-2"
+            >
+              Consulter sur Géorisques{" "}
+              <ExternalLink className="h-3.5 w-3.5 ml-2" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface ProjectDetailsDialogProps {
   project: Project | null;
 }
@@ -140,123 +201,100 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
             <AnimatedTabsContent value={tabIndex} index={1} className="h-full">
               <ScrollArea className="h-[calc(90vh-180px)]">
                 <div className="pr-4">
-                  {project.documents && project.documents.length > 0 ? (
-                    <div className="rounded-lg overflow-hidden border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Lien</TableHead>
-                            <TableHead className="w-[100px] text-right">
-                              Action
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {project.documents.map(
-                            (doc: PublicDocument, index: number) => (
-                              <TableRow
-                                key={index}
-                                className="cursor-pointer hover:bg-muted/80"
-                                onClick={() => handleOpenDocument(doc.lien)}
-                              >
-                                <TableCell>
-                                  <Badge
-                                    variant="secondary"
-                                    className="font-normal"
-                                  >
-                                    {doc.type}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="truncate max-w-[400px]">
-                                  {doc.lien}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0 ml-auto"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleOpenDocument(doc.lien);
-                                          }}
-                                        >
-                                          <ExternalLink className="h-4 w-4" />
-                                          <span className="sr-only">
-                                            Ouvrir
-                                          </span>
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Ouvrir le document</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </TableCell>
-                              </TableRow>
-                            ),
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full py-12">
-                      <div className="bg-muted rounded-full p-3 mb-4">
-                        <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                  <Localisation
+                    project={project}
+                    onOpenGeorisques={handleOpenGeorisques}
+                    showGeorisquesButton={false}
+                  />
+
+                  <div className="mt-6">
+                    {project.documents && project.documents.length > 0 ? (
+                      <div className="rounded-lg overflow-hidden border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Lien</TableHead>
+                              <TableHead className="w-[100px] text-right">
+                                Action
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {project.documents.map(
+                              (doc: PublicDocument, index: number) => (
+                                <TableRow
+                                  key={index}
+                                  className="cursor-pointer hover:bg-muted/80"
+                                  onClick={() => handleOpenDocument(doc.lien)}
+                                >
+                                  <TableCell>
+                                    <Badge
+                                      variant="secondary"
+                                      className="font-normal"
+                                    >
+                                      {doc.type}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="truncate max-w-[400px]">
+                                    {doc.lien}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 ml-auto"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleOpenDocument(doc.lien);
+                                            }}
+                                          >
+                                            <ExternalLink className="h-4 w-4" />
+                                            <span className="sr-only">
+                                              Ouvrir
+                                            </span>
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Ouvrir le document</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </TableCell>
+                                </TableRow>
+                              ),
+                            )}
+                          </TableBody>
+                        </Table>
                       </div>
-                      <p className="text-muted-foreground text-center max-w-md">
-                        Aucune document publique disponible pour ce projet.
-                      </p>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full py-12">
+                        <div className="bg-muted rounded-full p-3 mb-4">
+                          <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-muted-foreground text-center max-w-md">
+                          Aucune document publique disponible pour ce projet.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </ScrollArea>
             </AnimatedTabsContent>
 
             <AnimatedTabsContent value={tabIndex} index={2} className="h-full">
               <ScrollArea className="h-[calc(90vh-180px)]">
-                <div className="pr-4">
+                <div className="pr-4 space-y-6">
+                  <Localisation
+                    project={project}
+                    onOpenGeorisques={handleOpenGeorisques}
+                    showGeorisquesButton={true}
+                  />
                   {project.publicData ? (
-                    <div className="space-y-6">
-                      {/* Localisation */}
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg flex items-center">
-                            <MapPin className="h-5 w-5 mr-2" />
-                            Localisation
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <p>
-                              <span className="font-medium">Adresse : </span>
-                              {project.publicData?.adresse?.libelle ||
-                                "Non disponible"}
-                            </p>
-                            <p>
-                              <span className="font-medium">Commune : </span>
-                              {project.publicData?.commune?.libelle ||
-                                "Non disponible"}
-                              {project.publicData?.commune?.codePostal
-                                ? `(${project.publicData.commune.codePostal})`
-                                : ""}
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleOpenGeorisques}
-                              className="mt-2"
-                            >
-                              Consulter sur Géorisques{" "}
-                              <ExternalLink className="h-3.5 w-3.5 ml-2" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-
+                    <div className="space-y-6 pb-8">
                       {/* Risques Naturels */}
                       <Card>
                         <CardHeader className="pb-2">

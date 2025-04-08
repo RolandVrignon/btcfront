@@ -66,6 +66,8 @@ export async function GET(
       externalId: externalProjectData?.id || "",
       closest_formatted_address:
         externalProjectData?.closest_formatted_address || "",
+      latitude: externalProjectData?.latitude || "",
+      longitude: externalProjectData?.longitude || "",
     };
 
     console.log("filteredProjectData", filteredProjectData);

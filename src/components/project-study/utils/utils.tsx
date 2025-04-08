@@ -318,6 +318,7 @@ export const monitorProjectStatus = async (
       let isProcessingComplete = false;
       const startTime = Date.now();
       const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
+      let projectData: Project | null = null;
 
       while (
         !isProcessingComplete &&
@@ -350,36 +351,47 @@ export const monitorProjectStatus = async (
           continue;
         }
 
-        const projectData = await response.json();
+        projectData = await response.json();
 
-        // Vérifier si le traitement est terminé
         if (
-          projectData.status === "COMPLETED" ||
-          projectData.status === "ERROR"
+          projectData?.status === "COMPLETED" ||
+          projectData?.status === "ERROR"
         ) {
           isProcessingComplete = true;
           setProject(projectData);
-          if (projectData.closest_formatted_address) {
-            logger.info("Recherche de documents publics et données géorisques");
-            logger.info(
-              "Adresse proche:",
-              projectData.closest_formatted_address,
-            );
-
-            // Run both searches in parallel
-            const [publicDocuments, publicData] = await Promise.all([
-              searchPublicDocuments(projectId),
-              searchPublicData(projectId),
-            ]);
-
-            projectData.documents = publicDocuments as PublicDocumentList;
-            projectData.publicData = publicData;
-          }
-          resolve(projectData);
-          setProject(projectData);
-          return;
+          break;
         }
       }
+
+      if (
+        projectData?.latitude &&
+        projectData?.longitude &&
+        projectData?.closest_formatted_address
+      ) {
+        logger.info("Recherche de documents publics et données géorisques");
+        logger.info("Adresse proche:", projectData?.closest_formatted_address);
+        logger.info(
+          "Latitude et longitude:",
+          projectData?.latitude,
+          ", ",
+          projectData?.longitude,
+        );
+
+        // Run both searches in parallel
+        const [publicDocuments, publicData] = await Promise.all([
+          searchPublicDocuments(projectId),
+          searchPublicData(projectId),
+        ]);
+
+        logger.info("publicDocuments", publicDocuments);
+        logger.info("publicData", publicData);
+
+        projectData.documents = publicDocuments as PublicDocumentList;
+        projectData.publicData = publicData;
+      }
+      resolve(projectData);
+      setProject(projectData);
+      return;
     } catch (error) {
       logger.error("Erreur lors du monitoring du projet:", error);
       reject(error);

@@ -65,6 +65,10 @@ export interface PublicData {
   };
 }
 
+// Optional: Define more specific types for GPS coordinates
+export type Latitude = number; // Range: -90 to 90
+export type Longitude = number; // Range: -180 to 180
+
 export interface Project {
   id: string;
   name?: string;
@@ -82,6 +86,8 @@ export interface Project {
   publicData?: PublicData;
   deliverables?: Deliverable[];
   closest_formatted_address?: string;
+  latitude?: Latitude;
+  longitude?: Longitude;
 }
 
 export interface UploadingFile {

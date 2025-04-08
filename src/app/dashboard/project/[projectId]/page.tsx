@@ -231,6 +231,7 @@ export default function DashboardPage() {
           isUpperLoading={isProjectLoading}
           isUploading={isUploading}
           setIsUploading={setIsUploading}
+          isProjectSelected={true}
         />
       </main>
     </div>
