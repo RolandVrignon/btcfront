@@ -169,3 +169,16 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari et Opera */
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}

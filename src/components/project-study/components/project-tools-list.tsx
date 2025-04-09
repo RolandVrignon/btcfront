@@ -322,7 +322,7 @@ export function ProjectToolsList({
         toolName: currentTool?.name || "",
       });
 
-      logger.info("deliverable:", deliverable);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       setDialogOpen(true);
 
@@ -332,10 +332,9 @@ export function ProjectToolsList({
         currentTool?.name || "",
       );
 
-      setFileSelectionDialogOpen(false);
       setRemarks("");
-      setSelectedDocuments([]);
       setIsRegenerating(false);
+      setFileSelectionDialogOpen(false);
     } catch (error) {
       logger.error("Error regenerating deliverable:", error);
     }

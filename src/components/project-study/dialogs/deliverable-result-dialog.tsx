@@ -30,6 +30,7 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { logger } from "@/src/utils/logger";
 import { format } from "date-fns";
+import { cn } from "@/src/lib/utils";
 
 interface Document {
   id: string;
@@ -63,7 +64,7 @@ interface DeliverableResultDialogProps {
   toolName: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  uploadFiles?: UploadingFile[];
+  uploadFiles?: UploadingFile[] | [];
   projectId: string | null;
   setDeliverableIds?: React.Dispatch<
     React.SetStateAction<DeliverableIds | null>
@@ -166,6 +167,7 @@ export function DeliverableResultDialog({
 
     if (deliverableIds && deliverableIds.length > 0) {
       logger.info("deliverableIds:", deliverableIds);
+      setIsLoading(true);
       setCurrentVersionIndex(deliverableIds.length - 1);
       logger.info(
         `Mise à jour de la version courante: ${deliverableIds.length - 1 + 1}`,
@@ -501,7 +503,7 @@ export function DeliverableResultDialog({
           projectId: projectId,
           type: deliverable?.type,
           documentIds: selectedIds,
-          user_prompt: remarks.trim() || undefined,
+          user_prompt: remarks.trim() || "",
           new: true,
         }),
       });
@@ -517,12 +519,6 @@ export function DeliverableResultDialog({
         newDeliverables[newDeliverables.length - 1];
 
       logger.info("Our new deliverable:", newDeliverable);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setIsRegenerateDialogOpen(false);
-      setRemarks("");
-      setIsRegenerating(false);
 
       // Ajouter le nouvel ID au tableau de deliverableIds
       if (setDeliverableIds && newDeliverable.id) {
@@ -542,8 +538,13 @@ export function DeliverableResultDialog({
         });
       }
 
-      // Mettre immédiatement le composant en état de chargement
       setIsLoading(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setRemarks("");
+      setIsRegenerating(false);
+      setIsRegenerateDialogOpen(false);
     } catch (error) {
       logger.error("Error regenerating deliverable:", error);
       setIsRegenerating(false);
@@ -580,7 +581,7 @@ export function DeliverableResultDialog({
             </DialogHeader>
             <div className="flex items-center gap-2 mr-8">
               {deliverable && deliverable.status === "COMPLETED" && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800 transition-opacity duration-300 ease-in-out">
                   <svg
                     className="w-4 h-4 mr-1.5 text-green-500"
                     fill="currentColor"
@@ -603,7 +604,7 @@ export function DeliverableResultDialog({
                 </span>
               )}
               {deliverable && deliverable.status === "ERROR" && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800 transition-opacity duration-300 ease-in-out">
                   <svg
                     className="w-4 h-4 mr-1.5 text-red-500"
                     fill="currentColor"
@@ -622,7 +623,7 @@ export function DeliverableResultDialog({
               {deliverable &&
                 (deliverable.status === "PENDING" ||
                   deliverable.status === "PROCESSING") && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 transition-opacity duration-300 ease-in-out">
                     <svg
                       className="w-4 h-4 mr-1.5 text-yellow-500 animate-spin"
                       fill="none"
@@ -652,7 +653,7 @@ export function DeliverableResultDialog({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1"
+                      className="gap-1 transition-all duration-200"
                       disabled={isLoading}
                     >
                       {currentVersionIndex !== null
@@ -682,7 +683,7 @@ export function DeliverableResultDialog({
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1"
+                className="gap-1 transition-all duration-200"
                 onClick={() => setIsRegenerateDialogOpen(true)}
                 disabled={isLoading || deliverable?.status !== "COMPLETED"}
               >
@@ -692,83 +693,92 @@ export function DeliverableResultDialog({
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="flex flex-col space-y-4 py-4 flex-grow">
-              <Skeleton className="h-full w-full" />
-            </div>
-          ) : error ? (
-            <div className="py-6 text-center text-red-500 flex-grow">
-              <p>{error}</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() =>
-                  deliverableIds &&
-                  deliverableIds.length > 0 &&
-                  fetchDeliverable(
-                    deliverableIds[deliverableIds.length - 1],
-                    false,
-                  )
-                }
-              >
-                Réessayer
-              </Button>
-            </div>
-          ) : deliverable && deliverable.status === "COMPLETED" ? (
-            <div className="flex-grow flex flex-col overflow-hidden">
-              <AnimatedTabs
-                tabs={tabs}
-                defaultIndex={0}
-                onChange={setTabIndex}
-                className="mb-4 flex-shrink-0"
-              />
-              <div className="flex-grow overflow-hidden">
-                {!isLoading &&
-                  contents.map((content, index) => (
-                    <AnimatedTabsContent
-                      key={index}
-                      value={tabIndex}
-                      index={index}
-                      className="h-full"
-                    >
-                      <ScrollArea className="h-full">
-                        <div className="pr-4 pb-4">
-                          {content ? (
-                            renderResultValue(content)
-                          ) : (
-                            <div className="rounded-md border p-4 bg-gray-50">
-                              <p className="text-gray-500 italic">
-                                {index === 0
-                                  ? "Aucun résumé disponible"
-                                  : "Aucune analyse complète disponible"}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </AnimatedTabsContent>
-                  ))}
+          <div className="flex-grow flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+            {isLoading ? (
+              <div className="flex flex-col space-y-4 py-4 flex-grow animate-fadeIn transition-opacity duration-300">
+                <Skeleton className="h-full w-full" />
               </div>
-            </div>
-          ) : deliverable && deliverable.status === "ERROR" ? (
-            <div className="py-6 text-center text-red-500 flex-grow">
-              <p>Une erreur est survenue lors de la génération du livrable</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setIsRegenerateDialogOpen(true)}
-              >
-                Essayer de régénérer
-              </Button>
-            </div>
-          ) : (
-            <div className="py-6 text-center text-gray-500 flex-grow">
-              <p>Aucun résultat disponible</p>
-            </div>
-          )}
+            ) : error ? (
+              <div className="py-6 text-center text-red-500 flex-grow animate-fadeIn transition-opacity duration-300">
+                <p>{error}</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 transition-all duration-200"
+                  onClick={() =>
+                    deliverableIds &&
+                    deliverableIds.length > 0 &&
+                    fetchDeliverable(
+                      deliverableIds[deliverableIds.length - 1],
+                      false,
+                    )
+                  }
+                >
+                  Réessayer
+                </Button>
+              </div>
+            ) : deliverable && deliverable.status === "COMPLETED" ? (
+              <div className="flex-grow flex flex-col overflow-hidden animate-fadeIn transition-opacity duration-300">
+                <AnimatedTabs
+                  tabs={tabs}
+                  defaultIndex={0}
+                  onChange={setTabIndex}
+                  className="mb-4 flex-shrink-0"
+                />
+                <div className="flex-grow overflow-hidden">
+                  {!isLoading &&
+                    contents.map((content, index) => (
+                      <AnimatedTabsContent
+                        key={index}
+                        value={tabIndex}
+                        index={index}
+                        className={cn(
+                          "h-full transition-all duration-300 ease-in-out",
+                          tabIndex === index ? "opacity-100" : "opacity-0"
+                        )}
+                      >
+                        <ScrollArea className="h-full">
+                          <div className="pr-4 pb-4">
+                            {content ? (
+                              renderResultValue(content)
+                            ) : (
+                              <div className="rounded-md border p-4 bg-gray-50 transition-all duration-300">
+                                <p className="text-gray-500 italic">
+                                  {index === 0
+                                    ? "Aucun résumé disponible"
+                                    : "Aucune analyse complète disponible"}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </AnimatedTabsContent>
+                    ))}
+                </div>
+              </div>
+            ) : deliverable && deliverable.status === "ERROR" ? (
+              <div className="py-6 text-center text-red-500 flex-grow animate-fadeIn transition-opacity duration-300">
+                <p>Une erreur est survenue lors de la génération du livrable</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 transition-all duration-200"
+                  onClick={() => setIsRegenerateDialogOpen(true)}
+                >
+                  Essayer de régénérer
+                </Button>
+              </div>
+            ) : (
+              <div className="py-6 text-center text-gray-500 flex-grow animate-fadeIn transition-opacity duration-300">
+                <p>Aucun résultat disponible</p>
+              </div>
+            )}
+          </div>
 
           <DialogFooter className="mt-4 pt-4 border-t flex-shrink-0">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="transition-all duration-200"
+            >
               Fermer
             </Button>
           </DialogFooter>
