@@ -13,7 +13,7 @@ import {
   Table2,
 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DeliverableResultDialog } from "@/src/components/project-study/dialogs/deliverable-result-dialog";
 import { FileSelectionDialog } from "@/src/components/project-study/dialogs/select-infos-deliverable-dialog";
@@ -115,11 +115,15 @@ export function ProjectToolsList({
     toolName: string;
   } | null>(null);
   const [currentTool, setCurrentTool] = useState<Tool | null>(null);
-  const [selectedDocuments, setSelectedDocuments] = useState<UploadingFile[]>(
-    uploadFiles || [],
-  );
+  const [selectedDocuments, setSelectedDocuments] = useState<UploadingFile[]>([]);
   const [remarks, setRemarks] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (uploadFiles && uploadFiles.length > 0) {
+      setSelectedDocuments(uploadFiles);
+    }
+  }, [uploadFiles, fileSelectionDialogOpen]);
 
   const monitorDeliverable = async (
     deliverableId: string,
@@ -275,11 +279,11 @@ export function ProjectToolsList({
     try {
       setIsRegenerating(true);
 
-      const selectedIds = selectedDocuments.map((doc) => doc.id);
+      const selectedIds = selectedDocuments?.map((doc) => doc.id);
 
       logger.info("selectedIds:", selectedIds);
 
-      if (selectedIds.length === 0) {
+      if (selectedIds && selectedIds.length === 0) {
         alert("Veuillez sélectionner au moins un document");
         return;
       }
@@ -424,8 +428,8 @@ export function ProjectToolsList({
           isOpen={fileSelectionDialogOpen}
           onOpenChange={setFileSelectionDialogOpen}
           uploadFiles={uploadFiles || []}
-          selectedFiles={selectedDocuments}
-          setSelectedFiles={setSelectedDocuments}
+          selectedFiles={selectedDocuments || []}
+          setSelectedFiles={(files) => setSelectedDocuments(files)}
           onRegenerateClick={handleGenerateFirstDeliverable}
           isRegenerating={isRegenerating}
           title={`Sélection de fichiers pour ${currentTool.name}`}

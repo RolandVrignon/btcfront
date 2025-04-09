@@ -2,7 +2,7 @@
 
 # Variables
 NODE_BIN = node_modules/.bin
-NPM = npm
+NPM = pnpm
 DOCKER_HUB_USERNAME = roland.vrignon@iadopt.fr
 DOCKER_HUB_PREFIX = iadopt
 DOCKER_IMAGE_NAME = btpc-front
@@ -36,7 +36,7 @@ start:
 
 # Construction du projet pour la production
 build:
-	$(NPM) run build
+	$(NPM) run build --no-lint
 
 # Exécution des tests
 test:

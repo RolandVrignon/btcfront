@@ -195,9 +195,8 @@ export function DeliverableResultDialog({
     logger.info("isRegenerateDialogOpen", isRegenerateDialogOpen);
     logger.info("uploadFiles", uploadFiles);
     logger.info("uploadFiles length", uploadFiles?.length);
-    if (isRegenerateDialogOpen && uploadFiles && uploadFiles.length > 0) {
-      // Présélectionner tous les documents
-      setSelectedDocuments([...uploadFiles]);
+    if (uploadFiles && uploadFiles.length > 0) {
+      setSelectedDocuments(uploadFiles);
     }
   }, [isRegenerateDialogOpen, uploadFiles]);
 
@@ -483,7 +482,7 @@ export function DeliverableResultDialog({
 
   const handleRegenerateDeliverable = async () => {
     try {
-      setIsRegenerating(true);
+      setIsRegenerating(true); // On disable le bouton de régénération de la dialog 
 
       const selectedIds = selectedDocuments.map((doc) => doc.id);
 
@@ -513,9 +512,13 @@ export function DeliverableResultDialog({
       }
 
       // L'API retourne maintenant un tableau de livrables
-      const newDeliverable = await response.json();
+      const newDeliverables: Deliverable[] = await response.json();
+
+      const newDeliverable: Deliverable = newDeliverables[newDeliverables.length - 1];
 
       logger.info("Our new deliverable:", newDeliverable);
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setIsRegenerateDialogOpen(false);
       setRemarks("");
