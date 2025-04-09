@@ -187,7 +187,6 @@ export function DeliverableResultDialog({
         fetchDeliverable(selectedDeliverableId, false);
       }
     }
-    // eslint-disable-next-line
   }, [isOpen, deliverableIds, currentVersionIndex]);
 
   // Initialiser les documents sélectionnés quand le dialogue de régénération s'ouvre
