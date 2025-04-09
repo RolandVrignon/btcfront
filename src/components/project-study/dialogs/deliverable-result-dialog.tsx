@@ -482,7 +482,7 @@ export function DeliverableResultDialog({
 
   const handleRegenerateDeliverable = async () => {
     try {
-      setIsRegenerating(true); // On disable le bouton de régénération de la dialog 
+      setIsRegenerating(true); // On disable le bouton de régénération de la dialog
 
       const selectedIds = selectedDocuments.map((doc) => doc.id);
 
@@ -514,7 +514,8 @@ export function DeliverableResultDialog({
       // L'API retourne maintenant un tableau de livrables
       const newDeliverables: Deliverable[] = await response.json();
 
-      const newDeliverable: Deliverable = newDeliverables[newDeliverables.length - 1];
+      const newDeliverable: Deliverable =
+        newDeliverables[newDeliverables.length - 1];
 
       logger.info("Our new deliverable:", newDeliverable);
 

@@ -115,7 +115,9 @@ export function ProjectToolsList({
     toolName: string;
   } | null>(null);
   const [currentTool, setCurrentTool] = useState<Tool | null>(null);
-  const [selectedDocuments, setSelectedDocuments] = useState<UploadingFile[]>([]);
+  const [selectedDocuments, setSelectedDocuments] = useState<UploadingFile[]>(
+    [],
+  );
   const [remarks, setRemarks] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
 
