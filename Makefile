@@ -13,6 +13,8 @@ DB_NAME = btpc
 DB_PORT = 5434
 DB_HOST = localhost
 DATABASE_URL = postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?schema=public
+ECR_REGISTRY = 929387410269.dkr.ecr.eu-north-1.amazonaws.com
+ECR_REPO = ynor/client
 
 # Commandes principales
 .PHONY: install start build test lint clean help
@@ -156,12 +158,14 @@ push-image:
 	@echo "\033[1;36m=== Préparation et envoi de l'image Docker vers Docker Hub ===\033[0m"
 	@echo "\033[1;33mConstruction de l'image Docker...\033[0m"
 	@docker-compose build
-	@echo "\033[1;33mTaggage de l'image avec $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)...\033[0m"
-	@docker tag btpc-front:latest $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
-	@echo "\033[1;33mEnvoi de l'image vers Docker Hub...\033[0m"
-	@docker push $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
-	@echo "\033[1;32mImage envoyée avec succès vers Docker Hub !\033[0m"
-	@echo "L'image est disponible à l'adresse: $(DOCKER_HUB_PREFIX)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)"
+	@echo "\033[1;33mConnexion à ECR...\033[0m"
+	@aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin $(ECR_REGISTRY)
+	@echo "\033[1;33mTaggage de l'image avec $(ECR_REGISTRY)/$(ECR_REPO):$(DOCKER_IMAGE_TAG)...\033[0m"
+	@docker tag btpc-front:latest $(ECR_REGISTRY)/$(ECR_REPO):$(DOCKER_IMAGE_TAG)
+	@echo "\033[1;33mEnvoi de l'image vers ECR...\033[0m"
+	@docker push $(ECR_REGISTRY)/$(ECR_REPO):$(DOCKER_IMAGE_TAG)
+	@echo "\033[1;32mImage envoyée avec succès vers ECR !\033[0m"
+	@echo "L'image est disponible à l'adresse: $(ECR_REGISTRY)/$(ECR_REPO):$(DOCKER_IMAGE_TAG)"
 
 # Initialiser la base de données PostgreSQL
 db-init:
