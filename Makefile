@@ -40,6 +40,37 @@ start:
 build:
 	$(NPM) run build --no-lint
 
+.PHONY: deploy
+deploy:
+	@# Everything in one shell block for clarity:
+	@( \
+	  echo "Step 1: check if current branch is 'main'"; \
+	  CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	  if [ "$$CURRENT_BRANCH" != "main" ]; then \
+	    echo "Error: you must be on 'main' branch to deploy."; \
+	    exit 1; \
+	  fi; \
+	  echo "Step 2: verify uncommitted changes"; \
+	  CHANGES=$$(git status --porcelain); \
+	  if [ -n "$$CHANGES" ]; then \
+	    echo "You have local changes. Let's commit them."; \
+	    read -p "Enter production commit message: " MSG; \
+	    git add .; \
+	    git commit -m "$$MSG"; \
+	    git push origin main; \
+	  else \
+	    echo "No uncommitted changes found, continuing..."; \
+	  fi; \
+	  echo "Step 3: checkout 'prod', merge 'main', push, then come back"; \
+	  git checkout prod; \
+	  git merge main; \
+	  git push origin prod; \
+	  git checkout main; \
+	  echo "✅ Deployment completed!"; \
+	)
+
+
+
 # Exécution des tests
 test:
 	$(NPM) test
