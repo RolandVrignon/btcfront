@@ -26,7 +26,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE=929387410269.dkr.ecr.eu-north-1.amazonaws.com/ynor/client/ynor/client:latest
+          IMAGE=929387410269.dkr.ecr.eu-north-1.amazonaws.com/ynor/client:latest
           docker build -t $IMAGE .
           docker push $IMAGE
 
