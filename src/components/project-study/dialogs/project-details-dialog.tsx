@@ -76,6 +76,10 @@ function Localisation({
             <span className="font-medium">Coordonnées GPS : </span>
             {project.latitude}, {project.longitude}
           </p>
+          <p>
+            <span className="font-medium">Altitude : </span>
+            {Math.round(project.altitude || 0)} m
+          </p>
 
           {showGeorisquesButton && (
             <Button
@@ -176,6 +180,11 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
           <div className="flex-grow overflow-hidden">
             <AnimatedTabsContent value={tabIndex} index={0} className="h-full">
               <ScrollArea className="h-[calc(90vh-180px)]">
+                <Localisation
+                  project={project}
+                  onOpenGeorisques={() => {}}
+                  showGeorisquesButton={false}
+                />
                 <div className="pr-4">
                   {project.long_summary ? (
                     <RenderMarkdown
@@ -196,7 +205,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                 <div className="pr-4">
                   <Localisation
                     project={project}
-                    onOpenGeorisques={handleOpenGeorisques}
+                    onOpenGeorisques={() => {}}
                     showGeorisquesButton={false}
                   />
 
@@ -284,7 +293,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                   <Localisation
                     project={project}
                     onOpenGeorisques={handleOpenGeorisques}
-                    showGeorisquesButton={true}
+                    showGeorisquesButton={project.publicData?.url ? true : false}
                   />
                   {project.publicData ? (
                     <div className="space-y-6 pb-8">

@@ -69,6 +69,7 @@ export async function GET(
         externalProjectData?.closest_formatted_address || "",
       latitude: externalProjectData?.latitude || "",
       longitude: externalProjectData?.longitude || "",
+      altitude: externalProjectData?.altitude || "",
     };
 
     logger.log("filteredProjectData", filteredProjectData);

@@ -88,6 +88,7 @@ export interface Project {
   closest_formatted_address?: string;
   latitude?: Latitude;
   longitude?: Longitude;
+  altitude?: number;
 }
 
 export interface UploadingFile {
