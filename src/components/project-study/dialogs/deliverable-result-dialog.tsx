@@ -362,21 +362,24 @@ export function DeliverableResultDialog({
         cell: ({ row }: { row: Row<Record<string, unknown>> }) => {
           const value = row.getValue(header);
 
-          // Vérifier si la valeur est un tableau de chaînes
-          if (
-            Array.isArray(value) &&
-            value.every((item) => typeof item === "string")
-          ) {
+          // Afficher les tableaux comme des badges
+          if (Array.isArray(value)) {
             return (
               <div className="flex flex-wrap gap-1">
-                {value.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {value.length === 0 ? (
+                  <span className="text-gray-400">Aucune donnée</span>
+                ) : (
+                  value.map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                    >
+                      {typeof item === 'object' && item !== null
+                        ? JSON.stringify(item)
+                        : String(item)}
+                    </span>
+                  ))
+                )}
               </div>
             );
           }
@@ -394,14 +397,17 @@ export function DeliverableResultDialog({
         </div>
       );
     } else {
-      // Pour les tableaux de valeurs simples
+      // Pour les tableaux de valeurs simples, afficher en liste avec badges
       return (
-        <div className="border rounded-md p-2">
-          <ul className="list-disc pl-5">
-            {array.map((item, index) => (
-              <li key={index}>{renderResultValue(item)}</li>
-            ))}
-          </ul>
+        <div className="flex flex-wrap gap-1 p-2">
+          {array.map((item, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+            >
+              {renderResultValue(item)}
+            </span>
+          ))}
         </div>
       );
     }
@@ -434,7 +440,42 @@ export function DeliverableResultDialog({
       return <span className="text-gray-400">Non disponible</span>;
     }
 
+    // Vérifier s'il s'agit d'un FieldOrderObject
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.prototype.hasOwnProperty.call(value, "__data") &&
+      Object.prototype.hasOwnProperty.call(value, "__isArray")
+    ) {
+      const fieldOrderObj = value as Record<string, unknown>;
+      return renderFieldOrderObject(fieldOrderObj);
+    }
+
+    // Vérifier si la valeur est une date (format ISO ou autre format standard)
     if (typeof value === "string") {
+      // Essayer de détecter et formater une date
+      try {
+        // Vérifier si la chaîne ressemble à une date
+        if (
+          value.match(/^\d{4}-\d{2}-\d{2}/) || // Format ISO
+          value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/) || // Format ISO avec heure
+          value.includes("Z") || // Possiblement une date avec fuseau horaire
+          value.endsWith("Z") ||
+          (value.length > 10 &&
+            value.length < 30 &&
+            value.includes("-") &&
+            value.includes(":"))
+        ) {
+          const dateObj = new Date(value);
+          if (!isNaN(dateObj.getTime())) {
+            return format(dateObj, "dd/MM/yyyy à HH:mm");
+          }
+        }
+      } catch {
+        // Si la conversion échoue, continuer avec la valeur d'origine
+      }
+
       // Vérifier si c'est du JSON
       try {
         const jsonData = JSON.parse(value);
@@ -458,6 +499,104 @@ export function DeliverableResultDialog({
     }
 
     return String(value);
+  };
+
+  // Fonction pour rendre un FieldOrderObject
+  const renderFieldOrderObject = (obj: Record<string, unknown>): React.ReactNode => {
+    // Récupérer les données et l'ordre des champs
+    const data = obj.__data;
+    const isArray = obj.__isArray as boolean;
+    const fieldOrder = obj.__fieldOrder as string[] || [];
+
+    // Si ce n'est pas un tableau, on renvoie simplement la valeur
+    if (!isArray) {
+      return renderResultValue(data);
+    }
+
+    // Si c'est un tableau de données, on crée un tableau avec un ordre spécifique
+    if (Array.isArray(data)) {
+      // Extraire les vraies valeurs des objets __data dans chaque élément du tableau
+      const processedData = data.map(item => {
+        if (typeof item !== 'object' || item === null) return item;
+
+        // Créer un nouvel objet avec les valeurs extraites
+        const processedItem: Record<string, unknown> = {};
+
+        // Pour chaque propriété dans l'élément
+        Object.entries(item).forEach(([key, value]) => {
+          // Ignorer les propriétés spéciales comme __fieldOrder
+          if (key === '__fieldOrder') return;
+
+          // Si la valeur est un objet avec __data, extraire cette valeur
+          if (typeof value === 'object' && value !== null && '__data' in value) {
+            processedItem[key] = (value as Record<string, unknown>).__data;
+          }
+          // Si la valeur est un tableau d'objets avec __data, extraire pour chaque élément
+          else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null && '__data' in value[0]) {
+            processedItem[key] = value.map(v => (v as Record<string, unknown>).__data);
+          }
+          // Sinon, utiliser la valeur telle quelle
+          else {
+            processedItem[key] = value;
+          }
+        });
+
+        return processedItem;
+      });
+
+      // Si les données contiennent des objets avec des clés spécifiques, on utilise fieldOrder pour l'ordre des colonnes
+      const isStructuredData = processedData.length > 0 && typeof processedData[0] === "object" && processedData[0] !== null;
+
+      if (isStructuredData && fieldOrder.length > 0) {
+        // Créer un tableau avec les colonnes selon l'ordre défini
+        const columns = fieldOrder.map((key) => ({
+          accessorKey: key,
+          header: key,
+          cell: ({ row }: { row: Row<Record<string, unknown>> }) => {
+            const cellValue = row.getValue(key);
+
+            // Rendre les tableaux comme des badges
+            if (Array.isArray(cellValue)) {
+              return (
+                <div className="flex flex-wrap gap-1">
+                  {cellValue.length === 0 ? (
+                    <span className="text-gray-400">Aucune donnée</span>
+                  ) : (
+                    cellValue.map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                      >
+                        {typeof item === 'object' && item !== null
+                          ? JSON.stringify(item)
+                          : String(item)}
+                      </span>
+                    ))
+                  )}
+                </div>
+              );
+            }
+
+            return renderResultValue(cellValue);
+          },
+        }));
+
+        return (
+          <div className="rounded-lg overflow-hidden">
+            <DataTable
+              columns={columns}
+              data={processedData as Record<string, unknown>[]}
+            />
+          </div>
+        );
+      }
+
+      // Sinon, renvoyer un tableau standard
+      return renderTable(processedData);
+    }
+
+    // Si aucun des cas ci-dessus, renvoyer la valeur telle quelle
+    return renderResultValue(data);
   };
 
   // Préparer les données pour les onglets
@@ -733,7 +872,7 @@ export function DeliverableResultDialog({
                         index={index}
                         className={cn(
                           "h-full transition-all duration-300 ease-in-out",
-                          tabIndex === index ? "opacity-100" : "opacity-0"
+                          tabIndex === index ? "opacity-100" : "opacity-0",
                         )}
                       >
                         <ScrollArea className="h-full">
@@ -774,8 +913,8 @@ export function DeliverableResultDialog({
           </div>
 
           <DialogFooter className="mt-4 pt-4 border-t flex-shrink-0">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="transition-all duration-200"
             >

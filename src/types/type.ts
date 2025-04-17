@@ -122,3 +122,9 @@ export interface Deliverable {
   short_result?: JSON;
   long_result?: JSON;
 }
+
+export type FieldOrderObject = {
+  __data: unknown;
+  __fieldOrder: string[];
+  __isArray: boolean;
+};

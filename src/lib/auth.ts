@@ -40,12 +40,14 @@ export const authOptions: NextAuthOptions = {
         const userExists = await prisma.user.findUnique({
           where: { id: token.sub },
         });
-        
+
         if (!userExists) {
-          logger.warn(`User session invalidated - user ${token.sub} no longer exists in database`);
+          logger.warn(
+            `User session invalidated - user ${token.sub} no longer exists in database`,
+          );
           return { expires: session.expires };
         }
-        
+
         session.user.id = token.sub;
       }
       return session;

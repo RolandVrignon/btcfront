@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/src/components/ui/dialog";
 import { Project, PublicDocument } from "@/src/types/type";
-import { RenderMarkdown } from "@/src/components/ui/render-markdown";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import {
   AnimatedTabs,
@@ -118,7 +117,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
 
   if (!project) return null;
 
-  const tabs = ["Description du projet", "Documents publiques", "Géorisques"];
+  const tabs = ["Documents publics", "Géorisques"];
 
   const handleOpenDocument = (url: string) => {
     window.open(url, "_blank");
@@ -179,28 +178,6 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
 
           <div className="flex-grow overflow-hidden">
             <AnimatedTabsContent value={tabIndex} index={0} className="h-full">
-              <ScrollArea className="h-[calc(90vh-180px)]">
-                <Localisation
-                  project={project}
-                  onOpenGeorisques={() => {}}
-                  showGeorisquesButton={false}
-                />
-                <div className="pr-4">
-                  {project.long_summary ? (
-                    <RenderMarkdown
-                      content={project.long_summary}
-                      className="prose-p:my-4 prose-li:my-1 prose-headings:mt-6 prose-headings:mb-4"
-                    />
-                  ) : (
-                    <p className="text-muted-foreground italic">
-                      Aucune description disponible pour ce projet.
-                    </p>
-                  )}
-                </div>
-              </ScrollArea>
-            </AnimatedTabsContent>
-
-            <AnimatedTabsContent value={tabIndex} index={1} className="h-full">
               <ScrollArea className="h-[calc(90vh-180px)]">
                 <div className="pr-4">
                   <Localisation
@@ -287,13 +264,15 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
               </ScrollArea>
             </AnimatedTabsContent>
 
-            <AnimatedTabsContent value={tabIndex} index={2} className="h-full">
+            <AnimatedTabsContent value={tabIndex} index={1} className="h-full">
               <ScrollArea className="h-[calc(90vh-180px)]">
                 <div className="pr-4 space-y-6">
                   <Localisation
                     project={project}
                     onOpenGeorisques={handleOpenGeorisques}
-                    showGeorisquesButton={project.publicData?.url ? true : false}
+                    showGeorisquesButton={
+                      project.publicData?.url ? true : false
+                    }
                   />
                   {project.publicData ? (
                     <div className="space-y-6 pb-8">
