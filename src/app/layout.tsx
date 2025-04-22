@@ -23,7 +23,7 @@ export default async function RootLayout({
         className={cn("bg-background font-sans antialiased", inter.variable)}
       >
         <SessionProvider>{children}</SessionProvider>
-        <Toaster position="top-right" />
+        <Toaster position="bottom-right" />
       </body>
     </html>
   );

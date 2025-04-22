@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { redirect } from "next/navigation";
-import { Toaster } from "@/src/components/ui/sonner";
 
 export default async function DashboardLayout({
   children,
@@ -14,10 +13,5 @@ export default async function DashboardLayout({
     redirect("/auth/signin");
   }
 
-  return (
-    <>
-      {children}
-      <Toaster />
-    </>
-  );
+  return <>{children}</>;
 }

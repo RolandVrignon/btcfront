@@ -4,6 +4,8 @@ import { authOptions } from "@/src/lib/auth";
 import { Project } from "@/src/types/type";
 import prisma from "@/src/lib/prisma";
 import { logger } from "@/src/utils/logger";
+import { ProjectStatus } from "@prisma/client";
+import { db } from "@/src/lib/db";
 
 export async function GET(
   request: NextRequest,
@@ -88,7 +90,7 @@ export async function GET(
           ai_city: filteredProjectData.ai_city,
           ai_zip_code: filteredProjectData.ai_zip_code,
           ai_country: filteredProjectData.ai_country,
-          status: filteredProjectData.status,
+          status: filteredProjectData.status as ProjectStatus,
         },
         create: {
           externalId: id,
@@ -99,7 +101,7 @@ export async function GET(
           ai_city: filteredProjectData.ai_city,
           ai_zip_code: filteredProjectData.ai_zip_code,
           ai_country: filteredProjectData.ai_country,
-          status: filteredProjectData.status,
+          status: filteredProjectData.status as ProjectStatus,
           userId: session.user.id,
         },
       });
@@ -119,6 +121,78 @@ export async function GET(
     logger.error("Erreur lors de la récupération du projet:", error);
     return NextResponse.json(
       { error: "Erreur serveur interne" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { projectId: string } },
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { projectId } = params;
+    if (!projectId) {
+      return NextResponse.json(
+        { error: "ID du projet requis" },
+        { status: 400 },
+      );
+    }
+
+    const data = await req.json();
+
+    // Validate the updated fields
+    const allowedFields = [
+      "name",
+      "latitude",
+      "longitude",
+      "closest_formatted_address",
+    ];
+    const updateData: Record<string, string | number | null> = {};
+
+    for (const field of allowedFields) {
+      if (field in data) {
+        updateData[field] = data[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "Aucune donnée valide à mettre à jour" },
+        { status: 400 },
+      );
+    }
+
+    // Check if project exists and belongs to user
+    const existingProject = await db.project.findFirst({
+      where: {
+        externalId: projectId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!existingProject) {
+      return NextResponse.json({ error: "Projet non trouvé" }, { status: 404 });
+    }
+
+    // Update the project
+    const updatedProject = await db.project.update({
+      where: {
+        id: existingProject.id,
+      },
+      data: updateData,
+    });
+
+    return NextResponse.json(updatedProject);
+  } catch (error) {
+    logger.error("Erreur lors de la mise à jour du projet:", error);
+    return NextResponse.json(
+      { error: "Erreur serveur lors de la mise à jour du projet" },
       { status: 500 },
     );
   }

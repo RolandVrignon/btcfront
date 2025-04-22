@@ -374,7 +374,7 @@ export function DeliverableResultDialog({
                       key={idx}
                       className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
                     >
-                      {typeof item === 'object' && item !== null
+                      {typeof item === "object" && item !== null
                         ? JSON.stringify(item)
                         : String(item)}
                     </span>
@@ -502,11 +502,13 @@ export function DeliverableResultDialog({
   };
 
   // Fonction pour rendre un FieldOrderObject
-  const renderFieldOrderObject = (obj: Record<string, unknown>): React.ReactNode => {
+  const renderFieldOrderObject = (
+    obj: Record<string, unknown>,
+  ): React.ReactNode => {
     // Récupérer les données et l'ordre des champs
     const data = obj.__data;
     const isArray = obj.__isArray as boolean;
-    const fieldOrder = obj.__fieldOrder as string[] || [];
+    const fieldOrder = (obj.__fieldOrder as string[]) || [];
 
     // Si ce n'est pas un tableau, on renvoie simplement la valeur
     if (!isArray) {
@@ -516,8 +518,8 @@ export function DeliverableResultDialog({
     // Si c'est un tableau de données, on crée un tableau avec un ordre spécifique
     if (Array.isArray(data)) {
       // Extraire les vraies valeurs des objets __data dans chaque élément du tableau
-      const processedData = data.map(item => {
-        if (typeof item !== 'object' || item === null) return item;
+      const processedData = data.map((item) => {
+        if (typeof item !== "object" || item === null) return item;
 
         // Créer un nouvel objet avec les valeurs extraites
         const processedItem: Record<string, unknown> = {};
@@ -525,15 +527,27 @@ export function DeliverableResultDialog({
         // Pour chaque propriété dans l'élément
         Object.entries(item).forEach(([key, value]) => {
           // Ignorer les propriétés spéciales comme __fieldOrder
-          if (key === '__fieldOrder') return;
+          if (key === "__fieldOrder") return;
 
           // Si la valeur est un objet avec __data, extraire cette valeur
-          if (typeof value === 'object' && value !== null && '__data' in value) {
+          if (
+            typeof value === "object" &&
+            value !== null &&
+            "__data" in value
+          ) {
             processedItem[key] = (value as Record<string, unknown>).__data;
           }
           // Si la valeur est un tableau d'objets avec __data, extraire pour chaque élément
-          else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null && '__data' in value[0]) {
-            processedItem[key] = value.map(v => (v as Record<string, unknown>).__data);
+          else if (
+            Array.isArray(value) &&
+            value.length > 0 &&
+            typeof value[0] === "object" &&
+            value[0] !== null &&
+            "__data" in value[0]
+          ) {
+            processedItem[key] = value.map(
+              (v) => (v as Record<string, unknown>).__data,
+            );
           }
           // Sinon, utiliser la valeur telle quelle
           else {
@@ -545,7 +559,10 @@ export function DeliverableResultDialog({
       });
 
       // Si les données contiennent des objets avec des clés spécifiques, on utilise fieldOrder pour l'ordre des colonnes
-      const isStructuredData = processedData.length > 0 && typeof processedData[0] === "object" && processedData[0] !== null;
+      const isStructuredData =
+        processedData.length > 0 &&
+        typeof processedData[0] === "object" &&
+        processedData[0] !== null;
 
       if (isStructuredData && fieldOrder.length > 0) {
         // Créer un tableau avec les colonnes selon l'ordre défini
@@ -567,7 +584,7 @@ export function DeliverableResultDialog({
                         key={idx}
                         className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
                       >
-                        {typeof item === 'object' && item !== null
+                        {typeof item === "object" && item !== null
                           ? JSON.stringify(item)
                           : String(item)}
                       </span>

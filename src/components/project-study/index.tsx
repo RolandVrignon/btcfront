@@ -12,7 +12,7 @@ import { ProjectMapDialog } from "@/src/components/project-study/dialogs/project
 import { ProjectDetailsDialog } from "@/src/components/project-study/dialogs/project-details-dialog";
 import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
-import { Info } from "lucide-react";
+import { Info, Pencil } from "lucide-react";
 import { UploadingFile } from "@/src/types/type";
 import { ProjectToolsList } from "@/src/components/project-study/components/project-tools-list";
 import { ProjectChatbot } from "./components/project-chatbot";
@@ -23,6 +23,8 @@ import {
 } from "./utils/utils";
 import { TypewriterTitle } from "@/src/components/ui/typewriterTitle";
 import { LoadingSpinner } from "../ui/loading-spinner";
+import { AddressEditDialog } from "@/src/components/project-study/dialogs/address-edit-dialog";
+
 interface ProjectToolsProps {
   project: Project | null;
   projectRef: React.MutableRefObject<Project | null>;
@@ -147,6 +149,25 @@ export function ProjectStudy({
     );
   };
 
+  const updateProject = async (updatedProject: Partial<Project>) => {
+    if (!project || !project.externalId) return;
+
+    try {
+      setProject((prevProject) => {
+        if (!prevProject) return updatedProject;
+        return { ...prevProject, ...updatedProject };
+      });
+
+      // Update ref
+      if (projectRef && projectRef.current) {
+        projectRef.current = { ...projectRef.current, ...updatedProject };
+      }
+    } catch (error) {
+      console.error("Failed to update project:", error);
+      throw error;
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full overflow-auto overflow-x-hidden border-top-left border-l-2 bg-gray-50">
       <div className="banner h-[50vh] w-full relative flex-shrink-0">
@@ -181,13 +202,34 @@ export function ProjectStudy({
                 </>
               ) : project.status === "COMPLETED" ? (
                 // Cas 2: Projet terminé - Affichage du titre et du résumé
-                <div className="pb-10 flex flex-col gap-4">
+                <div className="pb-5 flex flex-col gap-4">
                   <h1 className="text-3xl font-bold">
                     {project.name || "Nouveau projet"}
                   </h1>
                   <h2 className="text-md font-light">
                     {project.short_summary}
                   </h2>
+                  <div
+                    className="flex flex-col border-2 border-stone-200 rounded-xl p-4 relative group cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => {
+                      document
+                        .getElementById("address-edit-dialog-trigger")
+                        ?.click();
+                    }}
+                  >
+                    <div className="absolute top-2 right-2 p-1 rounded-full">
+                      <Pencil className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <h3 className="text-md font-medium">
+                      {project.closest_formatted_address}
+                    </h3>
+                    <div className="flex items-center">
+                      <GoogleMapsIcon className="h-4 w-4 text-gray-500" />
+                      <h3 className="text-md font-light">
+                        {project.latitude}, {project.longitude}
+                      </h3>
+                    </div>
+                  </div>
                 </div>
               ) : project.status === "ERROR" ? (
                 // Cas 3: Projet en erreur - Message d'erreur
@@ -226,21 +268,6 @@ export function ProjectStudy({
                   >
                     <Info className="h-4 w-4 mr-1" />
                     Données publiques
-                  </Button>
-                )}
-
-                {project && project.ai_address && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center rounded-full bg-white hover:bg-blue-50"
-                    onClick={() => {
-                      // Ouvrir la dialog de carte
-                      document.getElementById("map-dialog-trigger")?.click();
-                    }}
-                  >
-                    <GoogleMapsIcon size={16} className="flex-shrink-0 mr-1" />
-                    Ouvrir dans Maps
                   </Button>
                 )}
               </div>
@@ -310,6 +337,11 @@ export function ProjectStudy({
       {/* Afficher la modale de détails du projet */}
       {!isLoading && project && project.long_summary && (
         <ProjectDetailsDialog project={project} />
+      )}
+
+      {/* Ajouter la modale d'édition d'adresse */}
+      {!isLoading && project && (
+        <AddressEditDialog project={project} updateProject={updateProject} />
       )}
     </div>
   );

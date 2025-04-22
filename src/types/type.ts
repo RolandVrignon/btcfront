@@ -70,24 +70,27 @@ export type Latitude = number; // Range: -90 to 90
 export type Longitude = number; // Range: -180 to 180
 
 export interface Project {
-  id: string;
+  id?: string;
+  externalId?: string;
   name?: string;
+  status?: "STARTED" | "PROCESSING" | "COMPLETED" | "ERROR";
+  // Location properties
+  latitude?: number;
+  longitude?: number;
+  ai_address?: string;
+  closest_formatted_address?: string;
+  // Summary properties
   short_summary?: string;
   long_summary?: string;
-  ai_address?: string;
+  // Other properties
   ai_city?: string;
   ai_zip_code?: string;
   ai_country?: string;
   date?: string;
-  status?: ProjectStatus;
-  externalId?: string;
   userId?: string;
   documents?: PublicDocumentList;
   publicData?: PublicData;
   deliverables?: Deliverable[];
-  closest_formatted_address?: string;
-  latitude?: Latitude;
-  longitude?: Longitude;
   altitude?: number;
 }
 
