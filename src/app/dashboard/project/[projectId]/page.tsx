@@ -3,12 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/src/components/sidebar";
 import { ProjectStudy } from "@/src/components/project-study";
-import {
-  Project,
-  UploadingFile,
-  PublicDocumentList,
-  Status,
-} from "@/src/types/type";
+import { Project, UploadingFile, Status } from "@/src/types/type";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import {
@@ -167,32 +162,17 @@ export default function DashboardPage() {
         setUploadingFiles(files);
         setIsProjectLoading(false);
 
-        if (
-          (!project?.documents ||
-            (project?.documents && project?.documents.length === 0)) &&
-          project?.ai_city
-        ) {
-          try {
-            // Exécuter les deux requêtes en parallèle avec Promise.all
-            const [publicDocuments, publicData] = await Promise.all([
-              searchPublicDocuments(project?.externalId || "", false),
-              searchPublicData(project?.externalId || "", false),
-            ]);
-
-            setProject({
-              ...project,
-              documents:
-                publicDocuments && publicDocuments.length > 0
-                  ? (publicDocuments as PublicDocumentList)
-                  : [],
-              publicData: publicData ? publicData : undefined,
-            });
-          } catch (error) {
-            logger.error(
-              "Erreur lors de la récupération des données publiques:",
-              error,
-            );
-          }
+        try {
+          // Exécuter les deux requêtes en parallèle avec Promise.all
+          await Promise.all([
+            searchPublicDocuments(project?.externalId || "", false),
+            searchPublicData(project?.externalId || "", false),
+          ]);
+        } catch (error) {
+          logger.error(
+            "Erreur lors de la récupération des données publiques:",
+            error,
+          );
         }
       } catch (error) {
         logger.error(

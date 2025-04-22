@@ -386,16 +386,10 @@ export const monitorProjectStatus = async (
         );
 
         // Run both searches in parallel
-        const [publicDocuments, publicData] = await Promise.all([
+        await Promise.all([
           searchPublicDocuments(projectId, true),
           searchPublicData(projectId, true),
         ]);
-
-        logger.info("publicDocuments", publicDocuments);
-        logger.info("publicData", publicData);
-
-        projectData.documents = publicDocuments as PublicDocumentList;
-        projectData.publicData = publicData;
       }
       resolve(projectData);
       setProject(projectData);
@@ -405,6 +399,17 @@ export const monitorProjectStatus = async (
       reject(error);
     }
   });
+};
+
+export const monitorDeliverable = async (deliverableId: string) => {
+  while (true) {
+    const response = await fetch(`/api/deliverables/${deliverableId}`);
+    const data = await response.json();
+    if (data.status === "COMPLETED" || data.status === "ERROR") {
+      return data;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
 };
 
 export const getDocumentIdByFileName = async (

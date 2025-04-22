@@ -21,10 +21,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  logger.info("body", body);
+  logger.info("projectId", projectId);
+  logger.info("type", type);
+  logger.info("documentIds", documentIds);
+  logger.info("user_prompt", user_prompt);
+  logger.info("new_deliverable", new_deliverable);
+
   const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
 
   try {
     if (!new_deliverable) {
+      logger.info("fetching deliverables without creating new one");
+
       const response = await fetch(
         `${apiUrl}/deliverables/project/${projectId}`,
         {
@@ -34,6 +43,8 @@ export async function POST(request: NextRequest) {
           },
         },
       );
+
+      logger.info("response", response);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch deliverables: ${response.statusText}`);
@@ -53,6 +64,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingDeliverables) {
+        logger.info("existingDeliverables", existingDeliverables);
         return NextResponse.json(existingDeliverables);
       }
     }

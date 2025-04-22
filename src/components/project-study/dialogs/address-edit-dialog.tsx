@@ -19,7 +19,19 @@ import { Search } from "lucide-react";
 // Add Google Maps types
 declare global {
   interface Window {
-    google: any;
+    google: {
+      maps: {
+        Map: any;
+        Marker: any;
+        LatLng: any;
+        Animation: any;
+        Geocoder: any;
+        ElevationService: any;
+        places: {
+          PlaceAutocompleteElement: any;
+        };
+      };
+    };
     initializeGoogleMaps: () => void;
   }
 }
@@ -52,11 +64,10 @@ export function AddressEditDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
-  const autocompleteRef = useRef<any>(null);
+  const autocompleteRef = useRef<HTMLElement | null>(null);
   const googleScriptLoadedRef = useRef(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const searchBoxRef = useRef<HTMLDivElement>(null);
-  // Référence pour suivre si une interaction avec la suggestion est en cours
   const interactingWithSuggestion = useRef(false);
 
   // Style pour les suggestions d'autocomplétion
@@ -64,40 +75,13 @@ export function AddressEditDialog({
     // Style pour modifier le curseur sur les suggestions
     const style = document.createElement("style");
     style.textContent = `
-      .pac-container {
-        z-index: 10000 !important;
-        position: absolute !important;
-        pointer-events: auto !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        border-radius: 0.5rem !important;
-        margin-top: 4px !important;
-        border: 1px solid #e2e8f0 !important;
-        background-color: white !important;
+      /* Styles pour le nouvel élément PlaceAutocompleteElement */
+      gmp-place-autocomplete-element {
+        width: 100%;
+        border-radius: 0.375rem;
+        height: 40px;
+        box-shadow: none !important;
         font-family: system-ui, -apple-system, sans-serif !important;
-        transform: translate3d(0, 0, 0) !important;
-        will-change: transform !important;
-      }
-      .pac-item {
-        cursor: pointer !important;
-        padding: 10px 12px !important;
-        font-size: 14px !important;
-        border-top: 1px solid #f1f5f9 !important;
-      }
-      .pac-item:first-child {
-        border-top: none !important;
-      }
-      .pac-item:hover {
-        background-color: #f1f9ff !important;
-      }
-      .pac-item-query {
-        font-size: 14px !important;
-        padding-right: 4px !important;
-      }
-      .pac-icon {
-        margin-right: 10px !important;
-      }
-      .pac-matched {
-        font-weight: bold !important;
       }
     `;
     document.head.appendChild(style);
@@ -109,17 +93,13 @@ export function AddressEditDialog({
 
   // Set up global initialization function
   useEffect(() => {
-    window.initializeGoogleMaps = () => {
-      googleScriptLoadedRef.current = true;
-      if (isOpen) {
-        initializeMap();
+    return () => {
+      // Nettoyer la fonction de callback globale à la désinstallation du composant
+      if (window.initializeGoogleMaps) {
+        window.initializeGoogleMaps = () => {};
       }
     };
-
-    return () => {
-      window.initializeGoogleMaps = () => {};
-    };
-  }, [isOpen]);
+  }, []);
 
   // Clear map references when dialog closes
   useEffect(() => {
@@ -138,7 +118,9 @@ export function AddressEditDialog({
   }, [isOpen]);
 
   // Fonction pour extraire ville, code postal et pays d'une adresse
-  const extractAddressComponents = (address: string): { city: string; zip_code: string; country: string } => {
+  const extractAddressComponents = (
+    address: string,
+  ): { city: string; zip_code: string; country: string } => {
     const components = {
       city: "",
       zip_code: "",
@@ -167,7 +149,10 @@ export function AddressEditDialog({
         }
       }
     } catch (error) {
-      console.error("Erreur lors de l'extraction des composants d'adresse:", error);
+      console.error(
+        "Erreur lors de l'extraction des composants d'adresse:",
+        error,
+      );
     }
 
     return components;
@@ -188,7 +173,9 @@ export function AddressEditDialog({
       // Reset selected location based on project data
       if (project.latitude && project.longitude) {
         // Extraire les composants d'adresse
-        const { city, zip_code, country } = extractAddressComponents(project.closest_formatted_address || "");
+        const { city, zip_code, country } = extractAddressComponents(
+          project.closest_formatted_address || "",
+        );
 
         setSelectedLocation({
           lat: project.latitude,
@@ -226,13 +213,21 @@ export function AddressEditDialog({
 
     const script = document.createElement("script");
     script.id = "google-maps-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initializeGoogleMaps`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=beta&callback=initializeGoogleMaps`;
     script.async = true;
     script.defer = true;
-    script.onerror = (error) => {
+    script.onerror = (error: Event) => {
       console.error("Erreur lors du chargement du script Google Maps:", error);
       setIsMapLoading(false);
       toast.error("Impossible de charger Google Maps");
+    };
+
+    // Définir la fonction de callback globale
+    window.initializeGoogleMaps = () => {
+      googleScriptLoadedRef.current = true;
+      if (isOpen) {
+        initializeMap();
+      }
     };
 
     document.head.appendChild(script);
@@ -338,153 +333,141 @@ export function AddressEditDialog({
         !searchBoxRef.current ||
         !window.google ||
         !window.google.maps ||
-        !window.google.maps.places
+        !window.google.maps.places ||
+        !window.google.maps.places.PlaceAutocompleteElement
       ) {
-        console.error("API Places non disponible");
+        console.error("API Places PlaceAutocompleteElement non disponible");
         return;
       }
 
-      // Get the input element directly from searchBoxRef
-      const inputElement = searchBoxRef.current.querySelector("input");
-      if (!inputElement) {
-        console.error("Champ de recherche non trouvé");
-        return;
-      }
-
-      // Create autocomplete with options
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        inputElement,
-        {
-          types: ["address"],
-          fields: ["formatted_address", "geometry", "place_id", "name"],
-        },
+      // Supprimer l'élément d'autocomplétion précédent s'il existe
+      const existingElement = searchBoxRef.current.querySelector(
+        '[id^="place-autocomplete"]',
       );
+      if (existingElement) {
+        existingElement.remove();
+      }
 
-      // Important: add these options
-      const checkPacContainer = () => {
-        const pacContainer = document.querySelector(".pac-container");
-        if (pacContainer) {
-          // Make sure the pac-container doesn't close prematurely
-          pacContainer.setAttribute("data-tap-disabled", "true");
+      // Masquer l'input existant
+      const inputElement = searchBoxRef.current.querySelector("input");
+      if (inputElement) {
+        inputElement.style.display = "none";
+      }
 
-          // S'assurer que le conteneur de suggestions est au-dessus de tout
-          (pacContainer as HTMLElement).style.zIndex = "10000";
+      // Créer le nouvel élément d'autocomplétion
+      const autocompleteElement =
+        new window.google.maps.places.PlaceAutocompleteElement({
+          types: ["address"],
+        });
 
-          // Ajouter un gestionnaire d'événements pour tous les éléments pac-item
-          const pacItems = pacContainer.querySelectorAll(".pac-item");
-          pacItems.forEach((item) => {
-            (item as HTMLElement).addEventListener("mousedown", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              interactingWithSuggestion.current = true;
-              console.log(
-                "Suggestion sélectionnée, empêche fermeture de la dialog",
+      // Définir un ID et des styles pour l'élément
+      autocompleteElement.id = "place-autocomplete-input";
+      autocompleteElement.style.width = "100%";
+      autocompleteElement.style.borderRadius = "0.375rem";
+
+      // Ajouter l'élément au DOM
+      searchBoxRef.current.appendChild(autocompleteElement);
+      autocompleteRef.current = autocompleteElement;
+
+      // Pré-remplir la recherche si nécessaire
+      if (searchQuery) {
+        setTimeout(() => {
+          const inputEl = autocompleteElement.querySelector("input");
+          if (inputEl) {
+            (inputEl as HTMLInputElement).value = searchQuery;
+          }
+        }, 100);
+      }
+
+      // Écouter l'événement de sélection
+      autocompleteElement.addEventListener("gmp-select", (event: Event) => {
+        try {
+          const customEvent = event as unknown as {
+            placePrediction: {
+              toPlace: () => any;
+            };
+          };
+
+          if (!customEvent.placePrediction) {
+            console.error("Données de prédiction non disponibles");
+            return;
+          }
+
+          // Convertir la prédiction en un objet Place
+          const placePrediction = customEvent.placePrediction;
+          const place = placePrediction.toPlace();
+
+          // Récupérer les détails du lieu
+          place
+            .fetchFields({
+              fields: [
+                "displayName",
+                "formattedAddress",
+                "location",
+                "addressComponents",
+              ],
+            })
+            .then(() => {
+              // Mise à jour de la carte
+              if (mapRef.current && markerRef.current && place.location) {
+                mapRef.current.setCenter(place.location);
+                mapRef.current.setZoom(17);
+                markerRef.current.setPosition(place.location);
+              }
+
+              const lat = place.location.lat();
+              const lng = place.location.lng();
+              const address = place.formattedAddress || place.displayName || "";
+
+              // Extraire les composants d'adresse
+              const { city, zip_code, country } =
+                extractAddressComponents(address);
+
+              // Récupérer l'altitude
+              getElevationForLocation(lat, lng).then((elevation) => {
+                // Mettre à jour l'emplacement sélectionné
+                const newLocation: Location = {
+                  lat,
+                  lng,
+                  address,
+                  altitude: elevation || 0,
+                  city,
+                  zip_code,
+                  country,
+                };
+
+                setSelectedLocation(newLocation);
+                setSearchQuery(address);
+
+                console.log(
+                  "Adresse sélectionnée avec composants:",
+                  newLocation,
+                );
+              });
+            })
+            .catch((error) => {
+              console.error(
+                "Erreur lors de la récupération des détails du lieu:",
+                error,
               );
             });
-
-            (item as HTMLElement).addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("Clic sur suggestion");
-
-              // Sélectionner l'adresse manuellement
-              const mainText =
-                item.querySelector(".pac-item-query")?.textContent || "";
-              const secondaryText =
-                item.querySelector(".pac-secondary-text")?.textContent || "";
-              const address =
-                mainText + (secondaryText ? ", " + secondaryText : "");
-
-              // Simuler une saisie dans l'input pour forcer la sélection
-              inputElement.value = address;
-              inputElement.focus();
-
-              // Lancer une recherche géocodage pour obtenir les coordonnées
-              const geocoder = new window.google.maps.Geocoder();
-              geocoder.geocode({ address }, (results, status) => {
-                if (status === "OK" && results && results.length > 0) {
-                  const location = results[0].geometry.location;
-
-                  // Mise à jour manuelle de la carte et des informations
-                  if (mapRef.current && markerRef.current) {
-                    mapRef.current.setCenter(location);
-                    mapRef.current.setZoom(17);
-                    markerRef.current.setPosition(location);
-                  }
-
-                  const lat = location.lat();
-                  const lng = location.lng();
-                  const newLocation = {
-                    lat,
-                    lng,
-                    address,
-                  };
-
-                  setSelectedLocation(newLocation);
-                  setSearchQuery(address);
-                }
-
-                // Reset l'état après traitement
-                setTimeout(() => {
-                  interactingWithSuggestion.current = false;
-                }, 500);
-              });
-            });
-          });
-        }
-      };
-
-      // Observer pour les ajouts de pac-container
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.addedNodes.length) {
-            checkPacContainer();
-          }
-        });
-      });
-
-      // Observer tout le document pour les changements
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-
-      // Vérifier immédiatement si le pac-container existe déjà
-      checkPacContainer();
-
-      // Prevent form submission on Enter key
-      inputElement.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          // Force place_changed event
-          if (autocompleteRef.current) {
-            try {
-              const place = autocompleteRef.current.getPlace();
-              if (place && place.geometry) {
-                updatePlaceOnMap(place);
-              }
-            } catch (err) {
-              console.error("Erreur lors de la récupération du lieu:", err);
-            }
-          }
-        }
-      });
-
-      // Handle place selection
-      autocompleteRef.current.addListener("place_changed", () => {
-        if (autocompleteRef.current) {
-          try {
-            const place = autocompleteRef.current.getPlace();
-            updatePlaceOnMap(place);
-          } catch (err) {
-            console.error("Erreur lors de la récupération du lieu:", err);
-          }
+        } catch (error) {
+          console.error("Erreur lors de la sélection du lieu:", error);
         }
       });
 
       return () => {
-        // Cleanup
-        observer.disconnect();
+        // Cleanup - supprimer l'élément d'autocomplétion
+        if (autocompleteRef.current && autocompleteRef.current.parentNode) {
+          autocompleteRef.current.parentNode.removeChild(
+            autocompleteRef.current,
+          );
+        }
+
+        // Restaurer l'input original
+        if (inputElement) {
+          inputElement.style.display = "";
+        }
       };
     } catch (error) {
       console.error(
@@ -499,38 +482,19 @@ export function AddressEditDialog({
     lat: number,
     lng: number,
   ): Promise<number | null> => {
-    try {
-      if (!window.google || !window.google.maps) {
-        console.error("API Google Maps non disponible");
-        return null;
-      }
-
-      console.log("Récupération de l'altitude pour:", lat, lng);
-
+    return new Promise((resolve) => {
       const elevator = new window.google.maps.ElevationService();
-      const location = { lat, lng };
-
-      return new Promise((resolve, reject) => {
-        elevator.getElevationForLocations(
-          {
-            locations: [location],
-          },
-          (results, status) => {
-            if (status === "OK" && results && results.length > 0) {
-              const elevation = results[0].elevation;
-              console.log("Altitude récupérée:", elevation);
-              resolve(elevation);
-            } else {
-              console.error("Impossible de récupérer l'altitude:", status);
-              resolve(null);
-            }
-          },
-        );
-      });
-    } catch (error) {
-      console.error("Erreur lors de la récupération de l'altitude:", error);
-      return null;
-    }
+      elevator.getElevationForLocations(
+        { locations: [{ lat, lng }] },
+        (results: Array<{ elevation: number }> | null, status: string) => {
+          if (status === "OK" && results && results.length > 0) {
+            resolve(results[0].elevation);
+          } else {
+            resolve(null);
+          }
+        },
+      );
+    });
   };
 
   // Modifier getAddressFromCoordinates pour inclure les composants d'adresse
@@ -540,15 +504,23 @@ export function AddressEditDialog({
       setIsLoading(true);
 
       const geocoder = new window.google.maps.Geocoder();
-      const response = await new Promise((resolve, reject) => {
-        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-          if (status === "OK" && results && results.length > 0) {
-            resolve(results);
-          } else {
-            reject(status);
-          }
-        });
-      });
+      const response = await new Promise<Array<{ formatted_address: string }>>(
+        (resolve, reject) => {
+          geocoder.geocode(
+            { location: { lat, lng } },
+            (
+              results: Array<{ formatted_address: string }> | null,
+              status: string,
+            ) => {
+              if (status === "OK" && results && results.length > 0) {
+                resolve(results);
+              } else {
+                reject(status);
+              }
+            },
+          );
+        },
+      );
 
       // Récupérer l'altitude
       const elevation = await getElevationForLocation(lat, lng);
@@ -596,57 +568,6 @@ export function AddressEditDialog({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Modifier updatePlaceOnMap pour inclure les composants d'adresse
-  const updatePlaceOnMap = (place: any) => {
-    if (!place || !place.geometry || !place.geometry.location) {
-      toast.error("Aucune information de localisation pour cette adresse");
-      return;
-    }
-
-    // Get lat/lng from place
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
-
-    console.log(
-      "Mise à jour de la carte avec:",
-      lat,
-      lng,
-      place.formatted_address,
-    );
-
-    // Update map and marker
-    if (mapRef.current && markerRef.current) {
-      const latLng = new window.google.maps.LatLng(lat, lng);
-      mapRef.current.setCenter(latLng);
-      mapRef.current.setZoom(17);
-      markerRef.current.setPosition(latLng);
-    }
-
-    // Récupérer l'altitude
-    getElevationForLocation(lat, lng).then((elevation) => {
-      const address = place.formatted_address || place.name || "";
-
-      // Extraire les composants d'adresse
-      const { city, zip_code, country } = extractAddressComponents(address);
-
-      // Update selected location state
-      const newLocation = {
-        lat,
-        lng,
-        address,
-        altitude: elevation || 0,
-        city,
-        zip_code,
-        country,
-      };
-
-      setSelectedLocation(newLocation);
-      setSearchQuery(address);
-
-      console.log("Adresse sélectionnée avec composants:", newLocation);
-    });
   };
 
   // Modifier handleSave pour inclure les composants d'adresse

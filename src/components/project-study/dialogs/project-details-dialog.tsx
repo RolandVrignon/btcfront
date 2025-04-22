@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/src/components/ui/dialog";
-import { Project, PublicDocument } from "@/src/types/type";
+import { Deliverable, Project, PublicDocument } from "@/src/types/type";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import {
   AnimatedTabs,
@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
-import { AlertTriangle, ExternalLink, MapPin } from "lucide-react";
+import { AlertTriangle, ExternalLink, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import {
@@ -40,7 +40,7 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { logger } from "@/src/utils/logger";
-
+import { monitorDeliverable } from "@/src/components/project-study/utils/utils";
 // Modify the Localisation component to accept a showGeorisquesButton prop
 interface LocalisationProps {
   project: Project;
@@ -101,9 +101,29 @@ interface ProjectDetailsDialogProps {
   project: Project | null;
 }
 
+interface GeorisquesData {
+  url?: string;
+  risquesNaturels?: Record<string, { present: boolean; libelle: string }>;
+  risquesTechnologiques?: Record<string, { present: boolean; libelle: string }>;
+}
+
 export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   const [tabIndex, setTabIndex] = useState(0);
   const [open, setOpen] = useState(false);
+  const [publicDocuments, setPublicDocuments] = useState<Deliverable | null>(
+    null,
+  );
+  const [georisquesData, setGeorisquesData] = useState<Deliverable | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Fetch deliverables when dialog opens
+  useEffect(() => {
+    if (open && project) {
+      fetchDeliverables();
+    }
+  }, [open, project]);
 
   // Reset tab index when dialog closes
   useEffect(() => {
@@ -115,6 +135,84 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
     }
   }, [open]);
 
+  useEffect(() => {
+    logger.info("publicDocuments", publicDocuments);
+  }, [publicDocuments]);
+
+  useEffect(() => {
+    logger.info("georisquesData", georisquesData);
+  }, [georisquesData]);
+
+  const fetchDeliverables = async () => {
+    if (!project) return;
+
+    setIsLoading(true);
+    try {
+      // Exécuter les deux requêtes en parallèle
+      const [documentsResponse, georisquesResponse] = await Promise.all([
+        fetch("/api/deliverables", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            projectId: project.externalId,
+            type: "DOCUMENTS_PUBLIQUES",
+            documentIds: [],
+            user_prompt: "",
+            new: false,
+          }),
+        }),
+        fetch("/api/deliverables", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            projectId: project.externalId,
+            type: "GEORISQUES",
+            documentIds: [],
+            user_prompt: "",
+            new: false,
+          }),
+        }),
+      ]);
+
+      logger.info("documentsResponse", documentsResponse);
+      logger.info("georisquesResponse", georisquesResponse);
+
+      // Traiter les résultats en parallèle également
+      await Promise.all([
+        (async () => {
+          if (documentsResponse.ok) {
+            const documentsData = await documentsResponse.json();
+            if (documentsData) {
+              const lastDeliverable = documentsData[documentsData.length - 1];
+              logger.info("DocumentslastDeliverable", lastDeliverable);
+              const res = await monitorDeliverable(lastDeliverable.id);
+              setPublicDocuments(res);
+            }
+          }
+        })(),
+        (async () => {
+          if (georisquesResponse.ok) {
+            const georisquesData = await georisquesResponse.json();
+            if (georisquesData) {
+              const lastDeliverable = georisquesData[georisquesData.length - 1];
+              logger.info("Georisques lastDeliverable", lastDeliverable);
+              const res = await monitorDeliverable(lastDeliverable.id);
+              setGeorisquesData(res);
+            }
+          }
+        })(),
+      ]);
+    } catch (error) {
+      logger.error("Error fetching deliverables:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!project) return null;
 
   const tabs = ["Documents publics", "Géorisques"];
@@ -124,8 +222,8 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   };
 
   const handleOpenGeorisques = () => {
-    if (project.publicData?.url) {
-      window.open(project.publicData.url, "_blank");
+    if (georisquesData?.url) {
+      window.open(georisquesData.url, "_blank");
     }
   };
 
@@ -187,7 +285,12 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                   />
 
                   <div className="mt-6">
-                    {project.documents && project.documents.length > 0 ? (
+                    {isLoading ? (
+                      <div className="flex justify-center items-center h-full">
+                        <Loader2 className="h-28 w-28 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : publicDocuments?.short_result &&
+                      Object.keys(publicDocuments.short_result).length > 0 ? (
                       <div className="rounded-lg overflow-hidden border">
                         <Table>
                           <TableHeader>
@@ -200,23 +303,23 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {project.documents.map(
-                              (doc: PublicDocument, index: number) => (
+                            {Object.entries(publicDocuments.short_result).map(
+                              ([key, value]) => (
                                 <TableRow
-                                  key={index}
+                                  key={key}
                                   className="cursor-pointer hover:bg-muted/80"
-                                  onClick={() => handleOpenDocument(doc.lien)}
+                                  onClick={() => handleOpenDocument(value.lien)}
                                 >
                                   <TableCell>
                                     <Badge
                                       variant="secondary"
                                       className="font-normal"
                                     >
-                                      {doc.type}
+                                      {key}
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="truncate max-w-[400px]">
-                                    {doc.lien}
+                                    {value.lien}
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <TooltipProvider>
@@ -228,7 +331,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                                             className="h-8 w-8 p-0 ml-auto"
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              handleOpenDocument(doc.lien);
+                                              handleOpenDocument(value.lien);
                                             }}
                                           >
                                             <ExternalLink className="h-4 w-4" />
@@ -255,7 +358,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                           <AlertTriangle className="h-6 w-6 text-muted-foreground" />
                         </div>
                         <p className="text-muted-foreground text-center max-w-md">
-                          Aucune document publique disponible pour ce projet.
+                          Aucun document public disponible pour ce projet.
                         </p>
                       </div>
                     )}
@@ -271,10 +374,19 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                     project={project}
                     onOpenGeorisques={handleOpenGeorisques}
                     showGeorisquesButton={
-                      project.publicData?.url ? true : false
+                      georisquesData?.short_result &&
+                      (georisquesData.short_result as any).url
+                        ? true
+                        : false
                     }
                   />
-                  {project.publicData ? (
+                  {georisquesData?.status !== "COMPLETED" &&
+                  georisquesData?.status !== "ERROR" ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : georisquesData?.status === "COMPLETED" &&
+                    georisquesData?.short_result ? (
                     <div className="space-y-6 pb-8">
                       {/* Risques Naturels */}
                       <Card>
@@ -285,11 +397,18 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {Object.entries(
-                              project.publicData?.risquesNaturels || {},
-                            ).map(([key, risque]) =>
-                              renderRisqueItem(risque, `naturel-${key}`),
-                            )}
+                            {georisquesData.short_result.risquesNaturels &&
+                              Object.entries(
+                                georisquesData.short_result.risquesNaturels,
+                              ).map(([key, risque]) =>
+                                renderRisqueItem(
+                                  risque as {
+                                    present: boolean;
+                                    libelle: string;
+                                  },
+                                  `naturel-${key}`,
+                                ),
+                              )}
                           </div>
                         </CardContent>
                       </Card>
@@ -303,11 +422,20 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {Object.entries(
-                              project.publicData?.risquesTechnologiques || {},
-                            ).map(([key, risque]) =>
-                              renderRisqueItem(risque, `techno-${key}`),
-                            )}
+                            {georisquesData.short_result
+                              .risquesTechnologiques &&
+                              Object.entries(
+                                georisquesData.short_result
+                                  .risquesTechnologiques,
+                              ).map(([key, risque]) =>
+                                renderRisqueItem(
+                                  risque as {
+                                    present: boolean;
+                                    libelle: string;
+                                  },
+                                  `techno-${key}`,
+                                ),
+                              )}
                           </div>
                         </CardContent>
                       </Card>

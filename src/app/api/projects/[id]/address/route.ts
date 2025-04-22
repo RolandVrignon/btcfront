@@ -23,7 +23,7 @@ export async function PATCH(
     }
 
     const data = await req.json();
-    console.log('data:', data)
+    console.log("data:", data);
 
     // Validate required fields
     const requiredFields = [

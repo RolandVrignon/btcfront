@@ -88,8 +88,6 @@ export interface Project {
   ai_country?: string;
   date?: string;
   userId?: string;
-  documents?: PublicDocumentList;
-  publicData?: PublicData;
   deliverables?: Deliverable[];
   altitude?: number;
 }
