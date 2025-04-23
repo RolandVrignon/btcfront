@@ -200,16 +200,20 @@ export function AddressEditDialog({
   }, [isOpen, project]);
 
   // Load Google Maps script
-  const loadGoogleMapsScript = () => {
+  const loadGoogleMapsScript = async () => {
     // Remove any existing script to avoid duplicates
     const existingScript = document.getElementById("google-maps-script");
     if (existingScript) {
       existingScript.remove();
     }
 
+    const response = await fetch('/api/config');
+    const data = await response.json();
+    const apiKey = data.googleMapsApiKey;
+
     const script = document.createElement("script");
     script.id = "google-maps-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=beta&callback=initializeGoogleMaps`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&v=beta&callback=initializeGoogleMaps`;
     script.async = true;
     script.defer = true;
 
@@ -246,8 +250,6 @@ export function AddressEditDialog({
         lat: project.latitude || 48.8566,
         lng: project.longitude || 2.3522,
       };
-
-      console.log("Initializing map with position:", initialPosition);
 
       if (!window.google?.maps?.Map) {
         toast.error("Google Maps API non chargée");
@@ -293,8 +295,6 @@ export function AddressEditDialog({
         "click",
         (e: google.maps.MapMouseEvent) => {
           if (!e.latLng) return;
-          console.log("Map clicked at:", e.latLng.lat(), e.latLng.lng());
-
           // Update marker position
           marker.setPosition(e.latLng);
 
@@ -307,8 +307,6 @@ export function AddressEditDialog({
       const dragListener = marker.addListener("dragend", () => {
         const position = marker.getPosition();
         if (!position) return;
-        console.log("Marker dragged to:", position.lat(), position.lng());
-
         // Get address from coordinates
         getAddressFromCoordinates(position.lat(), position.lng());
       });
@@ -453,11 +451,6 @@ export function AddressEditDialog({
 
                   setSelectedLocation(newLocation);
                   setSearchQuery(address);
-
-                  console.log(
-                    "Adresse sélectionnée avec composants:",
-                    newLocation,
-                  );
                 });
               }
             })
@@ -515,7 +508,6 @@ export function AddressEditDialog({
 
   // Modifier getAddressFromCoordinates pour inclure les composants d'adresse
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
-    console.log("Getting address for coordinates:", lat, lng);
     try {
       setIsLoading(true);
 
@@ -559,8 +551,6 @@ export function AddressEditDialog({
         };
         setSelectedLocation(newLocation);
         setSearchQuery(address);
-
-        console.log("Coordonnées -> Adresse avec composants:", newLocation);
       }
     } catch (error) {
       console.error("Erreur lors de la récupération de l'adresse:", error);
@@ -638,7 +628,6 @@ export function AddressEditDialog({
       onOpenChange={(open) => {
         // Ne pas fermer si on interagit avec les suggestions
         if (!open && interactingWithSuggestion.current) {
-          console.log("Empêche fermeture pendant interaction avec suggestions");
           return;
         }
         setIsOpen(open);

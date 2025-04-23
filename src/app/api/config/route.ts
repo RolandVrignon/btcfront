@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/src/utils/logger";
+
 export async function GET() {
   // Cette fonction s'exécute côté serveur, donc les variables d'environnement sont toujours disponibles
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
