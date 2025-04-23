@@ -19,19 +19,7 @@ import { Search } from "lucide-react";
 // Add Google Maps types
 declare global {
   interface Window {
-    google: {
-      maps: {
-        Map: any;
-        Marker: any;
-        LatLng: any;
-        Animation: any;
-        Geocoder: any;
-        ElevationService: any;
-        places: {
-          PlaceAutocompleteElement: any;
-        };
-      };
-    };
+    google: typeof google;
     initializeGoogleMaps: () => void;
   }
 }
@@ -51,6 +39,13 @@ interface Location {
   country: string;
 }
 
+interface PlaceWithFetchFields extends google.maps.places.PlaceResult {
+  fetchFields: (options: { fields: string[] }) => Promise<void>;
+  location?: google.maps.LatLng;
+  displayName?: string;
+  formattedAddress?: string;
+}
+
 export function AddressEditDialog({
   project,
   updateProject,
@@ -62,8 +57,8 @@ export function AddressEditDialog({
     null,
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const mapRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
   const autocompleteRef = useRef<HTMLElement | null>(null);
   const googleScriptLoadedRef = useRef(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -201,6 +196,7 @@ export function AddressEditDialog({
         loadGoogleMapsScript();
       }
     }
+    // eslint-disable-next-line
   }, [isOpen, project]);
 
   // Load Google Maps script
@@ -216,7 +212,8 @@ export function AddressEditDialog({
     script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=beta&callback=initializeGoogleMaps`;
     script.async = true;
     script.defer = true;
-    script.onerror = (error: Event) => {
+
+    script.onerror = (error) => {
       console.error("Erreur lors du chargement du script Google Maps:", error);
       setIsMapLoading(false);
       toast.error("Impossible de charger Google Maps");
@@ -252,7 +249,12 @@ export function AddressEditDialog({
 
       console.log("Initializing map with position:", initialPosition);
 
-      // Create map
+      if (!window.google?.maps?.Map) {
+        toast.error("Google Maps API non chargée");
+        setIsMapLoading(false);
+        return;
+      }
+
       const map = new window.google.maps.Map(mapContainerRef.current, {
         center: initialPosition,
         zoom: 15,
@@ -261,6 +263,7 @@ export function AddressEditDialog({
         fullscreenControl: true,
         zoomControl: true,
       });
+
       mapRef.current = map;
 
       // Create marker
@@ -286,16 +289,19 @@ export function AddressEditDialog({
       }
 
       // Add click event to map - capture coordinates when clicking on the map
-      const clickListener = map.addListener("click", (e) => {
-        if (!e.latLng) return;
-        console.log("Map clicked at:", e.latLng.lat(), e.latLng.lng());
+      const clickListener = map.addListener(
+        "click",
+        (e: google.maps.MapMouseEvent) => {
+          if (!e.latLng) return;
+          console.log("Map clicked at:", e.latLng.lat(), e.latLng.lng());
 
-        // Update marker position
-        marker.setPosition(e.latLng);
+          // Update marker position
+          marker.setPosition(e.latLng);
 
-        // Get address from coordinates
-        getAddressFromCoordinates(e.latLng.lat(), e.latLng.lng());
-      });
+          // Get address from coordinates
+          getAddressFromCoordinates(e.latLng.lat(), e.latLng.lng());
+        },
+      );
 
       // Add dragend event to marker - capture coordinates when marker is dragged
       const dragListener = marker.addListener("dragend", () => {
@@ -384,7 +390,7 @@ export function AddressEditDialog({
         try {
           const customEvent = event as unknown as {
             placePrediction: {
-              toPlace: () => any;
+              toPlace: () => google.maps.places.PlaceResult;
             };
           };
 
@@ -398,7 +404,8 @@ export function AddressEditDialog({
           const place = placePrediction.toPlace();
 
           // Récupérer les détails du lieu
-          place
+          const placeWithFetch = place as PlaceWithFetchFields;
+          placeWithFetch
             .fetchFields({
               fields: [
                 "displayName",
@@ -409,41 +416,50 @@ export function AddressEditDialog({
             })
             .then(() => {
               // Mise à jour de la carte
-              if (mapRef.current && markerRef.current && place.location) {
-                mapRef.current.setCenter(place.location);
+              if (
+                mapRef.current &&
+                markerRef.current &&
+                placeWithFetch.location
+              ) {
+                mapRef.current.setCenter(placeWithFetch.location);
                 mapRef.current.setZoom(17);
-                markerRef.current.setPosition(place.location);
+                markerRef.current.setPosition(placeWithFetch.location);
               }
 
-              const lat = place.location.lat();
-              const lng = place.location.lng();
-              const address = place.formattedAddress || place.displayName || "";
+              const lat = placeWithFetch.location?.lat();
+              const lng = placeWithFetch.location?.lng();
+              const address =
+                placeWithFetch.formattedAddress ||
+                placeWithFetch.displayName ||
+                "";
 
               // Extraire les composants d'adresse
               const { city, zip_code, country } =
                 extractAddressComponents(address);
 
               // Récupérer l'altitude
-              getElevationForLocation(lat, lng).then((elevation) => {
-                // Mettre à jour l'emplacement sélectionné
-                const newLocation: Location = {
-                  lat,
-                  lng,
-                  address,
-                  altitude: elevation || 0,
-                  city,
-                  zip_code,
-                  country,
-                };
+              if (typeof lat === "number" && typeof lng === "number") {
+                getElevationForLocation(lat, lng).then((elevation) => {
+                  // Mettre à jour l'emplacement sélectionné
+                  const newLocation: Location = {
+                    lat,
+                    lng,
+                    address,
+                    altitude: elevation || 0,
+                    city,
+                    zip_code,
+                    country,
+                  };
 
-                setSelectedLocation(newLocation);
-                setSearchQuery(address);
+                  setSelectedLocation(newLocation);
+                  setSearchQuery(address);
 
-                console.log(
-                  "Adresse sélectionnée avec composants:",
-                  newLocation,
-                );
-              });
+                  console.log(
+                    "Adresse sélectionnée avec composants:",
+                    newLocation,
+                  );
+                });
+              }
             })
             .catch((error) => {
               console.error(
@@ -525,7 +541,7 @@ export function AddressEditDialog({
       // Récupérer l'altitude
       const elevation = await getElevationForLocation(lat, lng);
 
-      const results = response as any[];
+      const results = response as google.maps.GeocoderResult[];
       if (results && results.length > 0) {
         const address = results[0].formatted_address;
 

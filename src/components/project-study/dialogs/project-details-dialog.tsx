@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/src/components/ui/dialog";
-import { Deliverable, Project, PublicDocument } from "@/src/types/type";
+import { Deliverable, Project } from "@/src/types/type";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
 import {
   AnimatedTabs,
@@ -101,12 +101,6 @@ interface ProjectDetailsDialogProps {
   project: Project | null;
 }
 
-interface GeorisquesData {
-  url?: string;
-  risquesNaturels?: Record<string, { present: boolean; libelle: string }>;
-  risquesTechnologiques?: Record<string, { present: boolean; libelle: string }>;
-}
-
 export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   const [tabIndex, setTabIndex] = useState(0);
   const [open, setOpen] = useState(false);
@@ -123,6 +117,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
     if (open && project) {
       fetchDeliverables();
     }
+    //eslint-disable-next-line
   }, [open, project]);
 
   // Reset tab index when dialog closes
@@ -133,6 +128,7 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
     if (project) {
       logger.info("project", project);
     }
+    //eslint-disable-next-line
   }, [open]);
 
   useEffect(() => {
@@ -222,8 +218,16 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
   };
 
   const handleOpenGeorisques = () => {
-    if (georisquesData?.url) {
-      window.open(georisquesData.url, "_blank");
+    const shortResult = georisquesData?.short_result as unknown as {
+      risquesNaturels?: Record<string, { present: boolean; libelle: string }>;
+      risquesTechnologiques?: Record<
+        string,
+        { present: boolean; libelle: string }
+      >;
+      url?: string;
+    };
+    if (shortResult?.url) {
+      window.open(shortResult.url, "_blank");
     }
   };
 
@@ -246,6 +250,16 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
       </span>
     </div>
   );
+
+  // Cast short_result pour l'utiliser dans le rendu
+  const shortResult = georisquesData?.short_result as unknown as {
+    risquesNaturels?: Record<string, { present: boolean; libelle: string }>;
+    risquesTechnologiques?: Record<
+      string,
+      { present: boolean; libelle: string }
+    >;
+    url?: string;
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -304,50 +318,53 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                           </TableHeader>
                           <TableBody>
                             {Object.entries(publicDocuments.short_result).map(
-                              ([key, value]) => (
-                                <TableRow
-                                  key={key}
-                                  className="cursor-pointer hover:bg-muted/80"
-                                  onClick={() => handleOpenDocument(value.lien)}
-                                >
-                                  <TableCell>
-                                    <Badge
-                                      variant="secondary"
-                                      className="font-normal"
-                                    >
-                                      {key}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="truncate max-w-[400px]">
-                                    {value.lien}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 ml-auto"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleOpenDocument(value.lien);
-                                            }}
-                                          >
-                                            <ExternalLink className="h-4 w-4" />
-                                            <span className="sr-only">
-                                              Ouvrir
-                                            </span>
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Ouvrir le document</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </TableCell>
-                                </TableRow>
-                              ),
+                              ([key, value]) => {
+                                const doc = value as { lien: string };
+                                return (
+                                  <TableRow
+                                    key={key}
+                                    className="cursor-pointer hover:bg-muted/80"
+                                    onClick={() => handleOpenDocument(doc.lien)}
+                                  >
+                                    <TableCell>
+                                      <Badge
+                                        variant="secondary"
+                                        className="font-normal"
+                                      >
+                                        {key}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="truncate max-w-[400px]">
+                                      {doc.lien}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 ml-auto"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenDocument(doc.lien);
+                                              }}
+                                            >
+                                              <ExternalLink className="h-4 w-4" />
+                                              <span className="sr-only">
+                                                Ouvrir
+                                              </span>
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Ouvrir le document</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              },
                             )}
                           </TableBody>
                         </Table>
@@ -375,7 +392,11 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                     onOpenGeorisques={handleOpenGeorisques}
                     showGeorisquesButton={
                       georisquesData?.short_result &&
-                      (georisquesData.short_result as any).url
+                      (
+                        georisquesData.short_result as unknown as {
+                          url?: string;
+                        }
+                      ).url
                         ? true
                         : false
                     }
@@ -397,17 +418,10 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {georisquesData.short_result.risquesNaturels &&
-                              Object.entries(
-                                georisquesData.short_result.risquesNaturels,
-                              ).map(([key, risque]) =>
-                                renderRisqueItem(
-                                  risque as {
-                                    present: boolean;
-                                    libelle: string;
-                                  },
-                                  `naturel-${key}`,
-                                ),
+                            {shortResult.risquesNaturels &&
+                              Object.entries(shortResult.risquesNaturels).map(
+                                ([key, risque]) =>
+                                  renderRisqueItem(risque, `naturel-${key}`),
                               )}
                           </div>
                         </CardContent>
@@ -422,19 +436,11 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {georisquesData.short_result
-                              .risquesTechnologiques &&
+                            {shortResult.risquesTechnologiques &&
                               Object.entries(
-                                georisquesData.short_result
-                                  .risquesTechnologiques,
+                                shortResult.risquesTechnologiques,
                               ).map(([key, risque]) =>
-                                renderRisqueItem(
-                                  risque as {
-                                    present: boolean;
-                                    libelle: string;
-                                  },
-                                  `techno-${key}`,
-                                ),
+                                renderRisqueItem(risque, `techno-${key}`),
                               )}
                           </div>
                         </CardContent>

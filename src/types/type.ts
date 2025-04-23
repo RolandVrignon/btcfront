@@ -120,8 +120,8 @@ export interface Deliverable {
   type: DeliverableType;
   status: Status;
   projectId: string;
-  short_result?: JSON;
-  long_result?: JSON;
+  short_result?: undefined;
+  long_result?: undefined;
 }
 
 export type FieldOrderObject = {

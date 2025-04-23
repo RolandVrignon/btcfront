@@ -41,7 +41,8 @@ COPY . .
 RUN touch .env.local
 
 # Construction de l'application en ignorant les erreurs de linting et de type
-RUN NODE_ENV=production SKIP_TYPE_CHECK=true NEXT_IGNORE_ESLINT=1 NEXT_IGNORE_TYPE_CHECK=1 pnpm exec next build --no-lint || echo "Build completed with warnings" && exit 0
+# Utiliser une solution qui permettra de terminer la génération du build
+RUN NODE_ENV=production SKIP_TYPE_CHECK=true NEXT_IGNORE_ESLINT=1 NEXT_IGNORE_TYPE_CHECK=1 pnpm exec next build --no-lint || (echo "Continuing despite build errors" && pnpm exec next build --no-lint --turbo)
 
 # Étape 2: Image de production
 FROM node:20-alpine AS runner

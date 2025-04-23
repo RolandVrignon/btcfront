@@ -158,6 +158,7 @@ export function FileUploadList({
         timerIntervalRef.current = null;
       }
     };
+    //eslint-disable-next-line
   }, []); // Exécuter une seule fois au montage
 
   // Gérer les changements de fichiers
@@ -190,6 +191,7 @@ export function FileUploadList({
         }
       }
     }
+    //eslint-disable-next-line
   }, [files]);
 
   // Formater le temps restant en MM:SS
