@@ -633,7 +633,7 @@ export function AddressEditDialog({
           Open Address Edit
         </div>
       </DialogTrigger>
-      <DialogContent className="min-w-[90vw] min-h-[90vh] overflow-auto">
+      <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Modifier la localisation du projet</DialogTitle>
           <DialogDescription>
@@ -643,12 +643,16 @@ export function AddressEditDialog({
         </DialogHeader>
 
         {/* Contenu principal de la boîte de dialogue en colonne */}
-        <div className="flex flex-col gap-4 h-full">
-          {/* Barre de recherche avec z-index élevé */}
-          <div className="relative" style={{ zIndex: 1000 }} ref={searchBoxRef}>
+        <div className="flex flex-col h-[calc(90vh-200px)] gap-4">
+          {/* Barre de recherche avec z-index élevé et hauteur fixe */}
+          <div
+            className="relative h-[50px]"
+            style={{ zIndex: 1000 }}
+            ref={searchBoxRef}
+          >
             <Input
               placeholder="Rechercher une adresse..."
-              className="pr-10"
+              className="pr-10 h-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoComplete="off"
@@ -656,9 +660,9 @@ export function AddressEditDialog({
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
           </div>
 
-          {/* Carte avec hauteur flexible */}
-          <div className="w-full flex-grow">
-            <div className="relative h-full min-h-[60vh] w-full rounded-md overflow-hidden border">
+          {/* Carte avec hauteur flexible qui prend tout l'espace disponible */}
+          <div className="flex-1 min-h-0">
+            <div className="relative h-full w-full rounded-md overflow-hidden border">
               {isMapLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 z-10">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
@@ -672,8 +676,8 @@ export function AddressEditDialog({
             </div>
           </div>
 
-          {/* Bloc d'informations sur l'adresse sélectionnée */}
-          <div className="flex flex-col gap-1 border-2 border-stone-200 rounded-xl p-4">
+          {/* Bloc d'informations sur l'adresse sélectionnée avec hauteur fixe */}
+          <div className="flex flex-col gap-1 border-2 border-stone-200 rounded-xl p-4 overflow-y-auto">
             <h3 className="text-md font-medium">Adresse sélectionnée:</h3>
             <p className="text-md break-words">
               {selectedLocation?.address || "Aucune adresse sélectionnée"}
@@ -698,26 +702,26 @@ export function AddressEditDialog({
               </div>
             </div>
           </div>
-        </div>
 
-        <DialogFooter className="mt-4">
-          <Button
-            variant="outline"
-            onClick={() => setIsOpen(false)}
-            disabled={isLoading}
-          >
-            Annuler
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isLoading || !selectedLocation}
-          >
-            {isLoading && (
-              <div className="h-3 w-3 mr-1 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            )}
-            {isLoading ? "Enregistrement..." : "Modifier"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={isLoading}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isLoading || !selectedLocation}
+            >
+              {isLoading && (
+                <div className="h-3 w-3 mr-1 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+              {isLoading ? "Enregistrement..." : "Modifier"}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

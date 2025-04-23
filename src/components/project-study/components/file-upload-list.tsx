@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   File,
   FileText,
   Image as ImageIcon,
   FileSpreadsheet,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/src/components/project-study/dialogs/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/type";
@@ -31,6 +32,172 @@ export function FileUploadList({
     name: string;
   } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const endTimeRef = useRef<number | null>(null);
+
+  // Générer une clé stable pour le localStorage
+  const timerStorageKey = `timer_end_${projectId || "default"}`;
+
+  // Fonction pour calculer le temps initial en secondes
+  const calculateInitialTime = () => {
+    const docsInProgress = files.filter(
+      (file) => file.status !== "COMPLETED" && file.status !== "ERROR",
+    ).length;
+
+    if (docsInProgress === 0) return null;
+
+    // Calcul en secondes: Math.ceil(docsInProgress / 15) * 2 minutes
+    return Math.ceil(docsInProgress / 15) * 2 * 60;
+  };
+
+  // Fonction pour démarrer ou redémarrer le timer
+  const startTimer = (durationInSeconds: number) => {
+    // Arrêter tout timer existant
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+
+    // Vérifier s'il y a déjà un timer en cours dans le localStorage
+    let endTime = null;
+    const savedEndTime = localStorage.getItem(timerStorageKey);
+
+    if (savedEndTime) {
+      const parsedEndTime = parseInt(savedEndTime, 10);
+      const now = Date.now();
+
+      // Si le temps de fin est encore dans le futur, l'utiliser
+      if (parsedEndTime > now) {
+        endTime = parsedEndTime;
+      }
+    }
+
+    // Si aucun timer en cours ou s'il est expiré, en créer un nouveau
+    if (!endTime) {
+      endTime = Date.now() + durationInSeconds * 1000;
+      localStorage.setItem(timerStorageKey, endTime.toString());
+    }
+
+    endTimeRef.current = endTime;
+
+    // Calculer et définir le temps restant initial
+    const initialRemainingSeconds = Math.max(
+      0,
+      Math.ceil((endTime - Date.now()) / 1000),
+    );
+    setRemainingSeconds(initialRemainingSeconds);
+
+    // Démarrer le nouvel intervalle
+    timerIntervalRef.current = setInterval(() => {
+      const now = Date.now();
+      const end = endTimeRef.current;
+
+      if (!end) {
+        clearInterval(timerIntervalRef.current!);
+        timerIntervalRef.current = null;
+        return;
+      }
+
+      // Calculer le temps restant
+      const remaining = Math.max(0, Math.ceil((end - now) / 1000));
+      setRemainingSeconds(remaining);
+
+      // Arrêter le timer quand il atteint zéro
+      if (remaining === 0) {
+        clearInterval(timerIntervalRef.current!);
+        timerIntervalRef.current = null;
+        localStorage.removeItem(timerStorageKey);
+      }
+    }, 1000);
+  };
+
+  // Initialiser le timer au montage du composant en vérifiant d'abord le localStorage
+  useEffect(() => {
+    const savedEndTime = localStorage.getItem(timerStorageKey);
+
+    if (savedEndTime) {
+      const parsedEndTime = parseInt(savedEndTime, 10);
+      const now = Date.now();
+
+      // Si le temps de fin est encore dans le futur, reprendre le timer
+      if (parsedEndTime > now) {
+        endTimeRef.current = parsedEndTime;
+        const remaining = Math.max(0, Math.ceil((parsedEndTime - now) / 1000));
+        setRemainingSeconds(remaining);
+
+        // Démarrer l'intervalle
+        timerIntervalRef.current = setInterval(() => {
+          const currentNow = Date.now();
+          const end = endTimeRef.current;
+
+          if (!end) {
+            clearInterval(timerIntervalRef.current!);
+            timerIntervalRef.current = null;
+            return;
+          }
+
+          const remaining = Math.max(0, Math.ceil((end - currentNow) / 1000));
+          setRemainingSeconds(remaining);
+
+          if (remaining === 0) {
+            clearInterval(timerIntervalRef.current!);
+            timerIntervalRef.current = null;
+            localStorage.removeItem(timerStorageKey);
+          }
+        }, 1000);
+      } else {
+        // Le timer a expiré, le supprimer
+        localStorage.removeItem(timerStorageKey);
+      }
+    }
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, []); // Exécuter une seule fois au montage
+
+  // Gérer les changements de fichiers
+  useEffect(() => {
+    // Calculer le nombre de documents en cours
+    const docsInProgress = files.filter(
+      (file) => file.status !== "COMPLETED" && file.status !== "ERROR",
+    ).length;
+
+    if (docsInProgress === 0) {
+      // Arrêter le timer s'il n'y a plus de documents en cours
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+
+      endTimeRef.current = null;
+      setRemainingSeconds(null);
+      localStorage.removeItem(timerStorageKey);
+    } else {
+      // Vérifier s'il y a déjà un timer en cours
+      const savedEndTime = localStorage.getItem(timerStorageKey);
+      const now = Date.now();
+
+      if (!savedEndTime || parseInt(savedEndTime, 10) <= now) {
+        // Aucun timer en cours ou timer expiré, en créer un nouveau
+        const initialDuration = calculateInitialTime();
+        if (initialDuration) {
+          startTimer(initialDuration);
+        }
+      }
+    }
+  }, [files]);
+
+  // Formater le temps restant en MM:SS
+  const formatRemainingTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   // Fonction pour obtenir l'icône selon le type de fichier
   const getFileIcon = (fileName: string) => {
@@ -125,9 +292,17 @@ export function FileUploadList({
   return (
     <>
       <div className="mt-4 w-full">
-        <h3 className="text-xl font-semibold mb-4">
-          Fichiers ({isLoading ? "..." : files.length})
-        </h3>
+        <div className="flex w-full justify-between items-center">
+          <h3 className="text-xl font-semibold mb-4">
+            Fichiers ({isLoading ? "..." : files.length})
+          </h3>
+          {remainingSeconds !== null && remainingSeconds > 0 && (
+            <div className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-light flex items-center">
+              <Clock className="h-3 w-3 mr-1" />
+              Temps restant estimé : {formatRemainingTime(remainingSeconds)}
+            </div>
+          )}
+        </div>
         <ScrollArea className="border rounded-lg flex flex-col max-h-[30vh] overflow-y-auto">
           {isLoading
             ? Array.from({ length: 3 }).map((_, index) => (
