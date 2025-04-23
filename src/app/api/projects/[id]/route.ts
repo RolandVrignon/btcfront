@@ -128,7 +128,7 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { projectId: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -136,8 +136,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { projectId } = params;
-    if (!projectId) {
+    const { id } = await params;
+    if (!id) {
       return NextResponse.json(
         { error: "ID du projet requis" },
         { status: 400 },
@@ -171,7 +171,7 @@ export async function PATCH(
     // Check if project exists and belongs to user
     const existingProject = await db.project.findFirst({
       where: {
-        externalId: projectId,
+        externalId: id,
         userId: session.user.id,
       },
     });
