@@ -207,7 +207,7 @@ export function AddressEditDialog({
       existingScript.remove();
     }
 
-    const response = await fetch('/api/config');
+    const response = await fetch("/api/config");
     const data = await response.json();
     const apiKey = data.googleMapsApiKey;
 

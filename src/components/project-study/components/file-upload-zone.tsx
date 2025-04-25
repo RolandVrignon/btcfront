@@ -30,10 +30,11 @@ const ACCEPTED_FILE_TYPES = [
   "text/csv",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/pdf",
+  "application/msword",
 ];
 
 // Extensions pour l'attribut accept de l'input
-const ACCEPTED_FILE_EXTENSIONS = ".csv,.docx,.pdf";
+const ACCEPTED_FILE_EXTENSIONS = ".docx,.pdf,.doc,.csv";
 
 export function FileUploadZone({
   onFilesSelected,
@@ -171,7 +172,7 @@ export function FileUploadZone({
             ou cliquez pour sélectionner des fichiers
           </p>
           <p className="text-sm text-muted-foreground">
-            Formats acceptés : DOCX, PDF
+            Formats acceptés : {ACCEPTED_FILE_EXTENSIONS}
           </p>
         </div>
       </label>
