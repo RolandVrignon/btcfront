@@ -20,6 +20,15 @@ export async function POST(request: NextRequest) {
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
 
+    const data = {
+      projectId,
+      downloadUrls,
+      documentWebhookUrl: `${process.env.NEXT_PUBLIC_FRONT_URL}/api/update/document`,
+      projectWebhookUrl: `${process.env.NEXT_PUBLIC_FRONT_URL}/api/update/project`,
+    };
+
+    console.log("Data : ", data);
+
     // Appel à l'API externe
     const response = await fetch(
       `${apiUrl}/documents/confirm-multiple-uploads`,
@@ -29,10 +38,7 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
           "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
         },
-        body: JSON.stringify({
-          projectId,
-          downloadUrls,
-        }),
+        body: JSON.stringify(data),
       },
     );
 
@@ -59,8 +65,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const responseData = await response.json();
+    return NextResponse.json(responseData);
   } catch (error) {
     logger.error("Erreur lors de la confirmation des uploads:", error);
     return NextResponse.json(

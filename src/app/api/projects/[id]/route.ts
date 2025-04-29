@@ -74,8 +74,6 @@ export async function GET(
       altitude: externalProjectData?.altitude || "",
     };
 
-    logger.log("filteredProjectData", filteredProjectData);
-
     try {
       // Utiliser upsert pour créer ou mettre à jour le projet
       const project = await prisma.project.upsert({

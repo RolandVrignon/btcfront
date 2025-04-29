@@ -32,8 +32,6 @@ export async function GET(
 
     const deliverable = await response.json();
 
-    logger.info("deliverable", deliverable);
-
     return NextResponse.json(deliverable);
   } catch (error) {
     logger.error("Error monitoring deliverable:", error);
