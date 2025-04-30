@@ -38,7 +38,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { projectId, documentId, extraction_status, indexation_status, extraction_message, indexation_message, code } = parseResult.data;
+  const {
+    projectId,
+    documentId,
+    extraction_status,
+    indexation_status,
+    extraction_message,
+    indexation_message,
+    code,
+  } = parseResult.data;
 
   console.log("Document updated : ", {
     projectId,

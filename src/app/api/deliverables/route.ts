@@ -21,14 +21,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  logger.info("body", body);
-  logger.info("projectId", projectId);
-  logger.info("type", type);
-  logger.info("documentIds", documentIds);
-  logger.info("user_prompt", user_prompt);
-  logger.info("new_deliverable", new_deliverable);
-
   const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
+
+  const webhook_url = `${process.env.NEXT_PUBLIC_FRONT_URL}/api/update/deliverable`;
+  console.log("webhook_url:", webhook_url);
 
   try {
     if (!new_deliverable) {
@@ -87,6 +83,7 @@ export async function POST(request: NextRequest) {
         documentIds: documentIds ? documentIds : [],
         user_prompt: user_prompt ? user_prompt : "",
         new: new_deliverable ? new_deliverable : false,
+        webhookUrl: webhook_url,
       }),
     });
 

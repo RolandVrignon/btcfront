@@ -3,7 +3,7 @@ import { z } from "zod";
 
 // Schema for body validation
 const bodySchema = z.object({
-  projectId: z.string(),
+  id: z.string(),
   status: z.enum([
     "UPLOAD",
     "DRAFT",
@@ -12,14 +12,15 @@ const bodySchema = z.object({
     "COMPLETED",
     "ERROR",
   ]),
+  type: z.string(),
+  projectId: z.string(),
   code: z.number(),
   message: z.string(),
+  updated_at: z.coerce.date(),
 });
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-
-  console.log("body:", body);
 
   const parseResult = bodySchema.safeParse(body);
 
@@ -30,9 +31,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { projectId, status, code, message } = parseResult.data;
+  const { id, status, type, projectId, code, message, updated_at } =
+    parseResult.data;
 
-  console.log("Project updated : ", { projectId, status, code, message });
+  console.log("Deliverable updated : ", {
+    id,
+    status,
+    type,
+    projectId,
+    code,
+    message,
+    updated_at,
+  });
 
   return NextResponse.json({ success: true });
 }
