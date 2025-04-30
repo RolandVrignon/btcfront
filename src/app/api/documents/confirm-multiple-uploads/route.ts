@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     const data = {
       projectId,
       downloadUrls,
-      documentWebhookUrl: `${process.env.NEXT_PUBLIC_FRONT_URL}/api/update/document`,
-      projectWebhookUrl: `${process.env.NEXT_PUBLIC_FRONT_URL}/api/update/project`,
+      documentWebhookUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/update/document`,
+      projectWebhookUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/update/project`,
     };
 
     console.log("Data : ", data);

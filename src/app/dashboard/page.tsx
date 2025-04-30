@@ -19,6 +19,10 @@ export default function DashboardPage() {
   const userId = session?.user?.id;
 
   useEffect(() => {
+    fetch("/api/socket");
+  }, []);
+
+  useEffect(() => {
     const fetchProjects = async () => {
       try {
         if (!userId) return;

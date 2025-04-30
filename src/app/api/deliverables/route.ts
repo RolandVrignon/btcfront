@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
 
-  const webhook_url = `${process.env.NEXT_PUBLIC_FRONT_URL}/api/update/deliverable`;
+  const webhook_url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/update/deliverable`;
   console.log("webhook_url:", webhook_url);
 
   try {
