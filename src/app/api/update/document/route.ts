@@ -5,7 +5,7 @@ import { z } from "zod";
 const bodySchema = z.object({
   projectId: z.string(),
   documentId: z.string(),
-  status: z.enum([
+  extraction_status: z.enum([
     "UPLOAD",
     "DRAFT",
     "PENDING",
@@ -13,14 +13,21 @@ const bodySchema = z.object({
     "COMPLETED",
     "ERROR",
   ]),
+  indexation_status: z.enum([
+    "UPLOAD",
+    "DRAFT",
+    "PENDING",
+    "PROGRESS",
+    "COMPLETED",
+    "ERROR",
+  ]),
+  extraction_message: z.string(),
+  indexation_message: z.string(),
   code: z.number(),
-  message: z.string(),
 });
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-
-  console.log("Body : ", body);
 
   const parseResult = bodySchema.safeParse(body);
 
@@ -31,14 +38,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { projectId, documentId, status, code, message } = parseResult.data;
+  const { projectId, documentId, extraction_status, indexation_status, extraction_message, indexation_message, code } = parseResult.data;
 
   console.log("Document updated : ", {
     projectId,
     documentId,
-    status,
+    extraction_status,
+    indexation_status,
+    extraction_message,
+    indexation_message,
     code,
-    message,
   });
 
   return NextResponse.json({ success: true });
