@@ -22,7 +22,7 @@ export function useProjectSocket(
       );
       return;
     }
-    
+
     if (!socket) {
       socket = io({
         path: "/api/socket",

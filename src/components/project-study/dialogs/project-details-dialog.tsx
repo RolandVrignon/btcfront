@@ -145,6 +145,12 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
     setIsLoading(true);
     try {
       // Exécuter les deux requêtes en parallèle
+
+      logger.info(
+        "Fetching deliverables documents and georisques for project",
+        project.externalId,
+      );
+
       const [documentsResponse, georisquesResponse] = await Promise.all([
         fetch("/api/deliverables", {
           method: "POST",

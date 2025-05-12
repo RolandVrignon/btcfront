@@ -85,17 +85,48 @@ export const ProjectStudy = React.memo(function ProjectStudy({
       const projectData = await response.json();
 
       setProject(projectData);
+
+      if (data.status === "COMPLETED") {
+        const [documentsResponse, georisquesResponse] = await Promise.all([
+          fetch(`/api/deliverables`, {
+            method: "POST",
+            body: JSON.stringify({
+              projectId: data.projectId,
+              type: "DOCUMENTS_PUBLIQUES",
+              documentIds: [],
+              user_prompt: "",
+              new: false,
+            }),
+          }),
+          fetch(`/api/deliverables`, {
+            method: "POST",
+            body: JSON.stringify({
+              projectId: data.projectId,
+              type: "GEORISQUES",
+              documentIds: [],
+              user_prompt: "",
+              new: false,
+            }),
+          }),
+        ]);
+
+        const documentsData = await documentsResponse.json();
+        const georisquesData = await georisquesResponse.json();
+
+        logger.info("documentsData", documentsData);
+        logger.info("georisquesData", georisquesData);
+      }
     }
   });
 
   useDocumentSocket(projectId || "", (data) => {
     if (projectId) {
-      logger.info(
-        "Document status : ",
-        JSON.stringify(data, null, 2),
-        "\nUploading files : ",
-        JSON.stringify(uploadingFiles, null, 2),
-      );
+      // logger.info(
+      //   "Document status : ",
+      //   JSON.stringify(data, null, 2),
+      //   "\nUploading files : ",
+      //   JSON.stringify(uploadingFiles, null, 2),
+      // );
 
       setUploadingFiles((prevFiles) =>
         prevFiles.map((file) =>

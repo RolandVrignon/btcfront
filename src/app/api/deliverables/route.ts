@@ -4,6 +4,7 @@ import { logger } from "@/src/utils/logger";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  console.log("body:", body);
 
   const {
     projectId,
@@ -21,36 +22,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
-
+  const completeApiUrl = `${process.env.NEXT_PUBLIC_CTIA_API_URL}/deliverables/project/${projectId}`;
   const webhook_url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/update/deliverable`;
-  console.log("webhook_url:", webhook_url);
 
   try {
     if (!new_deliverable) {
       logger.info("fetching deliverables without creating new one");
 
-      const response = await fetch(
-        `${apiUrl}/deliverables/project/${projectId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
-          },
+      const response = await fetch(`${completeApiUrl}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
         },
-      );
-
-      logger.info("response", response);
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch deliverables: ${response.statusText}`);
       }
 
       const deliverables = await response.json();
+      console.log("deliverables:", deliverables);
 
       const existingDeliverables = deliverables.filter(
         (deliverable: Deliverable) => deliverable.type === type,
       );
+
+      console.log("existingDeliverables:", existingDeliverables);
 
       // Sort existingDeliverables by createdAt from oldest to newest
       existingDeliverables.sort((a: Deliverable, b: Deliverable) => {
@@ -59,13 +56,45 @@ export async function POST(request: NextRequest) {
         return dateA - dateB;
       });
 
-      if (existingDeliverables) {
+      if (existingDeliverables.length > 0) {
         logger.info("existingDeliverables", existingDeliverables);
-        return NextResponse.json(existingDeliverables);
+        // Return the latest deliverable
+        return NextResponse.json([
+          existingDeliverables[existingDeliverables.length - 1],
+        ]);
+      } else {
+        // Create a default deliverable if none exist
+        const apiUrl = `${process.env.NEXT_PUBLIC_CTIA_API_URL}/deliverables/create-and-wait`;
+        const obj = {
+          projectId: projectId,
+          type: type,
+          documentIds: [],
+          user_prompt: "",
+          new: true,
+          webhookUrl: webhook_url,
+        }
+
+        const createResponse = await fetch(`${apiUrl}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
+          },
+          body: JSON.stringify(obj),
+        });
+
+        if (!createResponse.ok) {
+          throw new Error(
+            `Failed to create default deliverable: ${createResponse.statusText}`,
+          );
+        }
+
+        const newDeliverable = await createResponse.json();
+        return NextResponse.json([newDeliverable]);
       }
     }
 
-    const createDeliverableApiUrl = `${apiUrl}/deliverables`;
+    const createDeliverableApiUrl = `${completeApiUrl}/deliverables`;
 
     if (!process.env.NEXT_PUBLIC_CTIA_API_KEY) {
       throw new Error("NEXT_PUBLIC_CTIA_API_KEY is not set");
