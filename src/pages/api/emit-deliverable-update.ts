@@ -28,7 +28,14 @@ export default function handler(
     console.log("emit project update to socket");
     res.socket.server.io
       .to(projectId)
-      .emit("deliverableUpdate", { id, status, type, code, message, updated_at });
+      .emit("deliverableUpdate", {
+        id,
+        status,
+        type,
+        code,
+        message,
+        updated_at,
+      });
   }
 
   res.status(200).json({ ok: true });

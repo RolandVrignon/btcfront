@@ -67,10 +67,20 @@ export async function POST(request: NextRequest) {
   const emitDocumentUpdateUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/emit-document-update`;
   console.log("emitDocumentUpdateUrl:", emitDocumentUpdateUrl);
 
-    await fetch(emitDocumentUpdateUrl, {
+  await fetch(emitDocumentUpdateUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ projectId, fileName, documentId, extraction_status, indexation_status, extraction_message, indexation_message, code, tags }),
+    body: JSON.stringify({
+      projectId,
+      fileName,
+      documentId,
+      extraction_status,
+      indexation_status,
+      extraction_message,
+      indexation_message,
+      code,
+      tags,
+    }),
   });
 
   return NextResponse.json({ success: true });

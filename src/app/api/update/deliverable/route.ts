@@ -50,7 +50,15 @@ export async function POST(request: NextRequest) {
   await fetch(emitDeliverableUpdateUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, projectId, status, type, code, message, updated_at }),
+    body: JSON.stringify({
+      id,
+      projectId,
+      status,
+      type,
+      code,
+      message,
+      updated_at,
+    }),
   });
 
   return NextResponse.json({ success: true });
