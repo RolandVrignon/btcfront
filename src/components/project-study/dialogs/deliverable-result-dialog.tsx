@@ -626,7 +626,7 @@ export function DeliverableResultDialog({
   const getTabsData = (deliverable: Deliverable) => {
     if (!deliverable || !deliverable.short_result || !deliverable.long_result) {
       return {
-        tabs: ["Résumé", "Analyse complète"],
+        tabs: ["Analyse complète", "Résumé"],
         contents: [null, null],
       };
     }
@@ -635,10 +635,10 @@ export function DeliverableResultDialog({
     logger.debug("short_result:", deliverable.short_result);
 
     return {
-      tabs: ["Résumé", "Analyse complète"],
+      tabs: ["Analyse complète", "Résumé"],
       contents: [
-        deliverable.short_result.result,
         deliverable.long_result.result,
+        deliverable.short_result.result,
       ],
     };
   };

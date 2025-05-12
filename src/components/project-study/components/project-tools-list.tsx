@@ -127,77 +127,77 @@ export function ProjectToolsList({
     }
   }, [uploadFiles, fileSelectionDialogOpen]);
 
-  // const monitorDeliverable = async (
-  //   deliverableId: string,
-  //   toolId: string,
-  //   toolName: string,
-  // ) => {
-  //   try {
-  //     let isComplete = false;
-  //     let attempts = 0;
-  //     const maxAttempts = 60; // 5 minutes with 5-second intervals
-  //     await new Promise((resolve) => setTimeout(resolve, 5000));
+  const monitorDeliverable = async (
+    deliverableId: string,
+    toolId: string,
+    toolName: string,
+  ) => {
+    try {
+      let isComplete = false;
+      let attempts = 0;
+      const maxAttempts = 60; // 5 minutes with 5-second intervals
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
-  //     while (!isComplete && attempts < maxAttempts) {
-  //       attempts++;
+      while (!isComplete && attempts < maxAttempts) {
+        attempts++;
 
-  //       const response = await fetch(`/api/deliverables/${deliverableId}`);
+        const response = await fetch(`/api/deliverables/${deliverableId}`);
 
-  //       if (!response.ok) {
-  //         throw new Error("Failed to monitor deliverable");
-  //       }
+        if (!response.ok) {
+          throw new Error("Failed to monitor deliverable");
+        }
 
-  //       const deliverable: Deliverable = await response.json();
+        const deliverable: Deliverable = await response.json();
 
-  //       if (
-  //         deliverable.status === "COMPLETED" ||
-  //         deliverable.status === "ERROR"
-  //       ) {
-  //         isComplete = true;
+        if (
+          deliverable.status === "COMPLETED" ||
+          deliverable.status === "ERROR"
+        ) {
+          isComplete = true;
 
-  //         if (deliverable.status === "COMPLETED") {
-  //           setSelectedDeliverable({
-  //             id: [deliverableId],
-  //             toolName: toolName,
-  //           });
-  //           setDialogOpen(true);
-  //         } else {
-  //           toast.error(
-  //             "Une erreur est survenue lors de la génération du livrable.",
-  //           );
-  //         }
+          if (deliverable.status === "COMPLETED") {
+            setSelectedDeliverable({
+              id: [deliverableId],
+              toolName: toolName,
+            });
+            setDialogOpen(true);
+          } else {
+            toast.error(
+              "Une erreur est survenue lors de la génération du livrable.",
+            );
+          }
 
-  //         return;
-  //       }
+          return;
+        }
 
-  //       // Wait 5 seconds before checking again
-  //       await new Promise((resolve) => setTimeout(resolve, 5000));
-  //     }
+        // Wait 5 seconds before checking again
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
 
-  //     if (!isComplete) {
-  //       // Timeout reached
-  //       setTools((prevTools) =>
-  //         prevTools.map((tool) =>
-  //           tool.id === toolId ? { ...tool, isLoading: false } : tool,
-  //         ),
-  //       );
+      if (!isComplete) {
+        // Timeout reached
+        setTools((prevTools) =>
+          prevTools.map((tool) =>
+            tool.id === toolId ? { ...tool, isLoading: false } : tool,
+          ),
+        );
 
-  //       toast.error(
-  //         "La génération du livrable prend plus de temps que prévu. Veuillez réessayer plus tard.",
-  //       );
-  //     }
-  //   } catch (error) {
-  //     logger.error("Error monitoring deliverable:", error);
+        toast.error(
+          "La génération du livrable prend plus de temps que prévu. Veuillez réessayer plus tard.",
+        );
+      }
+    } catch (error) {
+      logger.error("Error monitoring deliverable:", error);
 
-  //     setTools((prevTools) =>
-  //       prevTools.map((tool) =>
-  //         tool.id === toolId ? { ...tool, isLoading: false } : tool,
-  //       ),
-  //     );
+      setTools((prevTools) =>
+        prevTools.map((tool) =>
+          tool.id === toolId ? { ...tool, isLoading: false } : tool,
+        ),
+      );
 
-  //     toast.error("Une erreur est survenue lors du suivi du livrable.");
-  //   }
-  // };
+      toast.error("Une erreur est survenue lors du suivi du livrable.");
+    }
+  };
 
   const handleToolClick = async (tool: Tool) => {
     if (!tool.endpoint) {
@@ -326,11 +326,11 @@ export function ProjectToolsList({
 
       setDialogOpen(true);
 
-      // await monitorDeliverable(
-      //   deliverable.id,
-      //   currentTool?.id || "",
-      //   currentTool?.name || "",
-      // );
+      await monitorDeliverable(
+        deliverable.id,
+        currentTool?.id || "",
+        currentTool?.name || "",
+      );
 
       setRemarks("");
       setIsRegenerating(false);
