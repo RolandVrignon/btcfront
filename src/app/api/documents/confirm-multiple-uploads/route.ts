@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
       projectWebhookUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/update/project`,
     };
 
-    console.log("Data : ", data);
-
     // Appel à l'API externe
     const response = await fetch(
       `${apiUrl}/documents/confirm-multiple-uploads`,

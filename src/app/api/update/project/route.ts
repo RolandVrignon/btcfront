@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/src/utils/logger";
 
 // Schema for body validation
 const bodySchema = z.object({
@@ -19,7 +20,7 @@ const bodySchema = z.object({
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
-  console.log("body:", body);
+  logger.info("body:", body);
 
   const parseResult = bodySchema.safeParse(body);
 
@@ -32,10 +33,10 @@ export async function POST(request: NextRequest) {
 
   const { projectId, status, code, message } = parseResult.data;
 
-  console.log("Project updated : ", { projectId, status, code, message });
+  logger.info("Project updated : ", { projectId, status, code, message });
 
   const emitProjectUpdateUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/emit-project-update`;
-  console.log("emitProjectUpdateUrl:", emitProjectUpdateUrl);
+  logger.info("emitProjectUpdateUrl:", emitProjectUpdateUrl);
 
   await fetch(emitProjectUpdateUrl, {
     method: "POST",

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import type { Server as HTTPServer } from "http";
 import type { Socket } from "net";
 import { Server as IOServer } from "socket.io";
-
+import { logger } from "@/src/utils/logger";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: Socket & {
     server: HTTPServer & {
@@ -15,7 +15,7 @@ export default function handler(
   req: NextApiRequest,
   res: NextApiResponseWithSocket,
 ) {
-  console.log("emit-project-update");
+  logger.info("emit-project-update");
 
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
@@ -24,11 +24,11 @@ export default function handler(
 
   const { projectId, status, code, message } = req.body;
 
-  console.log("projectId:", projectId);
-  console.log("status:", status);
+  logger.info("projectId:", projectId);
+  logger.info("status:", status);
 
   if (res.socket.server.io) {
-    console.log("emit project update to socket");
+    logger.info("emit project update to socket");
     res.socket.server.io
       .to(projectId)
       .emit("projectUpdate", { projectId, status, code, message });
