@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
           user_prompt: "",
           new: true,
           webhookUrl: webhook_url,
-        }
+        };
 
         const createResponse = await fetch(`${apiUrl}`, {
           method: "POST",
