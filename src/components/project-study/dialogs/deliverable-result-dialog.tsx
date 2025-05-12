@@ -31,7 +31,7 @@ import {
 import { logger } from "@/src/utils/logger";
 import { format } from "date-fns";
 import { cn } from "@/src/lib/utils";
-
+import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
 interface Document {
   id: string;
   name: string;
@@ -42,7 +42,7 @@ interface Document {
 interface Deliverable {
   id: string;
   type: string;
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "ERROR";
+  status: "PENDING" | "PROGRESS" | "COMPLETED" | "ERROR";
   short_result?: {
     result: string | Record<string, unknown>;
   };
@@ -144,6 +144,12 @@ export function DeliverableResultDialog({
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
     null,
   );
+
+  useDeliverableSocket(projectId || "", async (data) => {
+    const deliverable = await fetch(`/api/deliverables/${data.id}`);
+    const deliverableData = await deliverable.json();
+    setDeliverable(deliverableData);
+  });
 
   // Reset tab index when dialog closes
   useEffect(() => {
@@ -269,7 +275,7 @@ export function DeliverableResultDialog({
     // Maintenir l'état de chargement si le deliverable est en attente ou en cours
     else if (
       deliverable.status === "PENDING" ||
-      deliverable.status === "PROCESSING"
+      deliverable.status === "PROGRESS"
     ) {
       setIsLoading(true);
     }
@@ -778,7 +784,7 @@ export function DeliverableResultDialog({
               )}
               {deliverable &&
                 (deliverable.status === "PENDING" ||
-                  deliverable.status === "PROCESSING") && (
+                  deliverable.status === "PROGRESS") && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 transition-opacity duration-300 ease-in-out">
                     <svg
                       className="w-4 h-4 mr-1.5 text-yellow-500 animate-spin"

@@ -25,7 +25,6 @@ import { AddressEditDialog } from "@/src/components/project-study/dialogs/addres
 import { useProjectSocket } from "@/src/hooks/use-project-socket";
 import { logger } from "@/src/utils/logger";
 import { useDocumentSocket } from "@/src/hooks/use-document-socket";
-import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
 
 interface ProjectToolsProps {
   project: Project | null;
@@ -113,21 +112,37 @@ export const ProjectStudy = React.memo(function ProjectStudy({
         const documentsData = await documentsResponse.json();
         const georisquesData = await georisquesResponse.json();
 
-        logger.info("documentsData", documentsData);
-        logger.info("georisquesData", georisquesData);
+        if (documentsData.length === 0) {
+          await fetch(`/api/deliverables`, {
+            method: "POST",
+            body: JSON.stringify({
+              projectId: data.projectId,
+              type: "DOCUMENTS_PUBLIQUES",
+              documentIds: [],
+              user_prompt: "",
+              new: true,
+            }),
+          });
+        }
+
+        if (georisquesData.length === 0) {
+          await fetch(`/api/deliverables`, {
+            method: "POST",
+            body: JSON.stringify({
+              projectId: data.projectId,
+              type: "GEORISQUES",
+              documentIds: [],
+              user_prompt: "",
+              new: true,
+            }),
+          });
+        }
       }
     }
   });
 
   useDocumentSocket(projectId || "", (data) => {
     if (projectId) {
-      // logger.info(
-      //   "Document status : ",
-      //   JSON.stringify(data, null, 2),
-      //   "\nUploading files : ",
-      //   JSON.stringify(uploadingFiles, null, 2),
-      // );
-
       setUploadingFiles((prevFiles) =>
         prevFiles.map((file) =>
           file.fileName === data.fileName
@@ -142,12 +157,6 @@ export const ProjectStudy = React.memo(function ProjectStudy({
             : file,
         ),
       );
-    }
-  });
-
-  useDeliverableSocket(projectId || "", (data) => {
-    if (projectId) {
-      logger.info("Deliverable status : ", JSON.stringify(data, null, 2));
     }
   });
 

@@ -6,10 +6,13 @@ let socket: Socket | null = null;
 
 // Event data type for deliverable updates
 interface DeliverableUpdateDataEvent {
-  deliverableId: string;
+  id: string;
+  projectId: string;
   status: string;
-  message: string;
+  type: string;
   code: string;
+  message: string;
+  updated_at: string;
 }
 
 export function useDeliverableSocket(
