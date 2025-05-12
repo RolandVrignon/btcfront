@@ -40,7 +40,7 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { logger } from "@/src/utils/logger";
-import { monitorDeliverable } from "@/src/components/project-study/utils/utils";
+// import { monitorDeliverable } from "@/src/components/project-study/utils/utils";
 // Modify the Localisation component to accept a showGeorisquesButton prop
 interface LocalisationProps {
   project: Project;
@@ -191,8 +191,9 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
             if (documentsData) {
               const lastDeliverable = documentsData[documentsData.length - 1];
               logger.info("DocumentslastDeliverable", lastDeliverable);
-              const res = await monitorDeliverable(lastDeliverable.id);
-              setPublicDocuments(res);
+              const res = await fetch(`/api/deliverables/${lastDeliverable.id}`);
+              const deliverableData = await res.json();
+              setPublicDocuments(deliverableData);
             }
           }
         })(),
@@ -202,8 +203,9 @@ export function ProjectDetailsDialog({ project }: ProjectDetailsDialogProps) {
             if (georisquesData) {
               const lastDeliverable = georisquesData[georisquesData.length - 1];
               logger.info("Georisques lastDeliverable", lastDeliverable);
-              const res = await monitorDeliverable(lastDeliverable.id);
-              setGeorisquesData(res);
+              const res = await fetch(`/api/deliverables/${lastDeliverable.id}`);
+              const deliverableData = await res.json();
+              setGeorisquesData(deliverableData);
             }
           }
         })(),

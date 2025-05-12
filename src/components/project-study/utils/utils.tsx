@@ -401,16 +401,16 @@ export const searchPublicData = async (
 //   });
 // };
 
-export const monitorDeliverable = async (deliverableId: string) => {
-  while (true) {
-    const response = await fetch(`/api/deliverables/${deliverableId}`);
-    const data = await response.json();
-    if (data.status === "COMPLETED" || data.status === "ERROR") {
-      return data;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
-};
+// export const monitorDeliverable = async (deliverableId: string) => {
+//   while (true) {
+//     const response = await fetch(`/api/deliverables/${deliverableId}`);
+//     const data = await response.json();
+//     if (data.status === "COMPLETED" || data.status === "ERROR") {
+//       return data;
+//     }
+//     await new Promise((resolve) => setTimeout(resolve, 2000));
+//   }
+// };
 
 export const getDocumentIdByFileName = async (
   projectId: string,
