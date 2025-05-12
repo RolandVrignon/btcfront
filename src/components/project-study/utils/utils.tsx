@@ -222,184 +222,184 @@ export const searchPublicData = async (
   }
 };
 
-export const monitorDocumentProcessing = async (
-  projectRef: React.MutableRefObject<Project | null>,
-  documentId: string,
-  projectId: string,
-  setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
-) => {
-  try {
-    let isProcessingComplete = false;
-    const startTime = Date.now();
-    const timeoutDuration = 30 * 60 * 1000;
+// export const monitorDocumentProcessing = async (
+//   projectRef: React.MutableRefObject<Project | null>,
+//   documentId: string,
+//   projectId: string,
+//   setUploadingFiles: React.Dispatch<React.SetStateAction<UploadingFile[]>>,
+// ) => {
+//   try {
+//     let isProcessingComplete = false;
+//     const startTime = Date.now();
+//     const timeoutDuration = 30 * 60 * 1000;
 
-    while (
-      !isProcessingComplete &&
-      projectRef.current?.externalId === projectId
-    ) {
-      // Vérifier si le timeout est atteint
-      if (Date.now() - startTime > timeoutDuration) {
-        logger.warn(
-          `Timeout atteint pour le document ${documentId} après 10 minutes`,
-        );
-        setUploadingFiles((prev) =>
-          prev.map((f) =>
-            f.id === documentId
-              ? {
-                  ...f,
-                  status: "ERROR" as Status,
-                  indexation_status: "ERROR" as Status,
-                  processingMessage: "Timeout après 10 minutes de traitement",
-                }
-              : f,
-          ),
-        );
-        return; // Sortir de la fonction
-      }
+//     while (
+//       !isProcessingComplete &&
+//       projectRef.current?.externalId === projectId
+//     ) {
+//       // Vérifier si le timeout est atteint
+//       if (Date.now() - startTime > timeoutDuration) {
+//         logger.warn(
+//           `Timeout atteint pour le document ${documentId} après 10 minutes`,
+//         );
+//         setUploadingFiles((prev) =>
+//           prev.map((f) =>
+//             f.id === documentId
+//               ? {
+//                   ...f,
+//                   status: "ERROR" as Status,
+//                   indexation_status: "ERROR" as Status,
+//                   processingMessage: "Timeout après 10 minutes de traitement",
+//                 }
+//               : f,
+//           ),
+//         );
+//         return; // Sortir de la fonction
+//       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+//       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const response = await fetch("/api/documents/monitor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ documentId, projectId }),
-      });
+//       const response = await fetch("/api/documents/monitor", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({ documentId, projectId }),
+//       });
 
-      if (!response.ok) {
-        continue;
-      }
+//       if (!response.ok) {
+//         continue;
+//       }
 
-      const data = await response.json();
+//       const data = await response.json();
 
-      const terminalStatuses = ["COMPLETED", "ERROR"];
+//       const terminalStatuses = ["COMPLETED", "ERROR"];
 
-      // Vérifier que les deux statuts ont atteint un état terminal
-      const isStatusTerminal = terminalStatuses.includes(data.status);
-      const isIndexationStatusTerminal = terminalStatuses.includes(
-        data.indexation_status,
-      );
+//       // Vérifier que les deux statuts ont atteint un état terminal
+//       const isStatusTerminal = terminalStatuses.includes(data.status);
+//       const isIndexationStatusTerminal = terminalStatuses.includes(
+//         data.indexation_status,
+//       );
 
-      setUploadingFiles((prev) =>
-        prev.map((f) =>
-          f.id === documentId
-            ? {
-                ...f,
-                status: data.status as Status,
-                indexation_status: data.indexation_status as Status,
-                tags: Array.isArray(data.ai_Type_document)
-                  ? [...data.ai_Type_document]
-                  : [],
-              }
-            : f,
-        ),
-      );
+//       setUploadingFiles((prev) =>
+//         prev.map((f) =>
+//           f.id === documentId
+//             ? {
+//                 ...f,
+//                 status: data.status as Status,
+//                 indexation_status: data.indexation_status as Status,
+//                 tags: Array.isArray(data.ai_Type_document)
+//                   ? [...data.ai_Type_document]
+//                   : [],
+//               }
+//             : f,
+//         ),
+//       );
 
-      // Le traitement est complet uniquement si les deux statuts sont terminaux
-      if (isStatusTerminal && isIndexationStatusTerminal) {
-        isProcessingComplete = true;
-      }
-    }
-  } catch (error) {
-    logger.error("Erreur lors du monitoring du document:", error);
-    setUploadingFiles((prev) =>
-      prev.map((f) =>
-        f.id === documentId
-          ? {
-              ...f,
-              processingMessage: "Erreur lors du monitoring du document",
-            }
-          : f,
-      ),
-    );
-  }
-};
+//       // Le traitement est complet uniquement si les deux statuts sont terminaux
+//       if (isStatusTerminal && isIndexationStatusTerminal) {
+//         isProcessingComplete = true;
+//       }
+//     }
+//   } catch (error) {
+//     logger.error("Erreur lors du monitoring du document:", error);
+//     setUploadingFiles((prev) =>
+//       prev.map((f) =>
+//         f.id === documentId
+//           ? {
+//               ...f,
+//               processingMessage: "Erreur lors du monitoring du document",
+//             }
+//           : f,
+//       ),
+//     );
+//   }
+// };
 
-export const monitorProjectStatus = async (
-  projectRef: React.MutableRefObject<Project | null>,
-  projectId: string,
-  setProject: React.Dispatch<React.SetStateAction<Project | null>>,
-): Promise<Project | null> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      let isProcessingComplete = false;
-      const startTime = Date.now();
-      const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
-      let projectData: Project | null = null;
+// export const monitorProjectStatus = async (
+//   projectRef: React.MutableRefObject<Project | null>,
+//   projectId: string,
+//   setProject: React.Dispatch<React.SetStateAction<Project | null>>,
+// ): Promise<Project | null> => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       let isProcessingComplete = false;
+//       const startTime = Date.now();
+//       const timeoutDuration = 10 * 60 * 1000; // 10 minutes en millisecondes
+//       let projectData: Project | null = null;
 
-      while (
-        !isProcessingComplete &&
-        projectRef.current?.externalId === projectId
-      ) {
-        // Vérifier si le timeout est atteint
-        if (Date.now() - startTime > timeoutDuration) {
-          logger.warn(
-            `Timeout atteint pour le projet ${projectId} après 10 minutes`,
-          );
-          reject(
-            new Error("Timeout: Le monitoring du projet a dépassé 10 minutes"),
-          );
-          return;
-        }
+//       while (
+//         !isProcessingComplete &&
+//         projectRef.current?.externalId === projectId
+//       ) {
+//         // Vérifier si le timeout est atteint
+//         if (Date.now() - startTime > timeoutDuration) {
+//           logger.warn(
+//             `Timeout atteint pour le projet ${projectId} après 10 minutes`,
+//           );
+//           reject(
+//             new Error("Timeout: Le monitoring du projet a dépassé 10 minutes"),
+//           );
+//           return;
+//         }
 
-        // Attendre un peu entre chaque requête
-        await new Promise((timeoutResolve) => setTimeout(timeoutResolve, 2000));
+//         // Attendre un peu entre chaque requête
+//         await new Promise((timeoutResolve) => setTimeout(timeoutResolve, 2000));
 
-        // Récupérer le statut du projet
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+//         // Récupérer le statut du projet
+//         const response = await fetch(`/api/projects/${projectId}`, {
+//           method: "GET",
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
+//         });
 
-        if (!response.ok) {
-          logger.error("Erreur lors de la récupération du statut du projet");
-          continue;
-        }
+//         if (!response.ok) {
+//           logger.error("Erreur lors de la récupération du statut du projet");
+//           continue;
+//         }
 
-        projectData = await response.json();
+//         projectData = await response.json();
 
-        if (
-          projectData?.status === "COMPLETED" ||
-          projectData?.status === "ERROR"
-        ) {
-          isProcessingComplete = true;
-          setProject(projectData);
-          break;
-        }
-      }
+//         if (
+//           projectData?.status === "COMPLETED" ||
+//           projectData?.status === "ERROR"
+//         ) {
+//           isProcessingComplete = true;
+//           setProject(projectData);
+//           break;
+//         }
+//       }
 
-      if (
-        projectData?.latitude &&
-        projectData?.longitude &&
-        projectData?.closest_formatted_address
-      ) {
-        logger.info("Recherche de documents publics et données géorisques");
-        logger.info("Adresse proche:", projectData?.closest_formatted_address);
-        logger.info(
-          "Latitude et longitude:",
-          projectData?.latitude,
-          ", ",
-          projectData?.longitude,
-        );
+//       if (
+//         projectData?.latitude &&
+//         projectData?.longitude &&
+//         projectData?.closest_formatted_address
+//       ) {
+//         logger.info("Recherche de documents publics et données géorisques");
+//         logger.info("Adresse proche:", projectData?.closest_formatted_address);
+//         logger.info(
+//           "Latitude et longitude:",
+//           projectData?.latitude,
+//           ", ",
+//           projectData?.longitude,
+//         );
 
-        // Run both searches in parallel
-        await Promise.all([
-          searchPublicDocuments(projectId, true),
-          searchPublicData(projectId, true),
-        ]);
-      }
-      resolve(projectData);
-      setProject(projectData);
-      return;
-    } catch (error) {
-      logger.error("Erreur lors du monitoring du projet:", error);
-      reject(error);
-    }
-  });
-};
+//         // Run both searches in parallel
+//         await Promise.all([
+//           searchPublicDocuments(projectId, true),
+//           searchPublicData(projectId, true),
+//         ]);
+//       }
+//       resolve(projectData);
+//       setProject(projectData);
+//       return;
+//     } catch (error) {
+//       logger.error("Erreur lors du monitoring du projet:", error);
+//       reject(error);
+//     }
+//   });
+// };
 
 export const monitorDeliverable = async (deliverableId: string) => {
   while (true) {
@@ -626,96 +626,94 @@ export const confirmMultipleUploadsToBackend = async (
       }),
     );
 
-    // Créer les promesses pour le traitement des documents
-    const documentPromises = successfulUploads.map(async (upload) => {
-      let documentId: string | null = null;
-      while (!documentId) {
-        documentId = await getDocumentIdByFileName(projectId, upload.fileName);
-        if (!documentId) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      }
+    // // Créer les promesses pour le traitement des documents
+    // const documentPromises = successfulUploads.map(async (upload) => {
+    //   let documentId: string | null = null;
+    //   while (!documentId) {
+    //     documentId = await getDocumentIdByFileName(projectId, upload.fileName);
+    //     if (!documentId) {
+    //       await new Promise((resolve) => setTimeout(resolve, 1000));
+    //     }
+    //   }
 
-      if (documentId) {
-        setUploadingFiles((prev) =>
-          prev.map((f) =>
-            f.file && f.file.name === upload.fileName
-              ? {
-                  ...f,
-                  id: documentId,
-                }
-              : f,
-          ),
-        );
+    //   if (documentId) {
+    //     setUploadingFiles((prev) =>
+    //       prev.map((f) =>
+    //         f.file && f.file.name === upload.fileName
+    //           ? {
+    //               ...f,
+    //               id: documentId,
+    //             }
+    //           : f,
+    //       ),
+    //     );
 
-        await monitorDocumentProcessing(
-          projectRef,
-          documentId,
-          projectId,
-          setUploadingFiles,
-        );
-      }
+    //     await monitorDocumentProcessing(
+    //       projectRef,
+    //       documentId,
+    //       projectId,
+    //       setUploadingFiles,
+    //     );
+    //   }
 
-      return { fileName: upload.fileName, documentId };
-    });
+    //   return { fileName: upload.fileName, documentId };
+    // });
 
-    // Fonction pour gérer tout le processus lié au projet
-    const projectPromise = async () => {
-      try {
-        // Vérifier si c'est le premier upload en récupérant l'état actuel du projet
-        const projectResponse = await fetch(`/api/projects/${projectId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+    // // Fonction pour gérer tout le processus lié au projet
+    // const projectPromise = async () => {
+    //   try {
+    //     // Vérifier si c'est le premier upload en récupérant l'état actuel du projet
+    //     const projectResponse = await fetch(`/api/projects/${projectId}`, {
+    //       method: "GET",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     });
 
-        if (!projectResponse) {
-          logger.error("Erreur lors de la récupération du projet");
-          return null;
-        }
+    //     if (!projectResponse) {
+    //       logger.error("Erreur lors de la récupération du projet");
+    //       return null;
+    //     }
 
-        const currentProject = await projectResponse.json();
-        const isFirstUpload =
-          !currentProject?.short_summary || currentProject.short_summary === "";
+    //     const currentProject = await projectResponse.json();
+    //     const isFirstUpload =
+    //       !currentProject?.short_summary || currentProject.short_summary === "";
 
-        // Si c'est le premier upload, démarrer le monitoring du projet
-        if (isFirstUpload) {
-          try {
-            // Monitorer le projet jusqu'à ce qu'il soit terminé
-            const finalProject = await monitorProjectStatus(
-              projectRef,
-              projectId,
-              setProject,
-            );
-            return finalProject;
-          } catch (error) {
-            logger.error("Erreur lors du monitoring du projet:", error);
-            // En cas d'erreur, essayer de récupérer l'état actuel du projet
-            return await handleProjectUpdate(projectId, setProject);
-          }
-        } else {
-          // Si ce n'est pas le premier upload, simplement mettre à jour l'état du projet
-          const updatedProject = await handleProjectUpdate(
-            projectId,
-            setProject,
-          );
-          setIsUploading(false);
-          return updatedProject;
-        }
-      } catch (error) {
-        logger.error("Erreur dans le processus de projet:", error);
-        setIsUploading(false);
-        return null;
-      }
-    };
+    //     // Si c'est le premier upload, démarrer le monitoring du projet
+    //     if (isFirstUpload) {
+    //       try {
+    //         // Monitorer le projet jusqu'à ce qu'il soit terminé
+    //         const finalProject = await monitorProjectStatus(
+    //           projectRef,
+    //           projectId,
+    //           setProject,
+    //         );
+    //         return finalProject;
+    //       } catch (error) {
+    //         logger.error("Erreur lors du monitoring du projet:", error);
+    //         // En cas d'erreur, essayer de récupérer l'état actuel du projet
+    //         return await handleProjectUpdate(projectId, setProject);
+    //       }
+    //     } else {
+    //       // Si ce n'est pas le premier upload, simplement mettre à jour l'état du projet
+    //       const updatedProject = await handleProjectUpdate(
+    //         projectId,
+    //         setProject,
+    //       );
+    //       setIsUploading(false);
+    //       return updatedProject;
+    //     }
+    //   } catch (error) {
+    //     logger.error("Erreur dans le processus de projet:", error);
+    //     setIsUploading(false);
+    //     return null;
+    //   }
+    // };
 
-    // Attendre que les deux processus soient terminés en parallèle
-    Promise.all([Promise.all(documentPromises), projectPromise()]);
+    // // Attendre que les deux processus soient terminés en parallèle
+    // Promise.all([Promise.all(documentPromises), projectPromise()]);
 
     // Confirmer les uploads à l'API
-
-    logger.debug("body:", body);
 
     await fetch("/api/documents/confirm-multiple-uploads", {
       method: "POST",

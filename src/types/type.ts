@@ -73,7 +73,7 @@ export interface Project {
   id?: string;
   externalId?: string;
   name?: string;
-  status?: "STARTED" | "PROCESSING" | "COMPLETED" | "ERROR";
+  status?: ProjectStatus;
   // Location properties
   latitude?: number;
   longitude?: number;

@@ -34,10 +34,13 @@ export async function POST(request: NextRequest) {
 
   console.log("Project updated : ", { projectId, status, code, message });
 
-  await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/emit-project-update`, {
+  const emitProjectUpdateUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/emit-project-update`;
+  console.log("emitProjectUpdateUrl:", emitProjectUpdateUrl);
+
+  await fetch(emitProjectUpdateUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ projectId, status }),
+    body: JSON.stringify({ projectId, status, code, message }),
   });
 
   return NextResponse.json({ success: true });

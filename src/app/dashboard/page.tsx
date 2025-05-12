@@ -19,7 +19,8 @@ export default function DashboardPage() {
   const userId = session?.user?.id;
 
   useEffect(() => {
-    fetch("/api/socket");
+    fetch("/api/socket").catch(() => {});
+    logger.info("socket fetched");
   }, []);
 
   useEffect(() => {
@@ -97,7 +98,6 @@ export default function DashboardPage() {
           isUpperLoading={false}
           isUploading={isUploading}
           setIsUploading={setIsUploading}
-          isProjectSelected={false}
         />
       </main>
     </div>

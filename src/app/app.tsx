@@ -7,6 +7,5 @@ interface AppProps {
 }
 
 export default function App({ children }: AppProps) {
-  // Votre logique d'application ici
   return <div className="app-container">{children}</div>;
 }

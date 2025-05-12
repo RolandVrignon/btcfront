@@ -25,9 +25,24 @@ export default function DashboardPage() {
   const [isProjectLoading, setIsProjectLoading] = useState(true);
   const { data: session } = useSession();
   const userId = session?.user?.id;
-  const { projectId } = useParams();
+
+  // Define the expected type for the params with an index signature
+  interface Params {
+    [key: string]: string;
+    projectId: string;
+  }
+
+  // Use the defined type with useParams
+  const params = useParams<Params>();
+  const projectId = params?.projectId || "";
+
   const isFetchingProjectData = useRef(false);
   const hasBeenFetched = useRef(false);
+
+  useEffect(() => {
+    fetch("/api/socket").catch(() => {});
+    logger.info("socket fetched");
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -87,8 +102,6 @@ export default function DashboardPage() {
           throw new Error("Failed to fetch project");
         }
         const data = await response.json();
-
-        logger.info("project", data);
 
         setProject(data);
         setIsProjectLoading(false);
@@ -212,7 +225,6 @@ export default function DashboardPage() {
           isUpperLoading={isProjectLoading}
           isUploading={isUploading}
           setIsUploading={setIsUploading}
-          isProjectSelected={true}
         />
       </main>
     </div>

@@ -12,7 +12,10 @@ type NextApiResponseWithSocket = NextApiResponse & {
   };
 };
 
-export default function handler(req: NextApiRequest, res: NextApiResponseWithSocket) {
+export default function handler(
+  req: NextApiRequest,
+  res: NextApiResponseWithSocket,
+) {
   if (!res.socket.server.io) {
     // Crée le serveur Socket.io s'il n'existe pas déjà
     const io = new IOServer(res.socket.server, {

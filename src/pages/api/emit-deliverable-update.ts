@@ -3,6 +3,8 @@ import type { Server as HTTPServer } from "http";
 import type { Socket } from "net";
 import { Server as IOServer } from "socket.io";
 
+// Type for Next.js API response with socket.io server
+// ... existing code ...
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: Socket & {
     server: HTTPServer & {
@@ -15,23 +17,19 @@ export default function handler(
   req: NextApiRequest,
   res: NextApiResponseWithSocket,
 ) {
-  console.log("emit-project-update");
-
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
-  const { projectId, status, code, message } = req.body;
+  // Destructure deliverable update data from request body
+  const { projectId, deliverableId, status, message, code } = req.body;
 
-  console.log("projectId:", projectId);
-  console.log("status:", status);
-
+  // Emit deliverableUpdate event to the project room if socket.io is available
   if (res.socket.server.io) {
-    console.log("emit project update to socket");
     res.socket.server.io
       .to(projectId)
-      .emit("projectUpdate", { projectId, status, code, message });
+      .emit("deliverableUpdate", { deliverableId, status, message, code });
   }
 
   res.status(200).json({ ok: true });

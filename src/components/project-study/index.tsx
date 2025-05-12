@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FileUploadZone } from "@/src/components/project-study/components/file-upload-zone";
 import { FileUploadList } from "@/src/components/project-study/components/file-upload-list";
-import { Project } from "@/src/types/type";
+import { Project, UploadingFile, Status } from "@/src/types/type";
 import { useBucketUrl } from "@/src/lib/hooks/use-presigned-url";
 import { SelectedFilesList } from "@/src/components/project-study/components/selected-files-list";
 import { Skeleton } from "@/src/components/ui/skeleton";
@@ -13,17 +13,19 @@ import { ProjectDetailsDialog } from "@/src/components/project-study/dialogs/pro
 import { Button } from "@/src/components/ui/button";
 import { GoogleMapsIcon } from "@/src/components/ui/google-maps-icon";
 import { Info, Pencil } from "lucide-react";
-import { UploadingFile } from "@/src/types/type";
 import { ProjectToolsList } from "@/src/components/project-study/components/project-tools-list";
 import { ProjectChatbot } from "./components/project-chatbot";
 import {
   uploadAllFilesUtils,
-  monitorDocumentProcessing,
-  monitorProjectStatus,
+  // monitorDocumentProcessing,
 } from "./utils/utils";
 import { TypewriterTitle } from "@/src/components/ui/typewriterTitle";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { AddressEditDialog } from "@/src/components/project-study/dialogs/address-edit-dialog";
+import { useProjectSocket } from "@/src/hooks/use-project-socket";
+import { logger } from "@/src/utils/logger";
+import { useDocumentSocket } from "@/src/hooks/use-document-socket";
+import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
 
 interface ProjectToolsProps {
   project: Project | null;
@@ -37,10 +39,9 @@ interface ProjectToolsProps {
   isUpperLoading: boolean;
   isUploading: boolean;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
-  isProjectSelected: boolean;
 }
 
-export function ProjectStudy({
+export const ProjectStudy = React.memo(function ProjectStudy({
   project,
   projectRef,
   setProject,
@@ -52,38 +53,72 @@ export function ProjectStudy({
   isUploading,
   setIsUploading,
   isUpperLoading,
-  isProjectSelected,
 }: ProjectToolsProps) {
   const { getUploadUrl, getDownloadUrl } = useBucketUrl();
   const [isLoading, setIsLoading] = useState(true);
 
   const isUploadingRef = useRef(false);
-  const isMonitoringRef = useRef(false);
+  const projectIdRef = useRef<string | null>(null);
 
-  // Mettre à jour le projet dans le ref et surveiller son statut s'il n'est pas terminé
   useEffect(() => {
-    if (!project) return;
-    if (!projectRef) return;
-
-    if (project) {
-      projectRef.current = project;
+    if (project?.externalId) {
+      projectIdRef.current = project.externalId;
     }
+  }, [project?.externalId]);
 
-    if (!isProjectSelected) return;
+  const projectId = projectIdRef.current;
 
-    if (!setProject) return;
+  useProjectSocket(projectId || "", async (data) => {
+    if (projectId && (data.status === "COMPLETED" || data.status === "ERROR")) {
+      const response = await fetch(`/api/projects/${data.projectId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (
-      projectRef.current?.status !== "COMPLETED" &&
-      projectRef.current?.status !== "ERROR"
-    ) {
-      monitorProjectStatus(
-        projectRef,
-        projectRef.current?.externalId || "",
-        setProject,
+      if (!response.ok) {
+        logger.error("Erreur lors de la récupération du statut du projet");
+        return;
+      }
+
+      const projectData = await response.json();
+
+      setProject(projectData);
+    }
+  });
+
+  useDocumentSocket(projectId || "", (data) => {
+    if (projectId) {
+      logger.info(
+        "Document status : ",
+        JSON.stringify(data, null, 2),
+        "\nUploading files : ",
+        JSON.stringify(uploadingFiles, null, 2),
+      );
+
+      setUploadingFiles((prevFiles) =>
+        prevFiles.map((file) =>
+          file.fileName === data.fileName
+            ? {
+                ...file,
+                status: data.extraction_status as Status,
+                indexation_status: data.indexation_status as Status,
+                processingMessage:
+                  data.extraction_message || data.indexation_message,
+                tags: data.tags,
+              }
+            : file,
+        ),
       );
     }
-  }, [project, projectRef, setProject, isProjectSelected]);
+  });
+
+  useDeliverableSocket(projectId || "", (data) => {
+    if (projectId) {
+      logger.info("Deliverable status : ", JSON.stringify(data, null, 2));
+    }
+  });
 
   useEffect(() => {
     if (isUpperLoading) {
@@ -92,35 +127,6 @@ export function ProjectStudy({
       setIsLoading(false);
     }
   }, [isUpperLoading]);
-
-  // Surveiller le statut des fichiers en cours de traitement
-  useEffect(() => {
-    if (!uploadingFiles) return;
-    if (!uploadingFiles.length) return;
-    if (!project) return;
-    if (!project.externalId) return;
-    if (!setUploadingFiles) return;
-    if (!isUploadingRef) return;
-    if (!projectRef.current) return;
-    if (isMonitoringRef.current) return;
-    isMonitoringRef.current = true;
-
-    uploadingFiles.forEach((file) => {
-      if (
-        file.status !== "COMPLETED" &&
-        file.status !== "ERROR" &&
-        file.status !== "UPLOAD" &&
-        file.id
-      ) {
-        monitorDocumentProcessing(
-          projectRef,
-          file.id,
-          project?.externalId || "",
-          setUploadingFiles,
-        );
-      }
-    });
-  }, [uploadingFiles, setUploadingFiles, project, isUploadingRef, projectRef]);
 
   useEffect(() => {
     isUploadingRef.current = isUploading;
@@ -345,6 +351,4 @@ export function ProjectStudy({
       )}
     </div>
   );
-}
-
-export default ProjectStudy;
+});

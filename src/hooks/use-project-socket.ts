@@ -1,40 +1,53 @@
 import { useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { Status } from "../types/type";
-
-export interface ProjectUpdateEvent {
+import { logger } from "@/src/utils/logger";
+export interface ProjectUpdateDataEvent {
   projectId: string;
   status: Status;
+  code: string;
+  message: string;
 }
 
 let socket: Socket | null = null;
 
-export function useProjectSocket(projectId: string | undefined, onUpdate: (data: ProjectUpdateEvent) => void) {
+export function useProjectSocket(
+  projectId: string | undefined,
+  onUpdate: (data: ProjectUpdateDataEvent) => void,
+) {
   useEffect(() => {
-    if (!projectId) return;
-
-    // Initialise la connexion si ce n'est pas déjà fait
+    if (!projectId) {
+      logger.info(
+        "Webhook useProjectSocket: Pas de projectId, pas d'abonnement",
+      );
+      return;
+    }
+    
     if (!socket) {
       socket = io({
         path: "/api/socket",
         transports: ["websocket"],
       });
+      logger.info("Webhook Socket.io client initialisé");
     }
 
-    // S'abonner à la room du projet
     socket.emit("join", projectId);
 
-    // Écouter l'event projectUpdate
-    socket.on("projectUpdate", (data) => {
+    const handler = (data: ProjectUpdateDataEvent) => {
       if (data.projectId === projectId) {
         onUpdate(data);
       }
-    });
+    };
+    socket.on("projectUpdate", handler);
 
-    // Nettoyage à la désinscription
+    // Log du cleanup
     return () => {
+      logger.info(
+        "Webhook useProjectSocket: Désabonnement de la room",
+        projectId,
+      );
       socket?.emit("leave", projectId);
-      socket?.off("projectUpdate");
+      socket?.off("projectUpdate", handler);
     };
   }, [projectId, onUpdate]);
 }
