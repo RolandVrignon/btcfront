@@ -12,11 +12,6 @@ import {
 import { Button } from "@/src/components/ui/button";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import { RefreshCw, ChevronDown } from "lucide-react";
-import { ScrollArea } from "@/src/components/ui/scroll-area";
-import {
-  AnimatedTabs,
-  AnimatedTabsContent,
-} from "@/src/components/ui/animated-tabs";
 import { DataTable } from "@/src/components/ui/data-table";
 import type { Row } from "@tanstack/react-table";
 import { RenderMarkdown } from "@/src/components/ui/render-markdown";
@@ -30,8 +25,8 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { logger } from "@/src/utils/logger";
 import { format } from "date-fns";
-import { cn } from "@/src/lib/utils";
 import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
+
 interface Document {
   id: string;
   name: string;
@@ -124,7 +119,6 @@ export function DeliverableResultDialog({
 }: DeliverableResultDialogProps) {
   const [deliverable, setDeliverable] = useState<Deliverable | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [tabIndex, setTabIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [contents, setContents] = useState<
     (string | Record<string, unknown> | null)[]
@@ -158,8 +152,6 @@ export function DeliverableResultDialog({
     }
 
     if (!isOpen) {
-      setTabIndex(0);
-      // Clear polling interval when dialog closes
       if (pollingInterval) {
         clearInterval(pollingInterval);
         setPollingInterval(null);
@@ -682,7 +674,7 @@ export function DeliverableResultDialog({
 
       logger.info("Our new deliverable:", newDeliverable);
 
-      // Ajouter le nouvel ID au tableau de deliverableIds
+      // Ajouter le nouvel ID à la fin de la liste
       if (setDeliverableIds && newDeliverable.id) {
         logger.info(`Ajout d'un nouveau deliverable: ${newDeliverable.id}`);
         setDeliverableIds((prev) => {
@@ -880,41 +872,10 @@ export function DeliverableResultDialog({
               </div>
             ) : deliverable && deliverable.status === "COMPLETED" ? (
               <div className="flex-grow flex flex-col overflow-hidden animate-fadeIn transition-opacity duration-300">
-                <AnimatedTabs
-                  tabs={tabs}
-                  defaultIndex={0}
-                  onChange={setTabIndex}
-                  className="mb-4 flex-shrink-0"
-                />
                 <div className="flex-grow overflow-hidden">
                   {!isLoading &&
-                    contents.map((content, index) => (
-                      <AnimatedTabsContent
-                        key={index}
-                        value={tabIndex}
-                        index={index}
-                        className={cn(
-                          "h-full transition-all duration-300 ease-in-out",
-                          tabIndex === index ? "opacity-100" : "opacity-0",
-                        )}
-                      >
-                        <ScrollArea className="h-full">
-                          <div className="pr-4 pb-4">
-                            {content ? (
-                              renderResultValue(content)
-                            ) : (
-                              <div className="rounded-md border p-4 bg-gray-50 transition-all duration-300">
-                                <p className="text-gray-500 italic">
-                                  {index === 0
-                                    ? "Aucun résumé disponible"
-                                    : "Aucune analyse complète disponible"}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </ScrollArea>
-                      </AnimatedTabsContent>
-                    ))}
+                    deliverable.long_result &&
+                    renderResultValue(deliverable.long_result.result)}
                 </div>
               </div>
             ) : deliverable && deliverable.status === "ERROR" ? (
