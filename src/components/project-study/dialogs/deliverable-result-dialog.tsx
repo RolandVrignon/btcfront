@@ -874,12 +874,11 @@ export function DeliverableResultDialog({
             ) : deliverable && deliverable.status === "COMPLETED" ? (
               <div className="flex-grow flex flex-col overflow-hidden animate-fadeIn transition-opacity duration-300">
                 <div className="flex-grow overflow-hidden">
-                  {!isLoading &&
-                    deliverable.long_result && (
-                      <ScrollArea className="h-full w-full">
-                        {renderResultValue(deliverable.long_result.result)}
-                      </ScrollArea>
-                    )}
+                  {!isLoading && deliverable.long_result && (
+                    <ScrollArea className="h-full w-full">
+                      {renderResultValue(deliverable.long_result.result)}
+                    </ScrollArea>
+                  )}
                 </div>
               </div>
             ) : deliverable && deliverable.status === "ERROR" ? (

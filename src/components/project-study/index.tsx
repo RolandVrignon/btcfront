@@ -342,6 +342,7 @@ export const ProjectStudy = React.memo(function ProjectStudy({
                 files={uploadingFiles}
                 projectId={project?.externalId}
                 isLoading={isLoading}
+                setUploadingFiles={setUploadingFiles}
               />
             )}
           </div>
