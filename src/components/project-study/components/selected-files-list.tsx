@@ -2,7 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import dynamic from "next/dynamic";
+
 import {
   File,
   FileText,
@@ -10,20 +10,20 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 
-// Composant qui ne sera rendu que côté client
-const LoadingSpinner = dynamic(
-  () =>
-    Promise.resolve(() => (
-      <span className="flex items-center gap-2">
-        <div
-          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-          aria-hidden="true"
-        />
-        Upload en cours...
-      </span>
-    )),
-  { ssr: false },
-);
+// // Composant qui ne sera rendu que côté client
+// const LoadingSpinner = dynamic(
+//   () =>
+//     Promise.resolve(() => (
+//       <span className="flex items-center gap-2">
+//         <div
+//           className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+//           aria-hidden="true"
+//         />
+//         Upload en cours...
+//       </span>
+//     )),
+//   { ssr: false },
+// );
 
 interface SelectedFilesListProps {
   files: File[];
@@ -69,14 +69,11 @@ export function SelectedFilesList({
         <h3 className="text-lg font-medium">Fichiers sélectionnés</h3>
         <Button
           onClick={() => {
-            if (!isUploading) {
-              onUploadAll();
-            }
+            onUploadAll();
           }}
-          disabled={isUploading}
           className="ml-auto"
         >
-          {isUploading ? <LoadingSpinner /> : "Télécharger tous les documents"}
+          Télécharger tous les documents
         </Button>
       </div>
 

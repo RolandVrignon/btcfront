@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   ExternalLink,
   Clock,
+  Trash,
 } from "lucide-react";
 import { DocumentMetadataDialog } from "@/src/components/project-study/dialogs/document-metadata-dialog";
 import { UploadingFile } from "@/src/types/type";
@@ -20,12 +21,14 @@ interface FileUploadListProps {
   files: UploadingFile[];
   projectId?: string;
   isLoading?: boolean;
+  setUploadingFiles: (files: UploadingFile[]) => void;
 }
 
 export function FileUploadList({
   files,
   projectId,
   isLoading,
+  setUploadingFiles,
 }: FileUploadListProps) {
   const [selectedFile, setSelectedFile] = useState<{
     id: string;
@@ -291,6 +294,13 @@ export function FileUploadList({
     }
   };
 
+  // Ajouter la fonction de suppression locale
+  const handleDeleteFile = (fileName: string) => {
+    logger.info("Suppression du fichier avec l'id:", fileName);
+
+    setUploadingFiles(files.filter((file) => file.fileName !== fileName));
+  };
+
   return (
     <>
       <div className="mt-4 w-full">
@@ -389,6 +399,20 @@ export function FileUploadList({
                         <StatusPastille status="error" />
                       ) : (
                         <StatusPastille status="pending" />
+                      )}
+                      {(file.status === "ERROR" ||
+                        file.indexation_status === "ERROR") && (
+                        <button
+                          type="button"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          title="Supprimer le fichier"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Empêche l'ouverture du dialog
+                            handleDeleteFile(file.fileName ?? "");
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </button>
                       )}
                     </div>
                   </div>

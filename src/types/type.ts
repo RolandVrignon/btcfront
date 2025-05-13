@@ -94,7 +94,7 @@ export interface Project {
 
 export interface UploadingFile {
   file?: File;
-  fileName?: string;
+  fileName: string;
   id: string;
   progress?: number;
   url?: string;
