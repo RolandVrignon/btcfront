@@ -26,6 +26,7 @@ import {
 import { logger } from "@/src/utils/logger";
 import { format } from "date-fns";
 import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
+import { ScrollArea } from "@/src/components/ui/scroll-area";
 
 interface Document {
   id: string;
@@ -874,8 +875,11 @@ export function DeliverableResultDialog({
               <div className="flex-grow flex flex-col overflow-hidden animate-fadeIn transition-opacity duration-300">
                 <div className="flex-grow overflow-hidden">
                   {!isLoading &&
-                    deliverable.long_result &&
-                    renderResultValue(deliverable.long_result.result)}
+                    deliverable.long_result && (
+                      <ScrollArea className="h-full w-full">
+                        {renderResultValue(deliverable.long_result.result)}
+                      </ScrollArea>
+                    )}
                 </div>
               </div>
             ) : deliverable && deliverable.status === "ERROR" ? (
