@@ -148,6 +148,7 @@ export const ProjectStudy = React.memo(function ProjectStudy({
           file.fileName === data.fileName
             ? {
                 ...file,
+                id: data.documentId,
                 status: data.extraction_status as Status,
                 indexation_status: data.indexation_status as Status,
                 processingMessage:
