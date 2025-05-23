@@ -68,9 +68,11 @@ export const ProjectStudy = React.memo(function ProjectStudy({
   const projectId = projectIdRef.current;
 
   useProjectSocket(projectId || "", async (data) => {
+    console.log("data:", data);
+    console.log("projectId:", projectId);
     if (projectId && (data.status === "COMPLETED" || data.status === "ERROR")) {
       console.log("projectId:", projectId);
-      const response = await fetch(`/api/projects/${data.projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
