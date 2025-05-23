@@ -69,6 +69,7 @@ export const ProjectStudy = React.memo(function ProjectStudy({
 
   useProjectSocket(projectId || "", async (data) => {
     if (projectId && (data.status === "COMPLETED" || data.status === "ERROR")) {
+      console.log("projectId:", projectId);
       const response = await fetch(`/api/projects/${data.projectId}`, {
         method: "GET",
         headers: {
@@ -82,6 +83,7 @@ export const ProjectStudy = React.memo(function ProjectStudy({
       }
 
       const projectData = await response.json();
+      console.log("projectData:", projectData);
 
       setProject(projectData);
 

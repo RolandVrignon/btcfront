@@ -4,9 +4,9 @@ import { logger } from "@/src/utils/logger";
 
 // Schema for body validation
 const bodySchema = z.object({
-  projectId: z.string(),
-  fileName: z.string(),
-  documentId: z.string(),
+  projectId: z.string(), // project id
+  fileName: z.string(), // file name
+  documentId: z.string(), // document id
   extraction_status: z.enum([
     "UPLOAD",
     "DRAFT",
@@ -14,7 +14,7 @@ const bodySchema = z.object({
     "PROGRESS",
     "COMPLETED",
     "ERROR",
-  ]),
+  ]), // extraction status
   indexation_status: z.enum([
     "UPLOAD",
     "DRAFT",
@@ -22,11 +22,11 @@ const bodySchema = z.object({
     "PROGRESS",
     "COMPLETED",
     "ERROR",
-  ]),
-  extraction_message: z.string(),
-  indexation_message: z.string(),
-  code: z.number(),
-  tags: z.array(z.string()),
+  ]), // indexation status
+  extraction_message: z.string(), // extraction message
+  indexation_message: z.string(), // indexation message
+  code: z.number(), // code
+  tags: z.array(z.string()), // tags (array of strings) - Example : ["CCTP", "DCE", "Plan"]
 });
 
 export async function POST(request: NextRequest) {
