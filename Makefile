@@ -40,8 +40,8 @@ start:
 build:
 	$(NPM) run build --no-lint
 
-.PHONY: deploy
-deploy:
+.PHONY: prod
+prod:
 	@# Everything in one shell block for clarity:
 	@( \
 	  echo "Step 1: check if current branch is 'main'"; \
@@ -69,7 +69,34 @@ deploy:
 	  echo "✅ Deployment completed!"; \
 	)
 
-
+.PHONY: preprod
+preprod:
+	@# Everything in one shell block for clarity:
+	@( \
+	  echo "Step 1: check if current branch is 'main'"; \
+	  CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	  if [ "$$CURRENT_BRANCH" != "main" ]; then \
+	    echo "Error: you must be on 'main' branch to deploy."; \
+	    exit 1; \
+	  fi; \
+	  echo "Step 2: verify uncommitted changes"; \
+	  CHANGES=$$(git status --porcelain); \
+	  if [ -n "$$CHANGES" ]; then \
+	    echo "You have local changes. Let's commit them."; \
+	    read -p "Enter preprod commit message: " MSG; \
+	    git add .; \
+	    git commit -m "$$MSG"; \
+	    git push origin main; \
+	  else \
+	    echo "No uncommitted changes found, continuing..."; \
+	  fi; \
+	  echo "Step 3: checkout 'preprod', merge 'main', push, then come back"; \
+	  git checkout preprod; \
+	  git merge main; \
+	  git push origin preprod; \
+	  git checkout main; \
+	  echo "✅ Preprod deployment completed!"; \
+	)
 
 # Exécution des tests
 test:

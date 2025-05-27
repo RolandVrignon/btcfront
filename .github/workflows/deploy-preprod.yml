@@ -1,8 +1,8 @@
-name: Deploy Client App Prod
+name: Deploy Client App Preprod
 
 on:
   push:
-    branches: [prod]
+    branches: [preprod]
 
 jobs:
   deploy:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_CLIENT }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_CLIENT_PREPROD }} << 'EOF'
             cd /home/ubuntu
             aws ecr get-login-password --region eu-north-1   | docker login --username AWS --password-stdin 929387410269.dkr.ecr.eu-north-1.amazonaws.com/ynor/client
             docker compose pull
