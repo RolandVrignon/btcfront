@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -136,14 +136,22 @@ export function DeliverableResultDialog({
   );
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [remarks, setRemarks] = useState<string>("");
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMounted = useRef(true);
+  const [timer, setTimer] = useState<string>("");
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useDeliverableSocket(projectId || "", async (data) => {
+    if (!isMounted.current) return;
     const deliverable = await fetch(`/api/deliverables/${data.id}`);
     const deliverableData = await deliverable.json();
-    setDeliverable(deliverableData);
+    if (isMounted.current) setDeliverable(deliverableData);
   });
 
   // Reset tab index when dialog closes
@@ -153,12 +161,12 @@ export function DeliverableResultDialog({
     }
 
     if (!isOpen) {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     }
-  }, [isOpen, pollingInterval]);
+  }, [isOpen]);
 
   // Effect to set the current version index to the latest version when deliverableIds changes
   useEffect(() => {
@@ -202,13 +210,23 @@ export function DeliverableResultDialog({
 
   // Effect to handle polling for pending or processing deliverables
   useEffect(() => {
+    // Nettoyage à la fermeture du composant ou de la dialog
+    if (!isOpen) {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      return;
+    }
+
     // Si le composant est en chargement et qu'on a un deliverable, on met en place le polling
     if (isLoading && deliverable) {
       // Si on n'a pas déjà un intervalle de polling actif
-      if (!pollingInterval) {
+      if (!pollingIntervalRef.current) {
         logger.debug("Starting polling for deliverable:", deliverable.id);
 
         const interval = setInterval(() => {
+          if (!isMounted.current) return;
           if (deliverableIds && deliverableIds.length > 0) {
             const latestId = deliverableIds[deliverableIds.length - 1];
             logger.debug("Polling deliverable:", latestId);
@@ -216,12 +234,12 @@ export function DeliverableResultDialog({
           }
         }, 3000); // Poll every 3 seconds
 
-        setPollingInterval(interval);
+        pollingIntervalRef.current = interval;
       }
     }
     // Si le deliverable est complété ou en erreur, on arrête le polling
     else if (
-      pollingInterval &&
+      pollingIntervalRef.current &&
       deliverable &&
       (deliverable.status === "COMPLETED" || deliverable.status === "ERROR")
     ) {
@@ -231,8 +249,8 @@ export function DeliverableResultDialog({
         "with status:",
         deliverable.status,
       );
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
 
       // On met fin à l'état de chargement si on est complété
       if (deliverable.status === "COMPLETED") {
@@ -241,13 +259,13 @@ export function DeliverableResultDialog({
     }
 
     return () => {
-      if (pollingInterval) {
+      if (pollingIntervalRef.current) {
         logger.debug("Cleaning up polling interval");
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     };
-  }, [deliverable, deliverableIds, pollingInterval, isLoading]);
+  }, [deliverable, deliverableIds, isLoading, isOpen]);
 
   // Cet useEffect est déclenché quand le deliverable change
   useEffect(() => {
@@ -286,6 +304,36 @@ export function DeliverableResultDialog({
       setIsLoading(false);
     }
   }, [tabs, contents]);
+
+  // Timer pour afficher la durée écoulée en minutes pendant le progress
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (
+      deliverable &&
+      (deliverable.status === "PENDING" || deliverable.status === "PROGRESS") &&
+      deliverable.createdAt
+    ) {
+      const updateTimer = () => {
+        const created = new Date(deliverable.createdAt).getTime();
+        const now = Date.now();
+        const diffMs = now - created;
+        const minutes = Math.floor(diffMs / 60000);
+        const seconds = Math.floor((diffMs % 60000) / 1000);
+        setTimer(
+          `${minutes.toString().padStart(2, "0")}:${seconds
+            .toString()
+            .padStart(2, "0")}m`
+        );
+      };
+      updateTimer();
+      interval = setInterval(updateTimer, 1000);
+    } else {
+      setTimer("");
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [deliverable]);
 
   const fetchDeliverable = async (
     deliverableId: string,
@@ -799,7 +847,7 @@ export function DeliverableResultDialog({
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    En cours de génération...
+                    En cours de génération{timer && ` • ${timer}`}
                   </span>
                 )}
               {deliverableIds && deliverableIds.length > 1 && (
