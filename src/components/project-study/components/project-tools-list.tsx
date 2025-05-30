@@ -331,9 +331,9 @@ export function ProjectToolsList({
         toolName: currentTool?.name || "",
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
       setDialogOpen(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       await monitorDeliverable(
         deliverable.id,
@@ -361,50 +361,65 @@ export function ProjectToolsList({
         )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-        {tools.map((tool) => (
-          <div
-            key={tool.id}
-            className={`rounded-xl p-4 pt-8 ${isToolsReady ? "cursor-pointer hover:shadow-md" : "cursor-not-allowed"} min-h-[25vh] transition-all ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading && isToolsReady ? "hover:border-current" : "opacity-70"} relative`}
-            onClick={() => (isToolsReady ? handleToolClick(tool) : null)}
-          >
-            {!tool.endpoint && (
-              <Badge
-                variant="outline"
-                className="absolute top-2 right-2 bg-white/50 z-10 flex items-center gap-1"
-              >
-                <Construction className="h-3 w-3" />
-                En chantier
-              </Badge>
-            )}
-            <div className="flex items-start gap-4">
-              <div className="rounded-full p-2 bg-white/80">
-                {tool.isLoading ? (
-                  <Loader2 className="h-12 w-12 animate-spin" />
-                ) : tool.icon ? (
-                  tool.icon
-                ) : (
-                  <Clock className="h-12 w-12" />
-                )}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-xl font-medium">{tool.name}</h4>
-                <p className="text-md opacity-80 mt-1 line-clamp-3">
-                  {tool.description}
-                </p>
-              </div>
-            </div>
-            {tool.endpoint && !tool.isLoading && isToolsReady && (
-              <div className="absolute bottom-4 right-4">
-                <ArrowRight className="h-5 w-5 opacity-70" />
-              </div>
-            )}
+        {tools.map((tool) => {
+          // Vérifie si un livrable de ce type est en cours
+          const isCurrentDeliverableInProgress =
+            selectedDeliverable &&
+            tool.name === selectedDeliverable.toolName &&
+            dialogOpen === false;
 
-            {/* Overlay individuel pour chaque outil quand !isToolsReady */}
-            {!isToolsReady && (
-              <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto rounded-xl overflow-hidden"></div>
-            )}
-          </div>
-        ))}
+          return (
+            <div
+              key={tool.id}
+              className={`rounded-xl p-4 pt-8 ${isToolsReady ? "cursor-pointer hover:shadow-md" : "cursor-not-allowed"} min-h-[25vh] transition-all ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading && isToolsReady ? "hover:border-current" : "opacity-70"} relative`}
+              onClick={() => {
+                if (!isToolsReady) return;
+                if (isCurrentDeliverableInProgress) {
+                  setDialogOpen(true);
+                  return;
+                }
+                handleToolClick(tool);
+              }}
+            >
+              {!tool.endpoint && (
+                <Badge
+                  variant="outline"
+                  className="absolute top-2 right-2 bg-white/50 z-10 flex items-center gap-1"
+                >
+                  <Construction className="h-3 w-3" />
+                  En chantier
+                </Badge>
+              )}
+              <div className="flex items-start gap-4">
+                <div className="rounded-full p-2 bg-white/80">
+                  {tool.isLoading ? (
+                    <Loader2 className="h-12 w-12 animate-spin" />
+                  ) : tool.icon ? (
+                    tool.icon
+                  ) : (
+                    <Clock className="h-12 w-12" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xl font-medium">{tool.name}</h4>
+                  <p className="text-md opacity-80 mt-1 line-clamp-3">
+                    {tool.description}
+                  </p>
+                </div>
+              </div>
+              {tool.endpoint && !tool.isLoading && isToolsReady && (
+                <div className="absolute bottom-4 right-4">
+                  <ArrowRight className="h-5 w-5 opacity-70" />
+                </div>
+              )}
+
+              {/* Overlay individuel pour chaque outil quand !isToolsReady */}
+              {!isToolsReady && (
+                <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto rounded-xl overflow-hidden"></div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <style jsx>{`
