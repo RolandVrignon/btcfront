@@ -7,11 +7,15 @@ export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 
+    console.log("session", session);
+
     if (!session) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_CTIA_API_URL;
+
+    console.log("apiUrl:", apiUrl);
 
     if (!apiUrl) {
       return NextResponse.json(
@@ -20,6 +24,8 @@ export async function POST() {
       );
     }
 
+    console.log("apiUrl/projects:", `${apiUrl}/projects`);
+
     const response = await fetch(`${apiUrl}/projects`, {
       method: "POST",
       headers: {
@@ -27,6 +33,8 @@ export async function POST() {
         "X-API-Key": process.env.NEXT_PUBLIC_CTIA_API_KEY || "",
       },
     });
+
+    console.log("response:", response);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
