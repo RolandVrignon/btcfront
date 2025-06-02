@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 let metadataa: Metadata;
 
-if (process.env.NODE_ENV === "development") {
+if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
   metadataa = {
     title: "Ynor",
     description: "Ynor est une application de gestion de projet",
@@ -17,12 +17,28 @@ if (process.env.NODE_ENV === "development") {
       icon: "/dev/favicon.ico",
     },
   };
-} else {
+} else if (process.env.NEXT_PUBLIC_ENVIRONMENT === "preproduction") {
+  metadataa = {
+    title: "Ynor",
+    description: "Ynor est une application de gestion de projet",
+    icons: {
+      icon: "/preprod/favicon.ico",
+    },
+  };
+} else if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
   metadataa = {
     title: "Ynor",
     description: "Ynor est une application de gestion de projet",
     icons: {
       icon: "/prod/favicon.ico",
+    },
+  };
+} else {
+  metadataa = {
+    title: "Ynor",
+    description: "Ynor est une application de gestion de projet",
+    icons: {
+      icon: "/default/favicon.ico",
     },
   };
 }
