@@ -688,7 +688,7 @@ export function DeliverableResultDialog({
     try {
       setIsRegenerating(true); // On disable le bouton de régénération de la dialog
 
-      const selectedIds = selectedDocuments.map((doc) => doc.id);
+      const selectedIds = selectedDocuments.map((doc : UploadingFile) => doc.id);
 
       if (selectedIds.length === 0) {
         alert("Veuillez sélectionner au moins un document");

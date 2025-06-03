@@ -275,4 +275,15 @@ db-status:
 	@echo "\033[1;36m=== Status de PostgreSQL ===\033[0m"
 	@docker-compose ps postgres
 
+.PHONY: pull
+pull:
+	@echo "Mise à jour de toutes les branches locales..."
+	@for branch in $$(git branch | sed 's/[* ]//g'); do \
+	  echo "Mise à jour de la branche $$branch..."; \
+	  git checkout $$branch; \
+	  git pull; \
+	done; \
+	git checkout main; \
+	echo "✅ Toutes les branches locales ont été mises à jour."
+
 .PHONY: db-up db-down db-logs db-shell db-status
