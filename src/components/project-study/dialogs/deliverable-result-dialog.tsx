@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import { logger } from "@/src/utils/logger";
 import { format } from "date-fns";
 import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
 import { ScrollArea } from "@/src/components/ui/scroll-area";
+import { ProgressBadge } from "@/src/components/project-study/components/ProgressBadge";
 
 interface Document {
   id: string;
@@ -65,6 +66,7 @@ interface DeliverableResultDialogProps {
   setDeliverableIds?: React.Dispatch<
     React.SetStateAction<DeliverableIds | null>
   >;
+  onDeliverableLoaded?: () => void;
 }
 
 // Ajout d'une interface pour l'élément DocumentItem
@@ -117,6 +119,7 @@ export function DeliverableResultDialog({
   uploadFiles,
   projectId,
   setDeliverableIds,
+  onDeliverableLoaded,
 }: DeliverableResultDialogProps) {
   const [deliverable, setDeliverable] = useState<Deliverable | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,9 +139,14 @@ export function DeliverableResultDialog({
   );
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [remarks, setRemarks] = useState<string>("");
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+
+  // Use a ref to store the polling interval to avoid infinite update loop
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [pendingDeliverable, setPendingDeliverable] = useState<{
+    id: string[];
+    toolName: string;
+  } | null>(null);
 
   useDeliverableSocket(projectId || "", async (data) => {
     const deliverable = await fetch(`/api/deliverables/${data.id}`);
@@ -149,16 +157,17 @@ export function DeliverableResultDialog({
   // Reset tab index when dialog closes
   useEffect(() => {
     if (isOpen) {
+      setDeliverable(null);
       setIsLoading(true);
     }
 
     if (!isOpen) {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     }
-  }, [isOpen, pollingInterval]);
+  }, [isOpen]);
 
   // Effect to set the current version index to the latest version when deliverableIds changes
   useEffect(() => {
@@ -185,16 +194,15 @@ export function DeliverableResultDialog({
       // Fetch the selected version
       const selectedDeliverableId = deliverableIds[currentVersionIndex];
       if (selectedDeliverableId) {
-        fetchDeliverable(selectedDeliverableId, false);
+        fetchDeliverable(selectedDeliverableId, false).then(() => {
+          if (onDeliverableLoaded) onDeliverableLoaded();
+        });
       }
     }
-  }, [isOpen, deliverableIds, currentVersionIndex]);
+  }, [isOpen, deliverableIds, currentVersionIndex, onDeliverableLoaded]);
 
   // Initialiser les documents sélectionnés quand le dialogue de régénération s'ouvre
   useEffect(() => {
-    logger.info("isRegenerateDialogOpen", isRegenerateDialogOpen);
-    logger.info("uploadFiles", uploadFiles);
-    logger.info("uploadFiles length", uploadFiles?.length);
     if (uploadFiles && uploadFiles.length > 0) {
       setSelectedDocuments(uploadFiles);
     }
@@ -202,26 +210,21 @@ export function DeliverableResultDialog({
 
   // Effect to handle polling for pending or processing deliverables
   useEffect(() => {
-    // Si le composant est en chargement et qu'on a un deliverable, on met en place le polling
+    // If loading and we have a deliverable, start polling
     if (isLoading && deliverable) {
-      // Si on n'a pas déjà un intervalle de polling actif
-      if (!pollingInterval) {
+      if (!pollingIntervalRef.current) {
         logger.debug("Starting polling for deliverable:", deliverable.id);
-
         const interval = setInterval(() => {
           if (deliverableIds && deliverableIds.length > 0) {
             const latestId = deliverableIds[deliverableIds.length - 1];
             logger.debug("Polling deliverable:", latestId);
-            fetchDeliverable(latestId, false); // Don't reset loading state between polls
+            fetchDeliverable(latestId, false);
           }
-        }, 3000); // Poll every 3 seconds
-
-        setPollingInterval(interval);
+        }, 3000);
+        pollingIntervalRef.current = interval;
       }
-    }
-    // Si le deliverable est complété ou en erreur, on arrête le polling
-    else if (
-      pollingInterval &&
+    } else if (
+      pollingIntervalRef.current &&
       deliverable &&
       (deliverable.status === "COMPLETED" || deliverable.status === "ERROR")
     ) {
@@ -231,23 +234,20 @@ export function DeliverableResultDialog({
         "with status:",
         deliverable.status,
       );
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-
-      // On met fin à l'état de chargement si on est complété
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
       if (deliverable.status === "COMPLETED") {
         setIsLoading(false);
       }
     }
-
     return () => {
-      if (pollingInterval) {
+      if (pollingIntervalRef.current) {
         logger.debug("Cleaning up polling interval");
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     };
-  }, [deliverable, deliverableIds, pollingInterval, isLoading]);
+  }, [deliverable, deliverableIds, isLoading]);
 
   // Cet useEffect est déclenché quand le deliverable change
   useEffect(() => {
@@ -320,6 +320,7 @@ export function DeliverableResultDialog({
       setError("Une erreur est survenue lors de la récupération des résultats");
       setIsLoading(false);
     }
+    return;
   };
 
   const getTabTitle = (type: string) => {
@@ -640,7 +641,7 @@ export function DeliverableResultDialog({
     try {
       setIsRegenerating(true); // On disable le bouton de régénération de la dialog
 
-      const selectedIds = selectedDocuments.map((doc : UploadingFile) => doc.id);
+      const selectedIds = selectedDocuments.map((doc: UploadingFile) => doc.id);
 
       if (selectedIds.length === 0) {
         alert("Veuillez sélectionner au moins un document");
@@ -708,6 +709,8 @@ export function DeliverableResultDialog({
   };
 
   const handleVersionSelect = (index: number) => {
+    setDeliverable(null);
+    setIsLoading(true);
     if (index !== currentVersionIndex) {
       setCurrentVersionIndex(index);
     }
@@ -735,106 +738,98 @@ export function DeliverableResultDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2 mr-8">
-              {deliverable && deliverable.status === "COMPLETED" && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800 transition-opacity duration-300 ease-in-out">
-                  <svg
-                    className="w-4 h-4 mr-1.5 text-green-500"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                  Généré le{" "}
-                  {format(
-                    new Date(deliverable.createdAt),
-                    "dd/MM/yyyy à HH:mm",
-                  )}{" "}
-                  en {Math.round(deliverable.process_duration_in_seconds)}{" "}
-                  secondes
-                </span>
-              )}
-              {deliverable && deliverable.status === "ERROR" && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800 transition-opacity duration-300 ease-in-out">
-                  <svg
-                    className="w-4 h-4 mr-1.5 text-red-500"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                  Erreur lors de la génération
-                </span>
-              )}
-              {deliverable &&
-                (deliverable.status === "PENDING" ||
-                  deliverable.status === "PROGRESS") && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 transition-opacity duration-300 ease-in-out">
-                    <svg
-                      className="w-4 h-4 mr-1.5 text-yellow-500 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
+              {/* Status badge */}
+              {isLoading && !deliverable ? (
+                <Skeleton className="h-6 w-48 rounded-full" />
+              ) : (
+                <>
+                  {deliverable && deliverable.status === "COMPLETED" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800 transition-opacity duration-300 ease-in-out">
+                      <svg
+                        className="w-4 h-4 mr-1.5 text-green-500"
                         fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    En cours de génération...
-                  </span>
-                )}
-              {deliverableIds && deliverableIds.length > 1 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 transition-all duration-200"
-                      disabled={isLoading}
-                    >
-                      {currentVersionIndex !== null
-                        ? `v${currentVersionIndex + 1}`
-                        : "Versions"}
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {deliverableIds.map((_, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        className={
-                          currentVersionIndex === index
-                            ? "cursor-pointer bg-gray-100"
-                            : "cursor-pointer"
-                        }
-                        onClick={() => handleVersionSelect(index)}
+                        viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
-                        v{index + 1}
-                        {index === deliverableIds.length - 1 && " (dernière)"}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
+                      Généré le{" "}
+                      {format(
+                        new Date(deliverable.createdAt),
+                        "dd/MM/yyyy à HH:mm",
+                      )}{" "}
+                      en {Math.floor(deliverable.process_duration_in_seconds / 60)}:{String(Math.floor(deliverable.process_duration_in_seconds % 60)).padStart(2, '0')}m
+                    </span>
+                  )}
+                  {deliverable && deliverable.status === "ERROR" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800 transition-opacity duration-300 ease-in-out">
+                      <svg
+                        className="w-4 h-4 mr-1.5 text-red-500"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
+                      Erreur lors de la génération
+                    </span>
+                  )}
+                  {deliverable &&
+                    (deliverable.status === "PENDING" ||
+                      deliverable.status === "PROGRESS") && (
+                      <ProgressBadge createdAt={new Date(deliverable.createdAt)} size="medium" />
+                    )}
+                </>
               )}
+
+              {/* Version dropdown */}
+              {isLoading && !deliverable ? (
+                <Skeleton className="h-8 w-20 rounded-md" />
+              ) : (
+                deliverableIds && deliverableIds.length > 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 transition-all duration-200"
+                        disabled={isLoading}
+                      >
+                        {currentVersionIndex !== null
+                          ? `v${currentVersionIndex + 1}`
+                          : "Versions"}
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {deliverableIds.map((_, index) => (
+                        <DropdownMenuItem
+                          key={index}
+                          className={
+                            currentVersionIndex === index
+                              ? "cursor-pointer bg-gray-100"
+                              : "cursor-pointer"
+                          }
+                          onClick={() => handleVersionSelect(index)}
+                        >
+                          v{index + 1}
+                          {index === deliverableIds.length - 1 && " (dernière)"}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              )}
+
+              {/* Regenerate button */}
               <Button
                 size="sm"
                 variant="outline"

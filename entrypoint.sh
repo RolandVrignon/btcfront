@@ -16,12 +16,6 @@ fi
 echo "🔧 Génération du client Prisma..."
 pnpm prisma generate
 
-# Si PRISMA_RESOLVE_MIGRATION est à true, on marque la migration manuelle comme appliquée
-if [ "$PRISMA_RESOLVE_MIGRATION" = "true" ]; then
-  echo "🟢 Résolution de la migration manuelle snake_case_rename..."
-  pnpm prisma migrate resolve --applied 20250603763833_snake_case_rename || true
-fi
-
 # Vérifier si PRISMA_MIGRATE est défini à "true" pour exécuter les migrations
 if [ "$PRISMA_MIGRATE" = "true" ]; then
   echo "🔄 Exécution des migrations Prisma..."

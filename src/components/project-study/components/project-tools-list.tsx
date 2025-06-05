@@ -20,12 +20,10 @@ import { FileSelectionDialog } from "@/src/components/project-study/dialogs/sele
 import { LoadingSpinner } from "../../ui/loading-spinner";
 import { UploadingFile } from "@/src/types/type";
 import { logger } from "@/src/utils/logger";
-
-interface Deliverable {
-  id: string;
-  type: string;
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "ERROR";
-}
+import { StatusPastille } from "@/src/components/ui/status-pastille";
+import { Deliverable } from "@/src/types/type";
+import { useDeliverableSocket } from "@/src/hooks/use-deliverable-socket";
+import { ProgressBadge } from "@/src/components/project-study/components/ProgressBadge";
 
 interface Tool {
   id: string;
@@ -43,6 +41,11 @@ interface ProjectToolsListProps {
   isToolsReady?: boolean;
   uploadFiles?: UploadingFile[];
 }
+
+type DeliverableStatusInfo = {
+  status: "PROGRESS" | "COMPLETED" | "ERROR" | null;
+  createdAt?: Date | null;
+};
 
 export function ProjectToolsList({
   projectId,
@@ -120,12 +123,92 @@ export function ProjectToolsList({
   );
   const [remarks, setRemarks] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
+  const [deliverableStatus, setDeliverableStatus] = useState<
+    Record<string, DeliverableStatusInfo>
+  >({});
 
   useEffect(() => {
     if (uploadFiles && uploadFiles.length > 0) {
       setSelectedDocuments(uploadFiles);
     }
   }, [uploadFiles, fileSelectionDialogOpen]);
+
+  // Listen to deliverable updates via socket and update status in real time
+  useDeliverableSocket(projectId || "", async (data) => {
+    try {
+      const response = await fetch(`/api/deliverables/${data.id}`);
+      if (!response.ok) return;
+      const deliverable: Deliverable = await response.json();
+
+      // Find the corresponding tool by deliverable type
+      const tool = tools.find((t) => t.type === deliverable.type);
+      if (!tool) return;
+
+      // Update the status for this tool
+      const allowedStatus = ["PROGRESS", "COMPLETED", "ERROR"] as const;
+      setDeliverableStatus((prev) => ({
+        ...prev,
+        [tool.id]: allowedStatus.includes(deliverable.status as any)
+          ? {
+              status: deliverable.status as "PROGRESS" | "COMPLETED" | "ERROR",
+              createdAt: deliverable.createdAt
+                ? new Date(deliverable.createdAt)
+                : null,
+            }
+          : { status: null, createdAt: null },
+      }));
+    } catch (error) {
+      logger.error("Error updating status via socket:", error);
+    }
+  });
+
+  useEffect(() => {
+   // On mount, fetch all deliverables for the project and update status for each tool type
+    async function fetchAllDeliverables() {
+      if (!projectId) return;
+      try {
+        const res = await fetch(`/api/deliverables/project/${projectId}`);
+        if (!res.ok) return;
+        const deliverables = await res.json();
+        if (!Array.isArray(deliverables)) return;
+        // For each tool, find the last deliverable of its type
+        const statusUpdates: Record<string, DeliverableStatusInfo> = {};
+        tools.forEach((tool) => {
+          if (!tool.endpoint) return;
+          const deliverablesByType = deliverables.filter(
+            (d: Deliverable) => d.type === tool.type,
+          );
+          const deliverablesByTypeSorted = deliverablesByType.sort(
+            (a: Deliverable, b: Deliverable) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+          const last = deliverablesByTypeSorted[0];
+          if (
+            last &&
+            ["PROGRESS", "COMPLETED", "ERROR"].includes(last.status)
+          ) {
+            statusUpdates[tool.id] = {
+              status: last.status,
+              createdAt: last.createdAt ? new Date(last.createdAt) : null,
+            };
+          } else {
+            statusUpdates[tool.id] = { status: null, createdAt: null };
+          }
+        });
+        setDeliverableStatus((prev) => ({ ...prev, ...statusUpdates }));
+      } catch {
+        // In case of error, set all to null
+        const statusUpdates: Record<string, DeliverableStatusInfo> = {};
+        tools.forEach((tool) => {
+          if (tool.endpoint)
+            statusUpdates[tool.id] = { status: null, createdAt: null };
+        });
+        setDeliverableStatus((prev) => ({ ...prev, ...statusUpdates }));
+      }
+    }
+    fetchAllDeliverables();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   const monitorDeliverable = async (
     deliverableId: string,
@@ -136,6 +219,10 @@ export function ProjectToolsList({
       let isComplete = false;
       let attempts = 0;
       const maxAttempts = 60; // 5 minutes with 5-second intervals
+      setDeliverableStatus((prev) => ({
+        ...prev,
+        [toolId]: { status: "PROGRESS", createdAt: new Date() },
+      }));
       await new Promise((resolve) => setTimeout(resolve, 5000));
 
       while (!isComplete && attempts < maxAttempts) {
@@ -154,7 +241,19 @@ export function ProjectToolsList({
           deliverable.status === "ERROR"
         ) {
           isComplete = true;
-
+          setDeliverableStatus((prev) => ({
+            ...prev,
+            [toolId]: {
+              status: ["COMPLETED", "ERROR", "PROGRESS"].includes(
+                deliverable.status,
+              )
+                ? (deliverable.status as any)
+                : null,
+              createdAt: deliverable.createdAt
+                ? new Date(deliverable.createdAt)
+                : null,
+            },
+          }));
           if (deliverable.status === "COMPLETED") {
             setSelectedDeliverable({
               id: [deliverableId],
@@ -166,7 +265,6 @@ export function ProjectToolsList({
               "Une erreur est survenue lors de la génération du livrable.",
             );
           }
-
           return;
         }
 
@@ -181,20 +279,25 @@ export function ProjectToolsList({
             tool.id === toolId ? { ...tool, isLoading: false } : tool,
           ),
         );
-
+        setDeliverableStatus((prev) => ({
+          ...prev,
+          [toolId]: { status: null, createdAt: null },
+        }));
         toast.error(
           "La génération du livrable prend plus de temps que prévu. Veuillez réessayer plus tard.",
         );
       }
     } catch (error) {
       logger.error("Error monitoring deliverable:", error);
-
       setTools((prevTools) =>
         prevTools.map((tool) =>
           tool.id === toolId ? { ...tool, isLoading: false } : tool,
         ),
       );
-
+      setDeliverableStatus((prev) => ({
+        ...prev,
+        [toolId]: { status: "ERROR", createdAt: null },
+      }));
       toast.error("Une erreur est survenue lors du suivi du livrable.");
     }
   };
@@ -238,11 +341,7 @@ export function ProjectToolsList({
 
       const deliverables: Deliverable[] = await response.json();
 
-      logger.debug("deliverables info:", deliverables.length);
-
       if (deliverables.length === 0) {
-        logger.info("deliverables length is 0");
-        logger.info("tool:", tool);
         setCurrentTool(tool);
         setFileSelectionDialogOpen(true);
         return;
@@ -283,8 +382,6 @@ export function ProjectToolsList({
 
       const selectedIds = selectedDocuments?.map((doc) => doc.id);
 
-      logger.info("selectedIds:", selectedIds);
-
       if (selectedIds && selectedIds.length === 0) {
         alert("Veuillez sélectionner au moins un document");
         return;
@@ -297,8 +394,6 @@ export function ProjectToolsList({
         user_prompt: remarks.trim() || "",
         new: true,
       };
-
-      logger.info("obj:", obj);
 
       // Appeler l'API pour régénérer le livrable
       const response = await fetch(`/api/deliverables/`, {
@@ -358,6 +453,26 @@ export function ProjectToolsList({
             className={`rounded-xl p-4 pt-8 ${isToolsReady ? "cursor-pointer hover:shadow-md" : "cursor-not-allowed"} min-h-[25vh] transition-all ${tool.color} border border-transparent ${tool.endpoint && !tool.isLoading && isToolsReady ? "hover:border-current" : "opacity-70"} relative`}
             onClick={() => (isToolsReady ? handleToolClick(tool) : null)}
           >
+            {tool.endpoint && (
+              <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1">
+                {deliverableStatus[tool.id]?.status === "PROGRESS" && (
+                  <ProgressBadge
+                    createdAt={deliverableStatus[tool.id]?.createdAt}
+                    size="small"
+                  />
+                )}
+                {deliverableStatus[tool.id]?.status === "COMPLETED" && (
+                  <Badge className="bg-green-100 text-green-700 px-2 py-0.5">
+                    Terminé
+                  </Badge>
+                )}
+                {deliverableStatus[tool.id]?.status === "ERROR" && (
+                  <Badge className="bg-red-100 text-red-700 px-2 py-0.5">
+                    Erreur
+                  </Badge>
+                )}
+              </div>
+            )}
             {!tool.endpoint && (
               <Badge
                 variant="outline"
@@ -390,7 +505,6 @@ export function ProjectToolsList({
               </div>
             )}
 
-            {/* Overlay individuel pour chaque outil quand !isToolsReady */}
             {!isToolsReady && (
               <div className="absolute inset-0 z-20 backdrop-blur-[2px] flex items-center justify-center pointer-events-auto rounded-xl overflow-hidden"></div>
             )}

@@ -21,6 +21,8 @@ ALTER TABLE session RENAME COLUMN "userId" TO user_id;
 
 -- Rename columns for user
 ALTER TABLE "user" RENAME COLUMN "emailVerified" TO email_verified;
+ALTER TABLE "user" RENAME COLUMN "name" TO name;
+ALTER TABLE "user" RENAME COLUMN "email" TO email;
 
 -- Rename columns for verification_token
 -- (no columns to rename, all are already snake_case)

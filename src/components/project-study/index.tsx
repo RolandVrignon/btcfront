@@ -68,10 +68,7 @@ export const ProjectStudy = React.memo(function ProjectStudy({
   const projectId = projectIdRef.current;
 
   useProjectSocket(projectId || "", async (data) => {
-    console.log("data:", data);
-    console.log("projectId:", projectId);
     if (projectId && (data.status === "COMPLETED" || data.status === "ERROR")) {
-      console.log("projectId:", projectId);
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "GET",
         headers: {
@@ -84,10 +81,15 @@ export const ProjectStudy = React.memo(function ProjectStudy({
         return;
       }
 
-      const projectData = await response.json();
-      console.log("projectData:", projectData);
-
+      const projectData: Project = await response.json();
       setProject(projectData);
+      setProjects((prevProjects) =>
+        prevProjects.map((p) =>
+          p.externalId === projectData.externalId
+            ? { ...p, ...projectData }
+            : p,
+        ),
+      );
 
       if (data.status === "COMPLETED") {
         const [documentsResponse, georisquesResponse] = await Promise.all([
