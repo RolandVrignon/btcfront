@@ -726,20 +726,41 @@ export function DeliverableResultDialog({
 
     const pdf = new jsPDF("p", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth() - 20;
-
-    const text = resultRef.current.innerText || "";
-    const lines = pdf.splitTextToSize(text, pageWidth);
-
     let y = 10;
-    const lineHeight = 7;
 
-    lines.forEach((line: string) => {
-      pdf.text(line, 10, y);
-      y += lineHeight;
-      if (y > pdf.internal.pageSize.getHeight() - 10) {
-        pdf.addPage();
-        y = 10;
+    const elements = resultRef.current.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6, p, li, table, pre",
+    );
+
+    elements.forEach((el) => {
+      const tag = el.tagName.toLowerCase();
+      let fontSize = 11;
+      let fontStyle: "normal" | "bold" = "normal";
+      let text = el.textContent?.trim() || "";
+
+      if (/^h[1-6]$/.test(tag)) {
+        const level = parseInt(tag.charAt(1), 10);
+        const sizes = [18, 16, 14, 13, 12, 11];
+        fontSize = sizes[level - 1] || 11;
+        fontStyle = "bold";
+      } else if (tag === "li") {
+        text = `\u2022 ${text}`;
       }
+
+      pdf.setFontSize(fontSize);
+      pdf.setFont(undefined, fontStyle);
+
+      const lines = pdf.splitTextToSize(text, pageWidth);
+
+      lines.forEach((line: string) => {
+        if (y > pdf.internal.pageSize.getHeight() - 10) {
+          pdf.addPage();
+          y = 10;
+        }
+        pdf.text(line, 10, y);
+        y += fontSize * 0.6;
+      });
+      y += fontSize * 0.4;
     });
 
     pdf.save("deliverable-result.pdf");
