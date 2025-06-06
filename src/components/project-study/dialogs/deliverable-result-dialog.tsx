@@ -142,6 +142,8 @@ export function DeliverableResultDialog({
 
   // Use a ref to store the polling interval to avoid infinite update loop
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref to capture the deliverable result for PDF generation
+  const resultRef = useRef<HTMLDivElement | null>(null);
 
   const [pendingDeliverable, setPendingDeliverable] = useState<{
     id: string[];
@@ -716,6 +718,23 @@ export function DeliverableResultDialog({
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!resultRef.current) return;
+
+    const html2canvas = (await import("html2canvas")).default;
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule as unknown as { jsPDF: any };
+
+    const canvas = await html2canvas(resultRef.current);
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save("deliverable-result.pdf");
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -870,7 +889,7 @@ export function DeliverableResultDialog({
               <div className="flex-grow flex flex-col overflow-hidden animate-fadeIn transition-opacity duration-300">
                 <div className="flex-grow overflow-hidden">
                   {!isLoading && deliverable.long_result && (
-                    <ScrollArea className="h-full w-full">
+                    <ScrollArea className="h-full w-full" ref={resultRef}>
                       {renderResultValue(deliverable.long_result.result)}
                     </ScrollArea>
                   )}
@@ -895,6 +914,13 @@ export function DeliverableResultDialog({
           </div>
 
           <DialogFooter className="mt-4 pt-4 border-t flex-shrink-0">
+            <Button
+              variant="outline"
+              onClick={handleDownloadPdf}
+              className="transition-all duration-200"
+            >
+              Télécharger le PDF
+            </Button>
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
