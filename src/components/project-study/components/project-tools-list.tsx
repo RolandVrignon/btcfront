@@ -163,7 +163,7 @@ export function ProjectToolsList({
   });
 
   useEffect(() => {
-   // On mount, fetch all deliverables for the project and update status for each tool type
+    // On mount, fetch all deliverables for the project and update status for each tool type
     async function fetchAllDeliverables() {
       if (!projectId) return;
       try {

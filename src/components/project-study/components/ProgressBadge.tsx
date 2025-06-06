@@ -7,7 +7,10 @@ interface ProgressBadgeProps {
   size?: "small" | "medium";
 }
 
-export function ProgressBadge({ createdAt, size = "medium" }: ProgressBadgeProps) {
+export function ProgressBadge({
+  createdAt,
+  size = "medium",
+}: ProgressBadgeProps) {
   const [elapsed, setElapsed] = useState<number>(0);
 
   useEffect(() => {
