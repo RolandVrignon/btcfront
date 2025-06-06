@@ -721,17 +721,27 @@ export function DeliverableResultDialog({
   const handleDownloadPdf = async () => {
     if (!resultRef.current) return;
 
-    const html2canvas = (await import("html2canvas")).default;
     const jsPDFModule = await import("jspdf");
     const { jsPDF } = jsPDFModule as unknown as { jsPDF: any };
 
-    const canvas = await html2canvas(resultRef.current);
-    const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+
+    const text = resultRef.current.innerText || "";
+    const lines = pdf.splitTextToSize(text, pageWidth);
+
+    let y = 10;
+    const lineHeight = 7;
+
+    lines.forEach((line: string) => {
+      pdf.text(line, 10, y);
+      y += lineHeight;
+      if (y > pdf.internal.pageSize.getHeight() - 10) {
+        pdf.addPage();
+        y = 10;
+      }
+    });
+
     pdf.save("deliverable-result.pdf");
   };
 
