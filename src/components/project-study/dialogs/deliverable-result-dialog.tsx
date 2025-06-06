@@ -142,6 +142,8 @@ export function DeliverableResultDialog({
 
   // Use a ref to store the polling interval to avoid infinite update loop
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref to capture the deliverable result for PDF generation
+  const resultRef = useRef<HTMLDivElement | null>(null);
 
   const [pendingDeliverable, setPendingDeliverable] = useState<{
     id: string[];
@@ -716,6 +718,54 @@ export function DeliverableResultDialog({
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!resultRef.current) return;
+
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule as unknown as { jsPDF: any };
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+    let y = 10;
+
+    const elements = resultRef.current.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6, p, li, table, pre",
+    );
+
+    elements.forEach((el) => {
+      const tag = el.tagName.toLowerCase();
+      let fontSize = 11;
+      let fontStyle: "normal" | "bold" = "normal";
+      let text = el.textContent?.trim() || "";
+
+      if (/^h[1-6]$/.test(tag)) {
+        const level = parseInt(tag.charAt(1), 10);
+        const sizes = [18, 16, 14, 13, 12, 11];
+        fontSize = sizes[level - 1] || 11;
+        fontStyle = "bold";
+      } else if (tag === "li") {
+        text = `\u2022 ${text}`;
+      }
+
+      pdf.setFontSize(fontSize);
+      pdf.setFont(undefined, fontStyle);
+
+      const lines = pdf.splitTextToSize(text, pageWidth);
+
+      lines.forEach((line: string) => {
+        if (y > pdf.internal.pageSize.getHeight() - 10) {
+          pdf.addPage();
+          y = 10;
+        }
+        pdf.text(line, 10, y);
+        y += fontSize * 0.6;
+      });
+      y += fontSize * 0.4;
+    });
+
+    pdf.save("deliverable-result.pdf");
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -870,7 +920,7 @@ export function DeliverableResultDialog({
               <div className="flex-grow flex flex-col overflow-hidden animate-fadeIn transition-opacity duration-300">
                 <div className="flex-grow overflow-hidden">
                   {!isLoading && deliverable.long_result && (
-                    <ScrollArea className="h-full w-full">
+                    <ScrollArea className="h-full w-full" ref={resultRef}>
                       {renderResultValue(deliverable.long_result.result)}
                     </ScrollArea>
                   )}
@@ -895,6 +945,13 @@ export function DeliverableResultDialog({
           </div>
 
           <DialogFooter className="mt-4 pt-4 border-t flex-shrink-0">
+            <Button
+              variant="outline"
+              onClick={handleDownloadPdf}
+              className="transition-all duration-200"
+            >
+              Télécharger le PDF
+            </Button>
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
